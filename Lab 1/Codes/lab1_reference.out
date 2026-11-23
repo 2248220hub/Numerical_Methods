@@ -1,0 +1,117 @@
+
+==================== Recording 1: dati_rumorosi.wav
+0. fs = 44100 Hz, N = 5292000 (120.0 s), rms = 13194, max |x| = 29490 (int16 full scale 32767); 1/T = 0.0083 Hz; signal / noise power in the data -45.1 dB (signal amplitude in the data 1.001 x segnale)
+1. Welch, segments of 65536 samples (1.49 s, df = 0.673 Hz, K = 160 half-overlapping):
+   window          noise level / reference at 50-100 Hz, 500-1000 Hz, 5-6 kHz   contrast: signal lines | hum 50 Hz
+   boxcar           2.13  1.31  1.01       223.0  365.4  500.1  |  16.5
+   triang           1.05  1.01  1.00       318.9  410.7  498.2  |  35.9
+   hamming          1.08  1.01  1.00       311.2  399.0  484.2  |  35.0
+   hann             1.06  1.01  1.00       294.0  371.5  440.0  |  33.4
+   blackmanharris   1.05  1.00  1.01       237.6  285.4  330.3  |  26.8
+   nuttall          1.05  1.00  1.01       240.7  288.8  335.1  |  27.1
+   flattop          1.07  1.00  1.01       140.2  158.3  178.4  |  16.2
+   Bartlett (boxcar, no overlap, K = 80): noise level / reference at 50-100 Hz 2.15, 500-1000 Hz 1.33
+   Nuttall, contrast of the signal lines against the segment length:
+     2^12 =    4096 (  0.09 s, df = 10.767 Hz):    14.1    18.7    20.2
+     2^14 =   16384 (  0.37 s, df =  2.692 Hz):    56.1    75.3    80.9
+     2^16 =   65536 (  1.49 s, df =  0.673 Hz):   240.7   288.8   335.1
+     2^18 =  262144 (  5.94 s, df =  0.168 Hz):   957.8  1216.5  1242.3
+     2^20 = 1048576 ( 23.78 s, df =  0.042 Hz):  3864.2  4616.3  5081.2
+   periodogram: contrast    60082    71393    77094  | hum   5680
+2. amplitude of each line in 10 s blocks (projection on exp(-2 pi i f t)):
+     523.3 Hz: mean   60.1, std   1.1 (2%)
+     659.3 Hz: mean   60.0, std   0.8 (1%)
+     784.0 Hz: mean   60.0, std   0.8 (1%)
+      50.0 Hz: mean  120.2, std   7.7 (6%)
+5. three-parameter fit of log(Welch, Nuttall 2^16), 1 Hz - 20 kHz (generator: fk = 440 Hz, alpha = 2):
+   all points                            : A =    3.07, fk =  457.3 Hz, alpha = 1.983; rms of log residuals on the log bins 0.100
+   lines excluded                        : A =    3.07, fk =  439.4 Hz, alpha = 2.007; rms of log residuals on the log bins 0.086
+   log-binned (60 bins), lines excluded  : A =    3.12, fk =  421.7 Hz, alpha = 2.040; rms of log residuals on the log bins 0.077
+   detection, f >    0 Hz: z* = ln(M/0.01) = 19.4, 4 bins above: 50.00, 523.30, 659.30, 784.00
+   detection, f >   20 Hz: z* = ln(M/0.01) = 19.4, 4 bins above: 50.00, 523.30, 659.30, 784.00
+   line   50.000 Hz, z =    3544, amplitude 2|X|/N =  120.1, mains hum
+   line  523.300 Hz, z =   41349, amplitude 2|X|/N =   60.1, C5 (+0 cents)
+   line  659.300 Hz, z =   48722, amplitude 2|X|/N =   60.0, E5 (+0 cents)
+   line  784.000 Hz, z =   53536, amplitude 2|X|/N =   60.0, G5 (+0 cents)
+   largest noise-only z above 20 Hz: 15.3 (ln M = 14.8); fraction of bins with P > S_n above 20 Hz: 0.369 (e^-1 = 0.368)
+3, 4, 6. filters (y = irfft(H X)); SNR against the clean signal:
+   band-pass 493-814 Hz (by eye)                       : bins passed    38484, SNR    5.7 dB, signal amplitude x1.000
+   band-pass 20-814 Hz (hum included)                  : bins passed    95279, SNR   -8.5 dB, signal amplitude x1.000
+   comb, half-width 0.01 Hz                            : bins passed        9, SNR   43.4 dB, signal amplitude x1.000
+   comb, half-width 0.1 Hz                             : bins passed       71, SNR   32.5 dB, signal amplitude x1.000
+   comb, half-width 0.5 Hz                             : bins passed      357, SNR   26.1 dB, signal amplitude x1.000
+   comb, half-width 2.5 Hz                             : bins passed     1797, SNR   19.2 dB, signal amplitude x1.000
+   comb, half-width 10 Hz                              : bins passed     7197, SNR   13.0 dB, signal amplitude x1.000
+   comb, half-width 50 Hz                              : bins passed    35998, SNR    5.9 dB, signal amplitude x1.000
+   comb 2.5 Hz with the 50 Hz line too                 : bins passed     2396, SNR   -2.0 dB, signal amplitude x1.000
+   Wiener naive, S_s = max(P - S_n, 0) in every bin    : bins passed   976472, SNR  -37.5 dB, signal amplitude x1.000
+   Wiener naive, Phi = 0 below 20 Hz                   : bins passed   975633, SNR   -7.2 dB, signal amplitude x1.000
+   Wiener, detected lines (hum included)               : bins passed        4, SNR   -1.3 dB, signal amplitude x1.000
+   Wiener, detected lines, 50 Hz vetoed                : bins passed        3, SNR   44.9 dB, signal amplitude x1.000
+   Wiener, S_s = Welch - S_n (smooth estimate)         : bins passed  1342202, SNR   -9.8 dB, signal amplitude x0.996
+   Wiener, wrong units: P = |X|^2/N (no 2/fs)          : bins passed  2645872, SNR  -45.1 dB, signal amplitude x1.000
+   low-pass at 4 kHz                                   : bins passed   480000, SNR  -45.1 dB, signal amplitude x1.000
+7. Whittle on the periodogram, 1 Hz - 20 kHz, all bins: A = 2.977, fk = 936.4 Hz, alpha = 1.604
+7. Whittle on the periodogram, 1 Hz - 20 kHz, bins within 2 Hz of the detected lines excluded: A = 3.078, fk = 442.7 Hz, alpha = 1.994
+
+==================== Recording 2: dati_rumorosi_2.wav
+0. fs = 44100 Hz, N = 5292000 (120.0 s), rms = 10892, max |x| = 29490 (int16 full scale 32767); 1/T = 0.0083 Hz; signal / noise power in the data -46.2 dB (signal amplitude in the data 0.998 x segnale)
+1. Welch, segments of 65536 samples (1.49 s, df = 0.673 Hz, K = 160 half-overlapping):
+   window          noise level / reference at 50-100 Hz, 500-1000 Hz, 5-6 kHz   contrast: signal lines | hum 50 Hz
+   boxcar           2.20  1.32  1.01       251.3  244.0  439.2  |  18.6
+   triang           1.02  1.00  1.00       318.8  306.9  467.7  |  34.9
+   hamming          1.06  1.01  1.00       307.5  296.9  455.3  |  34.0
+   hann             1.02  1.01  1.00       285.2  275.2  424.8  |  32.8
+   blackmanharris   1.04  1.00  1.00       214.9  209.2  329.0  |  27.4
+   nuttall          1.04  1.00  1.00       218.1  212.0  332.7  |  27.7
+   flattop          1.01  1.00  1.00       160.5  161.1  182.9  |  17.1
+   Bartlett (boxcar, no overlap, K = 80): noise level / reference at 50-100 Hz 2.25, 500-1000 Hz 1.33
+   Nuttall, contrast of the signal lines against the segment length:
+     2^12 =    4096 (  0.09 s, df = 10.767 Hz):    24.9    24.9    21.3
+     2^14 =   16384 (  0.37 s, df =  2.692 Hz):    98.5    98.5    88.4
+     2^16 =   65536 (  1.49 s, df =  0.673 Hz):   218.1   212.0   332.7
+     2^18 =  262144 (  5.94 s, df =  0.168 Hz):   728.7   768.9  1422.1
+     2^20 = 1048576 ( 23.78 s, df =  0.042 Hz):  3683.1  3025.0  5836.2
+   periodogram: contrast    52070    50717    76094  | hum   4893
+2. amplitude of each line in 10 s blocks (projection on exp(-2 pi i f t)):
+     440.0 Hz: mean   43.9, std   0.8 (2%)
+     442.0 Hz: mean   43.3, std   1.1 (2%)
+     880.0 Hz: mean   43.7, std   0.5 (1%)
+      50.0 Hz: mean   87.2, std   6.8 (8%)
+5. three-parameter fit of log(Welch, Nuttall 2^16), 1 Hz - 20 kHz (generator: fk = 440 Hz, alpha = 2):
+   all points                            : A =    1.64, fk =  455.3 Hz, alpha = 1.996; rms of log residuals on the log bins 0.128
+   lines excluded                        : A =    1.64, fk =  437.9 Hz, alpha = 2.017; rms of log residuals on the log bins 0.112
+   log-binned (60 bins), lines excluded  : A =    1.68, fk =  406.0 Hz, alpha = 2.079; rms of log residuals on the log bins 0.087
+   detection, f >    0 Hz: z* = ln(M/0.01) = 19.4, 4 bins above: 50.00, 440.00, 442.00, 880.00
+   detection, f >   20 Hz: z* = ln(M/0.01) = 19.4, 4 bins above: 50.00, 440.00, 442.00, 880.00
+   line   50.000 Hz, z =    3456, amplitude 2|X|/N =   87.2, mains hum
+   line  440.000 Hz, z =   35526, amplitude 2|X|/N =   43.9, A4 (+0 cents)
+   line  442.000 Hz, z =   34760, amplitude 2|X|/N =   43.3, A4 (+8 cents)
+   line  880.000 Hz, z =   56254, amplitude 2|X|/N =   43.7, A5 (+0 cents)
+   largest noise-only z above 20 Hz: 17.2 (ln M = 14.8); fraction of bins with P > S_n above 20 Hz: 0.369 (e^-1 = 0.368)
+3, 4, 6. filters (y = irfft(H X)); SNR against the clean signal:
+   band-pass 410-910 Hz (by eye)                       : bins passed    59999, SNR    3.6 dB, signal amplitude x1.000
+   band-pass 20-910 Hz (hum included)                  : bins passed   106799, SNR   -8.7 dB, signal amplitude x1.000
+   comb, half-width 0.01 Hz                            : bins passed        9, SNR   39.2 dB, signal amplitude x1.000
+   comb, half-width 0.1 Hz                             : bins passed       71, SNR   32.6 dB, signal amplitude x1.000
+   comb, half-width 0.5 Hz                             : bins passed      357, SNR   25.2 dB, signal amplitude x1.000
+   comb, half-width 2.5 Hz                             : bins passed     1438, SNR   19.6 dB, signal amplitude x1.000
+   comb, half-width 10 Hz                              : bins passed     5038, SNR   14.1 dB, signal amplitude x1.000
+   comb, half-width 50 Hz                              : bins passed    24238, SNR    7.2 dB, signal amplitude x1.000
+   comb 2.5 Hz with the 50 Hz line too                 : bins passed     2037, SNR   -2.0 dB, signal amplitude x1.000
+   Wiener naive, S_s = max(P - S_n, 0) in every bin    : bins passed   977228, SNR  -39.3 dB, signal amplitude x1.000
+   Wiener naive, Phi = 0 below 20 Hz                   : bins passed   976395, SNR   -7.3 dB, signal amplitude x1.000
+   Wiener, detected lines (hum included)               : bins passed        4, SNR   -1.2 dB, signal amplitude x1.000
+   Wiener, detected lines, 50 Hz vetoed                : bins passed        3, SNR   42.1 dB, signal amplitude x1.000
+   Wiener, S_s = Welch - S_n (smooth estimate)         : bins passed  1332839, SNR  -11.7 dB, signal amplitude x0.996
+   Wiener, wrong units: P = |X|^2/N (no 2/fs)          : bins passed  2645887, SNR  -46.2 dB, signal amplitude x1.000
+   low-pass at 4 kHz                                   : bins passed   480000, SNR  -46.2 dB, signal amplitude x1.000
+7. Whittle on the periodogram, 1 Hz - 20 kHz, all bins: A = 1.597, fk = 867.2 Hz, alpha = 1.662
+7. Whittle on the periodogram, 1 Hz - 20 kHz, bins within 2 Hz of the detected lines excluded: A = 1.641, fk = 438.9 Hz, alpha = 2.006
+
+R2. Recording 2: resolution of 440 and 442 Hz (dip between the peaks / lower peak; < 0.5 = resolved)
+   2^16 (1.49 s, df = 0.673 Hz): boxcar 0.02, hann 0.18, nuttall 0.45, flattop 1.28
+   2^17 (2.97 s, df = 0.336 Hz): boxcar 0.02, hann 0.00, nuttall 0.00, flattop 0.12
+   2^18 (5.94 s, df = 0.168 Hz): boxcar 0.01, hann 0.00, nuttall 0.00, flattop 0.00
+   STFT, window 0.1 s: power in 436-446 Hz, modulation depth 1.00
+   STFT, window 2.0 s: power in 436-446 Hz, modulation depth 0.11

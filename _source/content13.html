@@ -1,0 +1,461 @@
+<!-- ================================================================== 1 -->
+<section class="lesson" data-title="The Monte Carlo idea: hit-or-miss" data-short="MC idea" data-badge="CONCEPT" data-time="25 min" data-level="Beginner"
+  data-sub="Integrals we cannot put on a grid — estimated by throwing random points, with an error bar from the same points.">
+  <div class="stage" data-widget="darts"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>Lecture 12 ended with a problem: every Bayesian answer is an integral over the posterior, and a grid costs K<sup>d</sup>.</p><p>Monte Carlo: evaluate the function at <b>random</b> points. Start with the simplest version — throw darts at a square and count how many land in the circle.</p></div>
+    <div class="s-key">A Monte Carlo result always comes with its error bar, computed from the same samples at no extra cost. A result without it is not a Monte Carlo result.</div>
+    <ul class="s-learn"><li>Why grids fail: K^d and wasted points</li><li>What “Monte Carlo” means (Ulam, von Neumann)</li><li>The three approaches to an integral</li><li>Hit-or-miss estimator</li><li>Its binomial error bar</li><li>Why small targets need ~1/p points</li></ul>
+  </aside>
+  <div class="prose">
+    <h2><span class="lv basic">BASIC</span>The problem: integrals we cannot put on a grid</h2>
+    <x-f name="Posterior expectations" tag="THE PROBLEM">
+      \h{E}{\mathbb E}[g(\theta)\mid x] = \h{integral}{\int} g(\theta)\,\h{post}{p(\theta\mid x)}\dd\theta
+      <note>Means, variances, intervals, marginals: all integrals. Grid with K points per axis: K<sup>d</sup> evaluations (30 µs each for the knee: 4 s for d = 3, 3 hours for d = 5, 9 months for d = 7) and 2462 of 10⁶ points (0.25%) hold 99% of the mass.</note>
+    </x-f>
+    <p><b>Monte Carlo</b> = a wide class of algorithms that obtain numerical results by <b>repeated random sampling</b>. The name dates from the 1940s at Los Alamos (Ulam, von Neumann, Metropolis — after the casino). Key idea: use randomness to solve problems that may be deterministic. For integration: evaluate the function at random points. It needs only the ability to <i>evaluate</i> the integrand, and it shines in many dimensions. Used “backwards”, the same idea <b>simulates</b>: noise records, sky maps, detector responses — every simulated record of the knee is a Monte Carlo sample.</p>
+    <p>Three approaches to \(I=\int_a^b f(x)\,{\rm d}x\): <b>(1) hit-or-miss</b> (geometric), <b>(2) sample mean</b> (mean-value theorem), <b>(3) importance sampling</b> (sample mean with points where they matter — needs sampling from a distribution, hence part II of the lecture).</p>
+
+    <h2><span class="lv basic">BASIC</span>Hit-or-miss</h2>
+    <p>Area of an irregular figure A inside a box of known area A<sub>box</sub>: throw N points uniformly in the box, count the N<sub>in</sub> inside.</p>
+    <x-f name="Hit-or-miss estimator" tag="ESTIMATOR">
+      \h{I}{I}\approx \h{Abox}{A_{\rm box}}\,\frac{\h{Nin}{N_{\rm in}}}{\h{N}{N}}
+      <note>Classic example: π from a circle inscribed in a square. In the quarter-circle version the fraction of hits estimates π/4.</note>
+      <py>
+      x, y = rng.random(n), rng.random(n)
+      p_hat = np.mean(x**2 + y**2 < 1.0)
+      pi_hat = 4.0 * p_hat
+      </py>
+      <f90>
+      call random_number(x);  call random_number(y)
+      p_hat  = count(x**2 + y**2 < 1.0_dp) / real(n, dp)
+      pi_hat = 4.0_dp * p_hat
+      </f90>
+    </x-f>
+
+    <h2><span class="lv core">CORE</span>The error of hit-or-miss</h2>
+    <p>Each point is a <b>Bernoulli trial</b> with success probability p = A/A<sub>box</sub> (unknown, estimated by p̂ = N<sub>in</sub>/N). The number of successes is binomial with variance Np(1−p). Propagate to I = A<sub>box</sub> N<sub>in</sub>/N:</p>
+    <x-f name="Standard error (hit-or-miss)" tag="RESULT">
+      \h{dI}{\delta I}\simeq\frac{\h{Abox}{A_{\rm box}}}{\sqrt{\h{N}{N}}}\sqrt{\h{phat}{\hat p}(1-\h{phat}{\hat p})},\qquad \frac{\h{dI}{\delta I}}{\h{I}{I}}\simeq\sqrt{\frac{1-\h{phat}{\hat p}}{\h{phat}{\hat p}\,\h{N}{N}}}
+      <note>p replaced by p̂: the same points give the error. Quarter circle, 1500 points: N<sub>in</sub> = 1164, p̂ = 0.776, π ≈ 3.104 ± 0.043. The absolute error is largest at p = ½; the <b>relative</b> error grows without bound as p → 0: a small figure in a big box needs ~1/p points just to be hit once.</note>
+      <py>err = 4.0 * np.sqrt(p_hat * (1 - p_hat) / n)</py>
+      <f90>err = 4.0_dp*sqrt(p_hat*(1.0_dp - p_hat)/n)</f90>
+    </x-f>
+    <x-ex id="e13-1a" ans="3.104" tol="0.001" lvl="Basic">1500 random points in the unit square, 1164 inside the quarter circle. Estimate π.
+      <hint>π ≈ 4 N<sub>in</sub>/N.</hint><sol>4·1164/1500 = 3.104.</sol></x-ex>
+    <x-ex id="e13-1b" ans="0.0431" tol="0.0005" lvl="Basic">Its standard error?
+      <hint>4√(p̂(1−p̂)/N) with p̂ = 0.776.</hint><sol>4·√(0.776·0.224/1500) = 4·0.01077 = 0.0431. The true π is 0.9σ away: fine.</sol></x-ex>
+    <x-ex id="e13-1c" ans="26968" tol="300" lvl="Core">How many points do you need for δπ = 0.01? (use the true p = π/4)
+      <hint>Solve 0.01 = 4√(p(1−p)/N).</hint><sol>N = 16 p(1−p)/10⁻⁴ = 16·0.16855/10⁻⁴ ≈ 2.7×10⁴. For δπ = 0.001: 100 times more, 2.7×10⁶ — the 1/√N law is slow.</sol></x-ex>
+    <x-ex id="e13-1d" ans="0.316" tol="0.003" lvl="Core">A target occupies p = 0.001 of the box. Relative error after N = 10⁴ points?
+      <hint>√((1−p)/(pN)).</hint><sol>√(0.999/10) = 0.316: about 10 hits, 32% error. Small targets are expensive.</sol></x-ex>
+    <div class="uses">
+      <div class="use"><b>Radiative transfer (Part II)</b>Photon packets random-walk through a cloud: escape fractions are hit-or-miss estimates.</div>
+      <div class="use"><b>Detector acceptance</b>Fraction of simulated particles that cross a detector of complicated shape.</div>
+      <div class="use"><b>Collision probability</b>Space debris: fraction of sampled orbit uncertainties that pass within a keep-out sphere.</div>
+    </div>
+    <div class="oral">Derive the error of hit-or-miss from the binomial distribution. Why is it a bad method for a small target in a big box?</div>
+    <x-hsi to="s9">Hit-or-miss on a scene: the fraction of vegetated pixels with a Wilson interval</x-hsi>
+  </div>
+</section>
+
+<!-- ================================================================== 2 -->
+<section class="lesson" data-title="The sample mean and its error" data-short="Sample mean" data-badge="MATH" data-time="30 min" data-level="Beginner"
+  data-sub="The standard Monte Carlo integral: (b−a) times the average of f at random points — and the 1/√N law.">
+  <div class="stage" data-widget="integ"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>The area under f equals (width) × (mean height). Estimate the mean height by averaging f at random points.</p><p>The error bar comes from the spread of the f values themselves.</p></div>
+    <div class="s-key">δI = V σ<sub>f</sub>/√N: ten times more precision costs a hundred times more points — but nothing in the formula knows the dimension.</div>
+    <ul class="s-learn"><li>Mean-value theorem → estimator</li><li>Variance of a mean of N independent terms</li><li>Estimating σ_f from the same samples</li><li>Central limit theorem</li><li>Sample mean vs hit-or-miss (2.5× fewer points)</li><li>Python and Fortran implementation</li></ul>
+  </aside>
+  <div class="prose">
+    <h2><span class="lv basic">BASIC</span>The estimator</h2>
+    <x-f name="Mean value of a function" tag="DEFINITION">
+      \h{fmean}{\langle f\rangle}=\frac{1}{\h{ab}{b-a}}\h{integral}{\int_a^b} f(x)\dd x\quad\Longrightarrow\quad \h{I}{I}=\h{ab}{(b-a)}\,\h{fmean}{\langle f\rangle}
+    </x-f>
+    <x-f name="Sample-mean Monte Carlo" tag="ESTIMATOR">
+      \h{IN}{I_N}=\h{ab}{(b-a)}\frac1{\h{N}{N}}\h{sum}{\sum_{i=1}^{N}} f(\h{xi}{x_i}),\qquad \h{xi}{x_i}\sim U(a,b)
+      <note>In d dimensions (b − a) becomes the volume V of the domain and x<sub>i</sub> is a d-vector: only the shape of the array changes.</note>
+      <py>
+      def mc_integrate(func, a, b, n, rng):
+          x = rng.uniform(a, b, n)
+          y = func(x)
+          return (b - a) * y.mean(), (b - a) * y.std(ddof=1) / np.sqrt(n)
+      </py>
+      <f90>
+      call random_number(x);  x = a + (b - a)*x
+      fx  = x**2
+      est = (b - a)*sum(fx)/n
+      err = (b - a)*sqrt(sum((fx - sum(fx)/n)**2)/(n - 1))/sqrt(real(n, dp))
+      </f90>
+    </x-f>
+    <x-ex id="e13-2a" ans="2.6" tol="0.005" lvl="Basic">Estimate \(\int_0^2 x^2{\rm d}x\) with the four “random” points x = 0.2, 0.8, 1.4, 1.6.
+      <hint>(b−a) × mean of f(xᵢ).</hint><sol>f = 0.04, 0.64, 1.96, 2.56 → mean 1.3 → I ≈ 2·1.3 = 2.6 (exact 8/3 = 2.667).</sol></x-ex>
+
+    <h2><span class="lv core">CORE</span>Its error, from the same samples</h2>
+    <ol class="steps">
+      <li>I<sub>N</sub> is (b−a) times a <b>mean of N independent</b> random variables f(x<sub>i</sub>).</li>
+      <li>Variance of a mean of N i.i.d. variables = (variance of one)/N: \(\sigma_I^2=(b-a)^2\sigma_f^2/N\).</li>
+      <li>σ<sub>f</sub> is unknown: estimate it with the same samples, \(\hat\sigma_f^2=\frac1{N-1}\sum(f_i-\bar f)^2\).</li>
+      <li>Central limit theorem: for large N, I<sub>N</sub> is Gaussian around I with that width.</li>
+    </ol>
+    <x-f name="Statistical error of Monte Carlo" tag="RESULT">
+      \h{dI}{\delta I}=\frac{\h{ab}{b-a}}{\sqrt{\h{N}{N}}}\,\h{sigf}{\hat\sigma_f},\qquad \h{sigf}{\sigma_f^2}=\langle f^2\rangle-\langle f\rangle^2,\qquad \h{IN}{I_N}\sim\mathcal N(I,\delta I^2)
+      <note>Requirement: σ<sub>f</sub> finite (a heavy-tailed f can break it). Every Monte Carlo result comes with its error bar at no extra cost.</note>
+      <py>err = (b - a) * y.std(ddof=1) / np.sqrt(n)</py>
+      <f90>err = (b - a)*sqrt(sum((fx - sum(fx)/n)**2)/(n - 1))/sqrt(real(n, dp))</f90>
+    </x-f>
+    <h3>Worked example: where does 2.385/√N come from?</h3>
+    <p>f = x² with x uniform on [0, 2]: \(\langle f\rangle=\frac12\int_0^2x^2=\frac43\), \(\langle f^2\rangle=\frac12\int_0^2x^4=\frac{16}{5}=3.2\), so \(\sigma_f^2 = 3.2-\frac{16}9 = 1.4222\), σ<sub>f</sub> = 1.1926, and (b−a)σ<sub>f</sub> = <b>2.385</b>. The lecture measured exactly 2.385/√N.</p>
+    <x-ex id="e13-2b" ans="1.4222" tol="0.003" lvl="Core">Compute σ<sub>f</sub>² for f(x) = x² with x ~ U(0, 2).
+      <hint>⟨f²⟩ − ⟨f⟩² = 3.2 − (4/3)².</hint><sol>3.2 − 1.7778 = 1.4222.</sol></x-ex>
+    <x-ex id="e13-2c" ans="0.02385" tol="0.0003" lvl="Basic">Predicted error of the x² integral with N = 10⁴ points?
+      <hint>2.385/√N.</hint><sol>2.385/100 = 0.0239 (the lecture measured 0.0237 from one run, 0.0238 rms over runs).</sol></x-ex>
+    <x-ex id="e13-2d" ans="100" tol="0.5" lvl="Basic">By what factor must N grow to make the error 10 times smaller?
+      <hint>δI ∝ 1/√N.</hint><sol>10² = 100.</sol></x-ex>
+    <div class="stage" data-widget="rms"></div>
+
+    <h2><span class="lv core">CORE</span>Hit-or-miss against the sample mean</h2>
+    <p>Same integral ∫₀² x² (box [0,2]×[0,4] for hit-or-miss), rms error over 400 repetitions: sample mean 2.385/√N, hit-or-miss 3.771/√N. Hit-or-miss needs (3.771/2.385)² = <b>2.5 times more points</b>: it reduces f(x<sub>i</sub>) to one bit (in or out). Use the sample mean for functions; hit-or-miss only for volumes defined by a condition (“is the point inside the solid?”).</p>
+    <x-ex id="e13-2e" ans="2.5" tol="0.05" lvl="Core">Hit-or-miss error 3.771/√N, sample mean 2.385/√N. How many times more points does hit-or-miss need for equal error?
+      <hint>Errors scale as 1/√N: square the ratio.</hint><sol>(3.771/2.385)² = 1.581² = 2.50.</sol></x-ex>
+    <div class="uses">
+      <div class="use"><b>Posterior means</b>With samples θ<sup>(k)</sup> from the posterior, the mean of θ is a sample mean: same error formula.</div>
+      <div class="use"><b>Photometry & PSF integrals</b>Flux through an irregular aperture, integrals over pixel response functions.</div>
+      <div class="use"><b>Finance & risk</b>Expected losses over many random factors — the same 1/√N law.</div>
+    </div>
+    <div class="oral">Derive the Monte Carlo error formula from the variance of a mean, the estimate of σ<sub>f</sub> from the samples and the CLT; then reproduce the 2.385 number.</div>
+    <x-hsi to="s9">How many random pixels give the mean spectrum of a class to 1%?</x-hsi>
+  </div>
+</section>
+
+<!-- ================================================================== 3 -->
+<section class="lesson" data-title="Grid or Monte Carlo? The curse of dimension" data-short="Grid vs MC" data-badge="MATH" data-time="30 min" data-level="Intermediate"
+  data-sub="1/√N in any dimension versus N^(−k/d) for a grid — and why uniform points miss a posterior entirely.">
+  <div class="stage" data-widget="gridmc"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>A grid rule of order k has error N<sup>−k/d</sup>: excellent in 1-D, hopeless in 10-D. Monte Carlo is N<sup>−1/2</sup> always.</p><p>Above: Simpson against Monte Carlo on a smooth product integrand. Raise d and watch the lines cross.</p></div>
+    <div class="s-key">Almost all the volume of a high-dimensional cube is in its corners. A posterior is like the inscribed ball: uniform points never hit it. We need points drawn <b>where the distribution is</b>.</div>
+    <ul class="s-learn"><li>Error scaling of grids: N^(−k/d)</li><li>Crossing at d = 2k</li><li>σ_f can grow with d</li><li>Volume of the d-ball (Gamma function)</li><li>The empty cube: 0 hits in 20-D</li><li>Wilson interval & rule of three</li></ul>
+  </aside>
+  <div class="prose">
+    <h2><span class="lv core">CORE</span>How errors scale</h2>
+    <x-f name="Monte Carlo vs product grid" tag="SCALING">
+      \text{MC: }\ \h{dI}{\delta I}\propto\frac{\h{sigf}{\sigma_f}}{\sqrt{\h{N}{N}}}\quad\text{(any } d),\qquad\text{grid of order }\h{kord}{k}:\ \ \h{dI}{\delta I}\propto \h{N}{N}^{-\h{kord}{k}/\h{d}{d}}
+      <note>A 1-D rule with error ∝ n<sup>−k</sup> (trapezoid k = 2, Simpson k = 4) on a product grid of N = n<sup>d</sup> points has error ∝ N<sup>−k/d</sup>. Simpson: N⁻⁴ in 1-D, N⁻¹ in 4-D, N<sup>−½</sup> in 8-D. Monte Carlo becomes competitive when k/d &lt; ½, i.e. <b>d &gt; 2k</b>: d &gt; 4 (trapezoid), d &gt; 8 (Simpson).</note>
+      <py>
+      # appendix A: MC error = V sigma_f / sqrt(N) by independence alone, no d in the argument
+      err_mc   = sigma_f / np.sqrt(N)
+      err_grid = C * N ** (-k / d)
+      </py>
+      <f90>
+      err_mc   = sigma_f / sqrt(real(N, dp))
+      err_grid = C * real(N, dp)**(-real(k, dp)/d)
+      </f90>
+    </x-f>
+    <p>Measured on \(\int_{[0,1]^d}\prod_i\frac\pi2\sin(\pi x_i)=1\) (σ<sub>f</sub>² = (π²/8)<sup>d</sup> − 1): d ≤ 4 Simpson wins by orders of magnitude; d = 8 same slope, Monte Carlo 3–17 times more accurate, and needs no grid (Simpson needs at least 3⁸ = 6561 points to start). σ<sub>f</sub> grows with d (0.48 at d = 1, 2.1 at d = 8): the error does not depend on d <i>through N</i>, but the prefactor can. The price of Monte Carlo: it does not exploit smoothness (quasi-Monte Carlo and variance reduction try to recover part of it).</p>
+    <x-ex id="e13-3a" ans="4" tol="0.01" lvl="Basic">Up to which dimension does the trapezoid rule (k = 2) beat Monte Carlo? (the crossing d)
+      <hint>k/d = ½.</hint><sol>d = 2k = 4.</sol></x-ex>
+    <x-ex id="e13-3b" ans="2.0899" tol="0.01" lvl="Core">σ<sub>f</sub> of the product integrand in d = 8: √((π²/8)⁸ − 1)?
+      <hint>π²/8 = 1.2337.</hint><sol>1.2337⁸ = 5.367; √4.367 = 2.0898 (the lecture: measured error 2.05×10⁻² at N = 10⁴, predicted 2.09×10⁻²).</sol></x-ex>
+
+    <h2><span class="lv expert">EXPERT</span>The empty cube</h2>
+    <x-f name="Volume of the unit d-ball" tag="GEOMETRY">
+      \h{Vd}{V_d}=\frac{\pi^{d/2}}{\h{Gam}{\Gamma}(d/2+1)},\qquad \h{p}{p}=\frac{\h{Vd}{V_d}}{2^{\h{d}{d}}}\ \ \text{(fraction of the cube }[-1,1]^d)
+      <note>V₂ = π, V₃ = 4π/3. Γ(d/2+1) (= (d/2)! for even d) grows faster than π<sup>d/2</sup>: V<sub>d</sub> → 0 while the cube's volume 2<sup>d</sup> explodes.</note>
+      <py>
+      from scipy.special import gamma
+      Vd = np.pi ** (d / 2) / gamma(d / 2 + 1)
+      p = Vd / 2**d
+      </py>
+      <f90>
+      Vd = pi**(d/2.0_dp) / gamma(d/2.0_dp + 1.0_dp)     ! GAMMA is a Fortran 2008 intrinsic
+      p  = Vd / 2.0_dp**d
+      </f90>
+    </x-f>
+    <table><tr><th>d</th><th>ball/cube = p</th><th>hits in 10⁶</th><th>estimate</th><th>exact V<sub>d</sub></th></tr>
+      <tr><td>2</td><td>0.785</td><td>785 612</td><td>3.142</td><td>3.142</td></tr>
+      <tr><td>5</td><td>0.165</td><td>163 683</td><td>5.238</td><td>5.264</td></tr>
+      <tr><td>10</td><td>2.5×10⁻³</td><td>2 512</td><td>2.57</td><td>2.55</td></tr>
+      <tr><td>15</td><td>1.2×10⁻⁵</td><td>12</td><td>0.39</td><td>0.38</td></tr>
+      <tr><td>20</td><td>2.5×10⁻⁸</td><td><b>0</b></td><td>0</td><td>0.026</td></tr></table>
+    <div class="stage" data-widget="ball"></div>
+    <p>Almost all the volume of the cube is in its <b>corners</b>. Relative error √((1−p)/(pN)): 2% at d = 10, 30% at d = 15, nothing at d = 20. A posterior is like that ball — concentrated in a tiny fraction of the prior box.</p>
+
+    <h2><span class="lv expert">EXPERT</span>Few or no hits: intervals that don't lie</h2>
+    <p>With 0 hits the Gaussian formula gives p̂ = 0 ± 0 — “exactly zero, no uncertainty”. Wrong. Use the binomial distribution itself:</p>
+    <x-f name="Wilson score interval" tag="INTERVAL">
+      \text{all } \h{p}{p}\ \text{with}\ \ |\h{phat}{\hat p}-\h{p}{p}|\le 1.96\sqrt{\h{p}{p}(1-\h{p}{p})/\h{N}{N}}\qquad(\text{0 hits: } [0,\ 3.84/N])
+      <note>The error is computed with the trial p, not with p̂ → asymmetric intervals. <b>Rule of three</b> (0 hits): (1−p)<sup>N</sup> ≥ 0.05 ⇒ p ≤ −ln(0.05)/N ≈ 3/N (95%). With 12 hits at d = 15: plug-in (1.20 ± 0.35)×10⁻⁵, Wilson [0.69, 2.10]×10⁻⁵, truth 1.16×10⁻⁵.</note>
+      <py>
+      from scipy.stats import binomtest
+      ci = binomtest(k, n).proportion_ci(method="wilson")
+      </py>
+      <f90>
+      ! Wilson: solve the quadratic in p
+      z2 = 1.96_dp**2
+      centre = (p_hat + z2/(2*n)) / (1 + z2/n)
+      half   = 1.96_dp*sqrt(p_hat*(1-p_hat)/n + z2/(4.0_dp*n*n)) / (1 + z2/n)
+      </f90>
+    </x-f>
+    <x-ex id="e13-3c" ans="0.000003" tol="0.0000002" lvl="Core">0 hits in N = 10⁶ trials. Rule-of-three 95% upper limit on p?
+      <hint>3/N.</hint><sol>3×10⁻⁶ (Wilson: 3.84×10⁻⁶). The true p = 2.5×10⁻⁸ is inside: the measurement is an upper limit, not a zero.</sol></x-ex>
+    <x-ex id="e13-3d" ans="0.00249" tol="0.00003" lvl="Expert">Fraction of the cube [−1,1]¹⁰ occupied by the unit ball (V₁₀ = π⁵/120)?
+      <hint>V₁₀/2¹⁰.</hint><sol>π⁵/120 = 2.5502; /1024 = 2.49×10⁻³ → about 1 point in 400 is a hit.</sol></x-ex>
+    <div class="uses">
+      <div class="use"><b>Cosmology</b>6 ΛCDM + tens of nuisance parameters: grids are impossible, Monte Carlo is the only option.</div>
+      <div class="use"><b>Particle physics</b>Phase-space integrals in many dimensions with adaptive MC (VEGAS).</div>
+      <div class="use"><b>Upper limits</b>“No event seen” in a rare-decay search: rule of three / Feldman–Cousins.</div>
+    </div>
+    <div class="oral">Why does the Monte Carlo error not depend on d, and why does the grid error? When is a grid still better?</div>
+  </div>
+</section>
+
+<!-- ================================================================== 4 -->
+<section class="lesson" data-title="Sampling from a distribution" data-short="Sampling" data-badge="MATH" data-time="35 min" data-level="Intermediate"
+  data-sub="From uniform numbers to any density: inversion, Box–Muller, rejection — and how to test a sampler.">
+  <div class="stage" data-widget="sampler"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>A random number generator gives uniform u ∈ [0, 1). We need samples from a density f — to simulate noise and to put integration points where f matters.</p><p>Switch the three methods above and watch the histograms fill.</p></div>
+    <div class="s-key">If F is the cumulative distribution and u is uniform, x = F⁻¹(u) has density f. When F⁻¹ is not available, propose from an envelope and reject.</div>
+    <ul class="s-learn"><li>Inversion theorem and its 1-line proof</li><li>Exponential & periodogram bins by inversion</li><li>Box–Muller for Gaussians</li><li>Rejection sampling, efficiency 1/M</li><li>Why rejection collapses in high d</li><li>Testing samplers: moments + KS test</li></ul>
+  </aside>
+  <div class="prose">
+    <h2><span class="lv basic">BASIC</span>Inversion</h2>
+    <x-f name="Inversion method" tag="THEOREM">
+      \h{Fcdf}{F(x)}=\h{integral}{\int_{-\infty}^{x}}f(t)\dd t,\qquad \h{u}{u}\sim U(0,1)\ \Rightarrow\ \h{Finv}{x=F^{-1}(u)}\ \text{has density } f
+      <note>Proof in one line: P(x ≤ t) = P(F⁻¹(u) ≤ t) = P(u ≤ F(t)) = F(t). Needs F⁻¹ in closed form or a fast numerical inverse.</note>
+      <py>x = F_inv(rng.random(n))</py>
+      <f90>call random_number(u);  x = F_inv(u)      ! elemental function</f90>
+    </x-f>
+    <x-f name="Exponential by inversion" tag="EXAMPLE">
+      f(x)=\h{lam}{\lambda}e^{-\h{lam}{\lambda} x},\quad \h{Fcdf}{F}=1-e^{-\h{lam}{\lambda} x}\ \Rightarrow\ x=-\frac{\ln(1-\h{u}{u})}{\h{lam}{\lambda}}
+      <note>λ = 2, 10⁶ samples: mean 0.4997, variance 0.2503 (exact 0.5, 0.25). A periodogram bin of noise with spectrum S is exponential with mean S: <b>P = −S ln u</b> simulates it directly, without generating the time series.</note>
+      <py>
+      x = -np.log(1.0 - rng.random(n)) / lam
+      P = -S * np.log(1.0 - rng.random(S.size))     # a whole periodogram
+      </py>
+      <f90>
+      call random_number(u);  x = -log(1.0_dp - u)/lam
+      </f90>
+    </x-f>
+    <x-ex id="e13-4a" ans="0.3466" tol="0.001" lvl="Basic">λ = 2 and u = 0.5. What exponential sample does inversion give?
+      <hint>−ln(1−u)/λ.</hint><sol>−ln(0.5)/2 = 0.6931/2 = 0.3466 — the median of Exp(2).</sol></x-ex>
+    <x-ex id="e13-4b" ans="0.6" tol="0.001" lvl="Core">Density f(x) = 2x on [0, 1]. Derive the inversion formula and apply it to u = 0.36.
+      <hint>F(x) = x².</hint><sol>u = x² ⇒ x = √u = 0.6.</sol></x-ex>
+    <p><b>Test the whole distribution, not only the moments</b>: the Kolmogorov–Smirnov test compares the empirical CDF with F (largest distance; <code>scipy.stats.kstest</code>). Lecture: inversion p = 0.46, Box–Muller 0.94, rejection 0.11 → no detectable difference.</p>
+
+    <h2><span class="lv core">CORE</span>The Gaussian: Box–Muller</h2>
+    <x-f name="Box–Muller transform" tag="ALGORITHM">
+      \h{z1}{z_1}=\sqrt{-2\ln \h{u1}{u_1}}\,\cos(2\pi \h{u2}{u_2}),\qquad \h{z2}{z_2}=\sqrt{-2\ln \h{u1}{u_1}}\,\sin(2\pi \h{u2}{u_2})
+      <note>Inversion in polar coordinates: a 2-D Gaussian has a uniform angle, and r² = z₁² + z₂² is exponential (χ²₂/… again!), so r = √(−2 ln u₁). Use u₁ ∈ (0, 1]: ln 0 = −∞. 10⁶ deviates: mean −0.0001, variance 0.9988. Time: Fortran 19 ms, NumPy vectorised 41 ms, NumPy's own ziggurat 14 ms.</note>
+      <py>
+      u1 = 1.0 - rng.random(n // 2); u2 = rng.random(n // 2)
+      r = np.sqrt(-2 * np.log(u1))
+      z = np.concatenate([r * np.cos(2*np.pi*u2), r * np.sin(2*np.pi*u2)])
+      # production: rng.standard_normal(n)
+      </py>
+      <f90>
+      call random_number(u(1:n/2)); call random_number(v(1:n/2))
+      u(1:n/2)   = 1.0_dp - u(1:n/2)
+      z(1:n/2)   = sqrt(-2*log(u(1:n/2)))*cos(2*pi*v(1:n/2))
+      z(n/2+1:n) = sqrt(-2*log(u(1:n/2)))*sin(2*pi*v(1:n/2))
+      </f90>
+    </x-f>
+    <x-ex id="e13-4c" ans="0.8326" tol="0.002" lvl="Basic">Box–Muller with u₁ = 0.5, u₂ = 0.125. What is z₁?
+      <hint>r = √(−2 ln 0.5) = 1.1774; angle 2π·0.125 = π/4.</hint><sol>1.1774·cos(π/4) = 1.1774·0.7071 = 0.8326 (z₂ is the same here).</sol></x-ex>
+
+    <h2><span class="lv core">CORE</span>Rejection: when F⁻¹ is not available</h2>
+    <x-f name="Rejection sampling" tag="ALGORITHM">
+      f(x)\le \h{Menv}{M}\,\h{g}{g(x)}\ \ \forall x;\quad x\sim \h{g}{g},\ v\sim U(0,1):\ \text{accept if } v\lt\frac{f(x)}{\h{Menv}{M}\,\h{g}{g(x)}};\qquad \text{acceptance}=\frac1{\h{Menv}{M}}
+      <note>Accepted points have density f (the envelope's “area under M g” is uniformly filled; keeping the part under f). Half-normal from Exp(1): M = √(2e/π) = 1.3155, accepted 0.7606 (1/M = 0.7602), mean 0.7966 (exact 0.7979). In d dimensions M grows: sampling the unit ball from the cube takes 402 trials per point at d = 10, 4×10⁷ at d = 20.</note>
+      <py>
+      M = np.sqrt(2 * np.e / np.pi)
+      x = rng.exponential(1.0, n); v = rng.random(n)
+      f = np.sqrt(2/np.pi) * np.exp(-x**2 / 2)
+      samples = x[v < f / (M * np.exp(-x))]
+      </py>
+      <f90>
+      do k = 1, n            ! z(k) ~ Exp(1), v(k) ~ U(0,1)
+        if (v(k) < exp(-0.5_dp*(z(k) - 1.0_dp)**2)) then   ! = f/(M g)
+          nacc = nacc + 1;  out(nacc) = z(k)
+        end if
+      end do
+      </f90>
+    </x-f>
+    <x-ex id="e13-4d" ans="0.7602" tol="0.002" lvl="Core">Acceptance rate of the half-normal sampler with M = √(2e/π)?
+      <hint>1/M.</hint><sol>√(π/(2e)) = √0.5778 = 0.7602.</sol></x-ex>
+    <x-ex id="e13-4e" ans="401.5" tol="3" lvl="Expert">Rejection sampling of the unit 10-ball from the cube [−1,1]¹⁰: trials per accepted point? (V₁₀ = 2.5502)
+      <hint>1/p = 2¹⁰/V₁₀.</hint><sol>1024/2.5502 = 401.5 trials per point.</sol></x-ex>
+    <p><b>In production</b>: Python <code>rng.standard_normal</code>, <code>rng.exponential</code>, <code>scipy.stats</code>; Fortran has no intrinsic (Box–Muller in a few lines, or fortran-lang stdlib <code>rvs_normal</code>); C: GSL <code>gsl_ran_gaussian</code>. Write your own to understand and to test.</p>
+    <div class="uses">
+      <div class="use"><b>Noise simulation</b>Thousands of fake periodograms for coverage tests (Lecture 12) — one line each with P = −S ln u.</div>
+      <div class="use"><b>Initial conditions</b>N-body ICs (Part II): positions drawn from a density profile by inversion of the enclosed mass M(r).</div>
+      <div class="use"><b>Photon emission</b>Radiative transfer: isotropic directions, path lengths τ = −ln u.</div>
+    </div>
+    <div class="oral">Prove the inversion theorem. Then: how would you sample photon optical depths in a Monte Carlo radiative-transfer code?</div>
+    <x-hsi to="s9">Propagate band noise through a non-linear index (NDVI) by simulation</x-hsi>
+  </div>
+</section>
+
+<!-- ================================================================== 5 -->
+<section class="lesson" data-title="Importance sampling" data-short="Importance" data-badge="MATH" data-time="35 min" data-level="Advanced"
+  data-sub="Put the points where they matter, weight them by f/g — and never use a proposal with lighter tails than the target.">
+  <div class="stage" data-widget="bumps"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>Uniform points waste effort where f ≈ 0. Draw them from a proposal g shaped like f, and correct each point with a weight w = f/g.</p><p>Above: three bumps on [−4, 4]. Change the proposal width and watch the error over repeated runs.</p></div>
+    <div class="s-key">The proposal must have heavier tails than the target. Otherwise the variance can be infinite while every single run looks fine — check the largest weight.</div>
+    <ul class="s-learn"><li>Multiply and divide by g</li><li>Weights and their error bar</li><li>Optimal g ∝ |f|: zero variance</li><li>Choosing a width: too narrow is worse than uniform</li><li>Rare events: P(X &gt; 4) to 0.1%</li><li>Tails: the silent failure</li></ul>
+  </aside>
+  <div class="prose">
+    <h2><span class="lv core">CORE</span>The method</h2>
+    <x-f name="Importance sampling" tag="ESTIMATOR">
+      \h{I}{I}=\h{integral}{\int} f(x)\dd x=\h{integral}{\int}\frac{f(x)}{\h{g}{g(x)}}\,\h{g}{g(x)}\dd x=\h{Eg}{\mathbb E_g}\!\left[\frac fg\right]\approx\frac1{\h{N}{N}}\h{sum}{\sum_i}\h{w}{w_i},\quad \h{w}{w_i}=\frac{f(x_i)}{\h{g}{g(x_i)}},\ x_i\sim \h{g}{g}
+      <note>g must be a density with g &gt; 0 wherever f ≠ 0 (support condition). The weight corrects for non-uniform sampling: points drawn often (g large) count less. Error as before from the spread of the weights: δI = σ̂<sub>w</sub>/√N. Uniform sampling is the special case g = 1/(b−a).</note>
+      <py>
+      def importance_sampling(f, g_pdf, g_draw, n, rng):
+          x = g_draw(n, rng)           # 1. samples from g
+          w = f(x) / g_pdf(x)          # 2. weights f/g
+          return w.mean(), w.std(ddof=1) / np.sqrt(n)
+      </py>
+      <f90>
+      x = draw_from_g(n)               ! 1.
+      w = f(x) / g(x)                  ! 2. elemental functions
+      est = sum(w)/n
+      err = sqrt(sum((w - est)**2)/(n - 1))/sqrt(real(n, dp))
+      </f90>
+    </x-f>
+    <x-ex id="e13-5a" ans="1.3746" tol="0.003" lvl="Basic">Target f = standard normal pdf φ, proposal g = N(0, 2²). Weight of the point x = 1?
+      <hint>φ(1) = 0.24197; g(1) = φ(0.5)/2 = 0.17603.</hint><sol>w = 0.24197/0.17603 = 1.375: near the centre the proposal under-samples relative to f, so the point counts more.</sol></x-ex>
+
+    <h2><span class="lv core">CORE</span>How to choose g</h2>
+    <x-f name="Optimal proposal" tag="THEOREM">
+      \h{g}{g^*(x)}=\frac{|f(x)|}{\h{integral}{\int}|f|\dd x}\quad\Rightarrow\quad \h{w}{w_i}=I\ \ \forall i\ \ (f\ge0):\ \text{zero variance}
+      <note>Needs I itself — what we're computing. In practice: a g easy to sample (Gaussian, exponential, Student t) that roughly matches the <b>shape</b> of f, with <b>heavier tails</b>. Three bumps, g = 𝒩(0, s²): s = 0.5 → 1.95% (worse than uniform's 1.75%: tails too light), s = 0.7 → 0.59% (best), s = 1 → 0.69%, s = 2 → 1.3%. Variance reduced 6.5× with a rough match.</note>
+    </x-f>
+    <x-ex id="e13-5b" ans="1" tol="0.001" lvl="Core">f(x) = 3x² on [0,1] and you choose g(x) = 3x² (exactly). What is every weight?
+      <hint>w = f/g.</hint><sol>1 = I. Zero variance: one point gives the exact answer. (You needed to know the normalisation of f to build g — the catch.)</sol></x-ex>
+
+    <h2><span class="lv core">CORE</span>Rare events</h2>
+    <p>P(X &gt; 4) for X ~ 𝒩(0,1) is 3.17×10⁻⁵. Plain Monte Carlo with 10⁶ points sees about 32 of them: relative error 17%. With g = an exponential starting at 4 (rate 4) and only 10⁴ points: 0.1%. <b>A hundred times fewer points, a hundred times smaller error.</b></p>
+    <x-code py="importance.py"/>
+    <x-ex id="e13-5c" ans="0.178" tol="0.004" lvl="Core">Plain MC, N = 10⁶, p = 3.17×10⁻⁵. Relative error ≈ 1/√(expected hits)?
+      <hint>Expected hits Np.</hint><sol>Np = 31.7, 1/√31.7 = 0.178 (17.8%).</sol></x-ex>
+    <div class="stage" data-widget="tails"></div>
+
+    <h2><span class="lv expert">EXPERT</span>Tails: a proposal that fails silently</h2>
+    <p>∫ t₃(x) dx = 1 (Student t with 3 dof, tails ∝ |x|⁻⁴). With a <b>Gaussian</b> proposal (tails e<sup>−x²/2</sup>, lighter): \(\mathbb E_g[w^2]=\infty\). 200 runs of 10⁴: median error 0.026 looks fine, the worst run is off by 17.9 with one weight at 95% of the total. The running estimate stays low, then jumps when a rare far point arrives. With a <b>Cauchy</b> proposal (∝ x⁻², heavier): rms error 0.004, no weight above 0.01%. <b>Diagnostic</b>: the largest weight against the total; for a posterior, the effective sample size (next lesson).</p>
+    <div class="uses">
+      <div class="use"><b>Rare-event reliability</b>Probability of satellite component failure or of a collision: importance sampling around the failure region.</div>
+      <div class="use"><b>Reweighting chains</b>Cosmologists reweight existing posterior samples by a new likelihood instead of re-running (CosmoMC importance sampling).</div>
+      <div class="use"><b>Radiative transfer</b>“Forced first scattering” and biased emission in MC RT codes are importance sampling.</div>
+    </div>
+    <div class="oral">Derive the importance-sampling estimator and its optimal proposal. Why must the proposal have heavier tails? Give the t₃ example.</div>
+  </div>
+</section>
+
+<!-- ================================================================== 6 -->
+<section class="lesson" data-title="Back to the posterior: self-normalised IS" data-short="Posterior & ESS" data-badge="MATH" data-time="35 min" data-level="Advanced"
+  data-sub="Posterior means when the normalisation is unknown, the effective sample size, and why it all collapses in high dimension.">
+  <div class="stage" data-widget="snis"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>We can evaluate q(θ) = 𝓛(θ)π(θ) but not its normalisation Z. Normalise the weights by their sum: Z cancels.</p><p>Above: a skewed 2-D posterior and a Laplace-Gaussian proposal. Widen it, switch to a Student t, watch N<sub>eff</sub> and the largest weight.</p></div>
+    <div class="s-key">N<sub>eff</sub>/N falls exponentially with d even for a nearly right proposal: 1% at d = 100 for a proposal only 20% too wide. The way out is Lecture 14: Markov chains.</div>
+    <ul class="s-learn"><li>Self-normalised estimator: Z cancels</li><li>Log-weights and the max trick</li><li>Effective sample size (Kong)</li><li>The Laplace proposal and its tails</li><li>5000 evaluations reproduce a 10⁶ grid</li><li>ESS/N = (𝔼_g[w²])⁻¹ ∝ c^(−d)</li></ul>
+  </aside>
+  <div class="prose">
+    <h2><span class="lv core">CORE</span>A posterior known up to a constant</h2>
+    <x-f name="Self-normalised importance sampling" tag="ESTIMATOR">
+      \h{E}{\mathbb E}[h\mid x]=\frac{\h{integral}{\int} h\,\h{q}{q}\dd\theta}{\h{integral}{\int}\h{q}{q}\dd\theta}\approx\frac{\h{sum}{\sum_i}\h{w}{w_i}\,h(\theta_i)}{\h{sum}{\sum_i}\h{w}{w_i}},\qquad \h{w}{w_i}=\frac{\h{q}{q(\theta_i)}}{\h{g}{g(\theta_i)}},\ \theta_i\sim \h{g}{g}
+      <note>Z = ∫q cancels in the ratio. Work with ln w = ln q − ln g, subtract the maximum, exponentiate. Slightly biased for finite N (ratio of two means), consistent as N → ∞.</note>
+      <py>
+      lw = log_q(th) - g.logpdf(th)          # ln w = ln q - ln g
+      w = np.exp(lw - lw.max())              # subtract the max, then exp
+      mean = np.sum(w[:, None] * th, 0) / w.sum()
+      </py>
+      <f90>
+      lw = log_q - log_g
+      w  = exp(lw - maxval(lw))
+      do j = 1, d
+        mean(j) = sum(w*th(:,j)) / sum(w)
+      end do
+      </f90>
+    </x-f>
+    <x-f name="Effective sample size (Kong 1992)" tag="DIAGNOSTIC">
+      \h{Neff}{N_{\rm eff}}=\frac{\left(\h{sum}{\sum_i}\h{w}{w_i}\right)^2}{\h{sum}{\sum_i}\h{w}{w_i}^2}
+      <note>Equal weights: N<sub>eff</sub> = N. One dominant weight: N<sub>eff</sub> ≈ 1. The error of a mean behaves roughly as with N<sub>eff</sub> independent samples. Report it — together with the largest weight.</note>
+      <py>neff = w.sum()**2 / np.sum(w**2);  wmax = w.max() / w.sum()</py>
+      <f90>neff = sum(w)**2 / sum(w**2);  wmax = maxval(w)/sum(w)</f90>
+    </x-f>
+    <x-ex id="e13-6a" ans="2.6667" tol="0.005" lvl="Basic">Three weights {2, 1, 1}. N<sub>eff</sub>?
+      <hint>(Σw)²/Σw².</hint><sol>16/6 = 2.667 out of 3.</sol></x-ex>
+    <x-ex id="e13-6b" ans="1" tol="0.001" lvl="Basic">Weights {5, 0, 0, 0, 0}. N<sub>eff</sub>?
+      <hint>One point carries everything.</hint><sol>25/25 = 1: five samples, one effective.</sol></x-ex>
+    <p><b>A natural proposal: the Laplace Gaussian</b> 𝒩(θ̂, H⁻¹) — same peak and curvature as the posterior (H = −∇² ln p at the mode, prior included). Cheap: one optimisation and a d × d matrix. Better slightly <b>wider</b>, or with heavier tails (Student t).</p>
+    <table><tr><th>proposal (knee, 5000 samples, 20 runs)</th><th>log₁₀ f<sub>k</sub></th><th>α</th><th>N<sub>eff</sub>/N</th><th>largest weight</th></tr>
+      <tr><td>grid, 10⁶ points</td><td>−0.028 ± 0.111</td><td>0.817 ± 0.126</td><td>–</td><td>–</td></tr>
+      <tr><td>Laplace Gaussian</td><td>−0.030 ± 0.105</td><td>0.819 ± 0.122</td><td>55%</td><td>5.6%</td></tr>
+      <tr><td>Laplace × 1.5</td><td>−0.029 ± 0.108</td><td>0.817 ± 0.125</td><td>53%</td><td>0.7%</td></tr>
+      <tr><td>Student t₅, × 1.2</td><td>−0.028 ± 0.111</td><td>0.817 ± 0.126</td><td>65%</td><td>1.3%</td></tr></table>
+    <p>5000 likelihood evaluations instead of 10⁶ (0.2 s): same answer as the grid. The plain Laplace Gaussian is too narrow: widths 3–5% low, one weight at 5.6%. <b>N<sub>eff</sub> alone did not reveal the bias</b>: check the largest weight and compare proposals.</p>
+
+    <h2><span class="lv expert">EXPERT</span>The limit: importance sampling in high dimension</h2>
+    <p>Target 𝒩(0, I<sub>d</sub>), proposal 𝒩(0, s²I<sub>d</sub>). For one dimension, \(\mathbb E_g[w^2]=\int f^2/g\,{\rm d}x\). With f = φ(x), g = φ(x/s)/s: the integrand is \(\frac{s}{\sqrt{2\pi}}e^{-x^2(1-1/(2s^2))}\), a Gaussian integral giving \(s^2/\sqrt{2s^2-1}\). Dimensions are independent, so the factors multiply:</p>
+    <x-f name="ESS collapse with dimension" tag="RESULT">
+      \frac{\h{Neff}{N_{\rm eff}}}{\h{N}{N}}\approx\big(\h{Egw2}{\mathbb E_g[w^2]}\big)^{-1}=\left(\frac{\h{s}{s}^2}{\sqrt{2\h{s}{s}^2-1}}\right)^{-\h{d}{d}}
+      <note>s = 1.2: 95% at d = 1, 37% at d = 20, ~1% at d = 100. s = 2: 13% at d = 5, 1.6% at d = 10; from d ≈ 50 two or three points carry all the weight. A posterior with tens of parameters is out of reach of any fixed proposal.</note>
+      <py>ess_frac = (s**2 / np.sqrt(2*s**2 - 1)) ** (-d)</py>
+      <f90>ess_frac = (s**2/sqrt(2*s**2 - 1.0_dp))**(-d)</f90>
+    </x-f>
+    <div class="stage" data-widget="essd"></div>
+    <x-ex id="e13-6c" ans="0.375" tol="0.004" lvl="Expert">s = 1.2, d = 20: ESS/N?
+      <hint>Per dimension: 1.44/√1.88 = 1.0502.</hint><sol>1.0502⁻²⁰ = 0.375 (measured with 10⁵ samples: 0.377).</sol></x-ex>
+    <x-ex id="e13-6d" ans="0.016" tol="0.0008" lvl="Expert">s = 2, d = 10: ESS/N?
+      <hint>Per dimension 4/√7 = 1.5119.</hint><sol>1.5119⁻¹⁰ = 0.0160: 1.6%.</sol></x-ex>
+    <div class="plain">Importance sampling draws <i>all</i> points from one fixed proposal; in many dimensions the weights degenerate. The way out (Lecture 14): let each new point depend on the previous one, so the sampler <b>walks</b> into the region of high probability and stays there — Markov chain Monte Carlo, Metropolis–Hastings.</div>
+    <div class="uses">
+      <div class="use"><b>Particle filters</b>Sequential importance sampling tracks a spacecraft or a target state; resampling fights weight collapse.</div>
+      <div class="use"><b>Nested sampling</b>dynesty, MultiNest: evidence and posterior from shrinking prior volumes.</div>
+      <div class="use"><b>Prior swaps</b>Change the prior of an existing posterior sample: reweight by π_new/π_old.</div>
+    </div>
+    <div class="oral">Explain self-normalised importance sampling and the effective sample size. Why does it fail in 50 dimensions? (formula for ESS/N and the numbers.)</div>
+    <x-hsi to="s9">Importance sampling of abundances with a physical prior (a ≥ 0, Σa = 1)</x-hsi>
+  </div>
+</section>
+
+<!-- ================================================================== 7 -->
+<section class="lesson" data-title="Code lab: Monte Carlo from scratch" data-short="Code lab" data-badge="CODE" data-time="45 min" data-level="Intermediate"
+  data-sub="Integration, samplers and importance sampling in Python and Fortran — tested, with the numbers they print.">
+  <div class="stage" data-widget="clt"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>The stage shows <i>why</i> the error formula works: repeat a Monte Carlo integral many times and the estimates form a Gaussian of width σ<sub>f</sub>/√N (central limit theorem).</p><p>Below: the four programs of the lecture, tested.</p></div>
+    <div class="s-key">Always report the error bar and the number of samples; for importance sampling also N<sub>eff</sub> and the largest weight. Library samplers in production, your own to understand and test.</div>
+    <ul class="s-learn"><li>Run the four programs</li><li>Compile mc_fortran.f90</li><li>Read the outputs against the lecture</li><li>Do the code tasks</li></ul>
+  </aside>
+  <div class="prose">
+    <h2><span class="lv code">CODE</span>How to run</h2>
+    <x-code>
+      <py>
+      # inside "13. Monte Carlo Methods/code"
+      python mc_integrals.py     # hit-or-miss, sample mean, rms vs N, Simpson vs MC, empty cube
+      python sampling.py         # inversion, periodogram bins, Box-Muller, rejection + KS tests
+      python importance.py       # bumps, rare event, tails, self-normalised IS, ESS vs d
+      </py>
+      <f90>
+      gfortran -O2 mc_fortran.f90 -o mc_fortran && ./mc_fortran
+      </f90>
+    </x-code>
+    <p>Tested output (Fortran, seed 13): ∫x² = 2.6689 ± 0.0238; π = 3.14266 ± 0.00164; Exp(2) mean 0.4997; N(0,1) variance 1.0006 in 15 ms; rejection accepted 0.7598, mean 0.7982; P(X&gt;4) = 3.1661×10⁻⁵ ± 3.2×10⁻⁸ (exact 3.1671×10⁻⁵).</p>
+    <h2><span class="lv code">CODE</span>Integration — <code>mc_integrals.py</code> / <code>mc_fortran.f90</code></h2>
+    <x-code py="mc_integrals.py" f90="mc_fortran.f90"/>
+    <h2><span class="lv code">CODE</span>Samplers — <code>sampling.py</code></h2>
+    <x-code py="sampling.py"/>
+    <h2><span class="lv code">CODE</span>Your tasks</h2>
+    <div class="task"><b>TASK 13.1 — 1/√N IN FORTRAN</b>Loop over N = 10², 10³, …, 10⁶ in <code>mc_fortran.f90</code>, repeat each 200 times, print the rms error of ∫x² and check rms·√N ≈ 2.385.</div>
+    <div class="task"><b>TASK 13.2 — A NEW SAMPLER</b>Sample the Rayleigh distribution f(r) = r e<sup>−r²/2</sup> by inversion (F = 1 − e<sup>−r²/2</sup>). Test with <code>scipy.stats.kstest(r, "rayleigh")</code>. Connect it to Box–Muller.</div>
+    <div class="task"><b>TASK 13.3 — BREAK A PROPOSAL</b>In <code>importance.py</code> part A, use s = 0.3. Print the largest weight fraction for each run. When does the error bar from one run lie?</div>
+    <div class="task"><b>TASK 13.4 — THE KNEE BY IMPORTANCE SAMPLING</b>Import <code>knee.py</code> from Lecture 12. Build the Laplace proposal from the MLE and Hessian, draw 5000 samples, compute posterior means of log₁₀ f<sub>k</sub> and α with self-normalised weights, N<sub>eff</sub> and the largest weight. Compare with the grid of <code>knee_inference.py</code>. Then widen ×1.5 and try a Student t₅.</div>
+    <div class="task"><b>TASK 13.5 — QUASI-MONTE CARLO (search topic)</b>Replace the uniform points of ∫x² by a Sobol sequence (<code>scipy.stats.qmc.Sobol</code>). How does the error scale with N now?</div>
+  </div>
+</section>
+

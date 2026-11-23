@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>05. Conditioning, EVD and SVD · Comp Astro</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='14' fill='%23cfe3b2' stroke='%231d1b18' stroke-width='3'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="../assets/katex/katex.min.css">
+<link rel="stylesheet" href="../assets/css/style.css">
+<script>try{document.documentElement.dataset.theme=JSON.parse(localStorage.getItem("cma.theme"))||"light"}catch(e){}</script>
+</head>
+<body data-unit="05" data-root="../">
+<header class="topbar">
+  <button class="iconbtn burger" data-act="burger" aria-label="menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+  <a class="brand" href="../index.html"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="15.5" fill="none" stroke="currentColor" stroke-width="2.5"/>
+<ellipse cx="20" cy="20" rx="19" ry="6.5" fill="none" stroke="currentColor" stroke-width="2.2" transform="rotate(-24 20 20)"/>
+<circle cx="20" cy="20" r="6" fill="#cfe3b2" stroke="currentColor" stroke-width="2.2"/><circle cx="35" cy="11.5" r="2.6" fill="#e6824c" stroke="currentColor" stroke-width="1.5"/></svg><span>Comp <mark>Astro</mark></span></a>
+  <nav class="tabs"><a class="tab on" data-view="learn" href="../index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 5.5C5 4 8.5 4 12 6c3.5-2 7-2 10-.5V19c-3-1.5-6.5-1.5-10 .5-3.5-2-7-2-10-.5z"/><path d="M12 6v13.5"/></svg><span>Learn</span></a><a class="tab" data-view="practice" href="../index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg><span>Practice</span></a><a class="tab" data-view="code" href="../index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2.5" y="4" width="19" height="16" rx="2"/><path d="M2.5 8.5h19M7 13l-2 2 2 2M11 17h5"/></svg><span>Code Lab</span></a><a class="tab" data-view="sheet" href="../index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 17.5h7M17.5 14v7"/></svg><span>Cheatsheet</span></a></nav>
+  <div class="search" data-act="search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><span>Search lessons &amp; formulas…</span><kbd>Ctrl K</kbd></div>
+  <button class="iconbtn" data-act="theme" aria-label="dark mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg></button>
+  <div class="credit"><div class="av">∑</div><div>open study guide<b>numerical methods</b></div></div>
+</header>
+<div class="layout">
+  <aside class="sidebar"><nav class="tree"></nav><div class="progress"></div></aside>
+  <main class="main">
+    <div class="stepper learnonly"><div class="stepper-h">IN THIS LESSON <small id="stepper-n"></small></div><div class="dots"></div></div>
+    <div class="card">
+      <div class="crumbs"><span>05. Conditioning, EVD and SVD</span><span class="sep">/</span><span id="crumb-sub"></span></div>
+      <div class="learnonly">
+        <div class="titlebar"><h1 id="title"></h1>
+          <div class="badges"><span class="badge y" id="b-time"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> </span><span class="badge g" id="b-level"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="15" width="3.2" height="6" rx="1"/><rect x="8.5" y="11" width="3.2" height="10" rx="1"/><rect x="14" y="7" width="3.2" height="14" rx="1"/><rect x="19.5" y="3" width="2.5" height="18" rx="1" opacity=".35"/></svg> </span><span class="badge p" id="b-steps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 6h12M9 12h12M9 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg> </span></div>
+        </div>
+        <p class="subtitle" id="subtitle"></p>
+        <!-- ================================================================== 1 -->
+<section class="lesson" data-title="Vector and matrix norms" data-short="Norms" data-badge="MATH" data-time="30 min" data-level="Beginner"
+  data-sub="Before asking how big an error is, we need a way to measure size: of a vector, and of how much a matrix can stretch one.">
+  <div class="stage" data-widget="normball"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>Data are never exact: photon noise in b, discretisation error in A, rounding everywhere. To ask whether 0.01% noise gives 0.01% error in x we must measure vectors and operators.</p><p>Above: the unit "circles" of three vector norms, and what a matrix does to the Euclidean one.</p></div>
+    <div class="s-key">‖A‖ = max ‖Ax‖/‖x‖ is the largest stretch of A. For the 2-norm it is the largest singular value σ<sub>max</sub>.</div>
+    <ul class="s-learn"><li>Axioms of a norm</li><li>ℓ₁, ℓ₂, ℓ∞ and their physical meaning</li><li>Induced (operator) norms</li><li>Column-sum, row-sum, spectral, Frobenius</li><li>Submultiplicativity, orthogonal invariance</li></ul>
+  </aside>
+  <div class="prose">
+    <h2><span class="lv basic">BASIC</span>Vector norms</h2>
+    <div class="formula" data-name="ℓp norms"><div class="f-head"><span class="t">DEFINITION</span>ℓp norms<span class="hint">hover the symbols ↓</span></div><div class="tex">\|\mathbf x\|_1=\h{sum}{\sum_i}|x_i|,\qquad \h{n2}{\|\mathbf x\|_2}=\Big(\sum_i|x_i|^2\Big)^{1/2},\qquad \|\mathbf x\|_\infty=\max_i|x_i|</div><div class="f-note">A norm is positive (zero only for x = 0), homogeneous (‖αx‖ = |α|‖x‖) and satisfies the triangle inequality. ℓ₁: total absolute flux; ℓ₂: energy, rms; ℓ∞: worst pixel. In ℝⁿ all norms are equivalent within factors of at most n (e.g. ‖x‖∞ ≤ ‖x‖₂ ≤ √n‖x‖∞). x = (1, −2, 3): 6, 3.742, 3.</div><div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><button data-lang="f90" data-file="" class="">Fortran</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code>np.linalg.norm(x, 1), np.linalg.norm(x), np.linalg.norm(x, np.inf)</code></pre><pre data-lang="f90" hidden><code>sum(abs(x)), norm2(x), maxval(abs(x))</code></pre></div></div>
+    <h2><span class="lv core">CORE</span>Matrix norms</h2>
+    <div class="formula" data-name="Induced norm"><div class="f-head"><span class="t">DEFINITION</span>Induced norm<span class="hint">hover the symbols ↓</span></div><div class="tex">\h{nA}{\|A\|}=\max_{\mathbf x\ne0}\frac{\|A\mathbf x\|}{\|\mathbf x\|},\qquad \|A\|_1=\max_j\sum_i|a_{ij}|,\quad \|A\|_\infty=\max_i\sum_j|a_{ij}|,\quad \|A\|_2=\h{smax}{\sigma_{\max}},\quad \|A\|_F=\Big(\sum_{ij}a_{ij}^2\Big)^{1/2}=\Big(\sum_k\sigma_k^2\Big)^{1/2}</div><div class="f-note">‖Ax‖ ≤ ‖A‖‖x‖ (compatibility) and ‖AB‖ ≤ ‖A‖‖B‖ (submultiplicativity). ‖·‖₂ and ‖·‖<sub>F</sub> are unchanged by orthogonal U, V: ‖UAV‖ = ‖A‖. ‖A‖₂ ≤ ‖A‖<sub>F</sub> ≤ √rank ‖A‖₂. For A = [[10, −1, 2], [−1, 11, −1], [2, −1, 10]]: ‖A‖₁ = ‖A‖∞ = ‖A‖₂ = 13, ‖A‖<sub>F</sub> = 18.248.</div><div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><button data-lang="f90" data-file="" class="">Fortran</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code>[np.linalg.norm(A, o) for o in (1, np.inf, 2, 'fro')]</code></pre><pre data-lang="f90" hidden><code>n1   = maxval(sum(abs(A), dim=1))      ! column sums
+ninf = maxval(sum(abs(A), dim=2))      ! row sums
+nF   = sqrt(sum(A**2))                 ! ||A||_2 needs the SVD (dgesvd)</code></pre></div></div>
+    <div class="ex" id="e5-1a" data-ans="6" data-tol="0.001"><div class="ex-h">EXERCISE <span class="lvl">Basic</span></div><div class="ex-q">‖x‖₁ for x = (1, −2, 3)?</div><div class="ex-in"><input placeholder="your answer"> <button class="btn go check">Check</button><span class="ex-res"></span></div><details><summary>Hint</summary>Sum of absolute values.</details><details><summary>Full solution</summary>6.</details></div>
+    <div class="ex" id="e5-1b" data-ans="7" data-tol="0.001"><div class="ex-h">EXERCISE <span class="lvl">Basic</span></div><div class="ex-q">A = [[1, −2], [3, 4]]. ‖A‖∞ (largest absolute row sum)?</div><div class="ex-in"><input placeholder="your answer"> <button class="btn go check">Check</button><span class="ex-res"></span></div><details><summary>Hint</summary>Rows: 1+2, 3+4.</details><details><summary>Full solution</summary>7.</details></div>
+    <div class="ex" id="e5-1c" data-ans="6" data-tol="0.001"><div class="ex-h">EXERCISE <span class="lvl">Core</span></div><div class="ex-q">Same A: ‖A‖₁ (largest absolute column sum)?</div><div class="ex-in"><input placeholder="your answer"> <button class="btn go check">Check</button><span class="ex-res"></span></div><details><summary>Hint</summary>Columns: 1+3, 2+4.</details><details><summary>Full solution</summary>6.</details></div>
+  </div>
+</section>
+
+<!-- ================================================================== 2 -->
+<section class="lesson" data-title="The condition number" data-short="Condition number" data-badge="MATH" data-time="35 min" data-level="Intermediate"
+  data-sub="κ(A) = ‖A‖‖A⁻¹‖ is the largest factor by which a relative error in the data can grow in the solution. It belongs to the problem, not to the algorithm.">
+  <div class="stage" data-widget="condlines"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>For a 2×2 system the solution is where two lines cross. Nearly parallel lines: a tiny shift of one line moves the crossing far away.</p><p>Above: change the angle and the perturbation and follow the solution.</p></div>
+    <div class="s-key">‖δx‖/‖x‖ ≤ κ(A) ‖δb‖/‖b‖. A bad κ ruins every algorithm equally; a stable algorithm only avoids making it worse.</div>
+    <ul class="s-learn"><li>Derivation of the bound</li><li>Geometric picture</li><li>The 2×2 example with κ ≈ 4/ε</li><li>Errors in A and b together</li><li>κ₂ = σ<sub>max</sub>/σ<sub>min</sub></li></ul>
+  </aside>
+  <div class="prose">
+    <div class="formula" data-name="Condition number and error bound"><div class="f-head"><span class="t">THEOREM</span>Condition number and error bound<span class="hint">hover the symbols ↓</span></div><div class="tex">A\,\delta\mathbf x=\delta\mathbf b\ \Rightarrow\ \|\delta\mathbf x\|\le\|A^{-1}\|\,\|\delta\mathbf b\|,\quad \|\mathbf b\|\le\|A\|\,\|\mathbf x\|\ \Rightarrow\ \frac{\|\delta\mathbf x\|}{\|\mathbf x\|}\le\h{kappa}{\kappa(A)}\,\frac{\|\delta\mathbf b\|}{\|\mathbf b\|},\qquad \kappa(A)=\|A\|\,\|A^{-1}\|</div><div class="f-note">κ ≥ 1, κ(I) = 1, κ(cA) = κ(A). In the 2-norm κ₂ = σ<sub>max</sub>/σ<sub>min</sub>. Note: det(A) says nothing about conditioning — 10⁻³ I has a tiny determinant and κ = 1.</div><div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><button data-lang="f90" data-file="" class="">Fortran</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code>kappa = np.linalg.cond(A)            # 2-norm, from the SVD
+kappa_1 = np.linalg.cond(A, 1)       # 1-norm (LAPACK estimates it cheaply: dgecon)</code></pre><pre data-lang="f90" hidden><code>call dgetrf(n, n, A, n, ipiv, info)
+call dgecon('1', n, A, n, anorm, rcond, work, iwork, info)   ! rcond = 1/kappa_1</code></pre></div></div>
+    <h2><span class="lv core">CORE</span>A 2×2 collapse</h2>
+    <p>A = [[1, 1], [1, 1+ε]], b = (2, 2+ε): x = (1, 1). A⁻¹ = (1/ε)[[1+ε, −1], [−1, 1]], so κ∞ = (2+ε)²/ε ≈ 4/ε. Perturb b by δb = (0, ε) — a relative change of ε/2 — and the solution jumps to (0, 2): a 100% error. Checked for ε = 10⁻², 10⁻⁶, 10⁻¹⁰: κ∞ = 4.04×10², 4.0×10⁶, 4.0×10¹⁰ and always x = (0, 2).</p>
+    <div class="formula" data-name="Errors in A and b"><div class="f-head"><span class="t">THEOREM</span>Errors in A and b<span class="hint">hover the symbols ↓</span></div><div class="tex">(A+\delta A)(\mathbf x+\delta\mathbf x)=\mathbf b+\delta\mathbf b,\quad \kappa\frac{\|\delta A\|}{\|A\|}<1\ \Rightarrow\ \frac{\|\delta\mathbf x\|}{\|\mathbf x\|}\le\frac{\kappa}{1-\kappa\frac{\|\delta A\|}{\|A\|}}\Big(\frac{\|\delta\mathbf b\|}{\|\mathbf b\|}+\frac{\|\delta A\|}{\|A\|}\Big)</div><div class="f-note">Backward stability of LU with pivoting: the computed x̂ is the exact solution of (A + δA)x̂ = b with ‖δA‖/‖A‖ ~ ε<sub>mach</sub>. Hence the rule of thumb error ≈ κ ε<sub>mach</sub>.</div></div>
+    <div class="ex" id="e5-2a" data-ans="40000" data-tol="1"><div class="ex-h">EXERCISE <span class="lvl">Basic</span></div><div class="ex-q">The 2×2 example with ε = 10⁻⁴: κ∞ ≈ 4/ε?</div><div class="ex-in"><input placeholder="your answer"> <button class="btn go check">Check</button><span class="ex-res"></span></div><details><summary>Hint</summary>4/10⁻⁴.</details><details><summary>Full solution</summary>4×10⁴.</details></div>
+    <div class="ex" id="e5-2b" data-ans="100" data-tol="0.01"><div class="ex-h">EXERCISE <span class="lvl">Core</span></div><div class="ex-q">A = diag(1, 0.01). κ₂?</div><div class="ex-in"><input placeholder="your answer"> <button class="btn go check">Check</button><span class="ex-res"></span></div><details><summary>Hint</summary>σ<sub>max</sub>/σ<sub>min</sub>.</details><details><summary>Full solution</summary>100 — although the matrix is diagonal and trivial to solve: the noise on x₂ is amplified 100 times.</details></div>
+    <div class="oral">Is ill-conditioning a property of the matrix or of the algorithm? Use the 2×2 example and the bound to argue it, and say what a stable algorithm can and cannot do.</div>
+  </div>
+</section>
+
+<!-- ================================================================== 3 -->
+<section class="lesson" data-title="Digits lost: κ and floating-point precision" data-short="Digits lost" data-badge="MATH" data-time="25 min" data-level="Intermediate"
+  data-sub="If κ ≈ 10ᵏ, solving Ax = b can lose up to k decimal digits. In single precision that is everything from κ ≈ 10⁷.">
+  <div class="stage" data-widget="hilbert"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>The Hilbert matrix H<sub>ij</sub> = 1/(i + j − 1) is the textbook ill-conditioned matrix: it appears when fitting polynomials with the monomial basis.</p><p>Above: solve Hx = H·1 in double and (emulated) single precision.</p></div>
+    <div class="s-key">Relative error ≈ κ · ε<sub>mach</sub>: 16 digits in float64, 7 in float32, minus log₁₀ κ.</div>
+    <ul class="s-learn"><li>Machine epsilon in float32 and float64</li><li>The digits-lost rule</li><li>Hilbert matrices</li><li>When single precision is enough</li></ul>
+  </aside>
+  <div class="prose">
+    <div class="formula" data-name="Rule of thumb"><div class="f-head"><span class="t">RESULT</span>Rule of thumb<span class="hint">hover the symbols ↓</span></div><div class="tex">\frac{\|\hat{\mathbf x}-\mathbf x\|}{\|\mathbf x\|}\lesssim\h{kappa}{\kappa(A)}\,\h{epsm}{\varepsilon_{\rm mach}},\qquad \text{digits retained}\approx-\log_{10}\varepsilon_{\rm mach}-\log_{10}\kappa</div><div class="f-note">ε<sub>mach</sub> = 2⁻⁵² = 2.22×10⁻¹⁶ (double, 53-bit significand) and 2⁻²³ = 1.19×10⁻⁷ (single). The notes also quote 1.11×10⁻¹⁶ = ε/2, the unit roundoff (largest relative rounding error).</div><div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><button data-lang="f90" data-file="" class="">Fortran</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code>np.finfo(np.float64).eps, np.finfo(np.float32).eps</code></pre><pre data-lang="f90" hidden><code>epsilon(1.0_dp), epsilon(1.0)</code></pre></div></div>
+    <table><tr><th>κ(A)</th><th>float32 (~7 digits)</th><th>float64 (~16 digits)</th></tr>
+      <tr><td>10²</td><td>~5 digits</td><td>~14</td></tr><tr><td>10⁴</td><td>~3</td><td>~12</td></tr>
+      <tr><td>10⁷</td><td>0 (noise)</td><td>~9</td></tr><tr><td>10¹⁶</td><td>0</td><td>0</td></tr></table>
+    <h3>Measured on Hilbert matrices (conditioning_svd.py)</h3>
+    <table><tr><th>n</th><th>κ₂</th><th>error float64</th><th>error float32</th></tr>
+      <tr><td>4</td><td>1.6×10⁴</td><td>1.1×10⁻¹³</td><td>2×10⁻⁵</td></tr>
+      <tr><td>6</td><td>1.5×10⁷</td><td>1.9×10⁻¹⁰</td><td>0.07</td></tr>
+      <tr><td>8</td><td>1.5×10¹⁰</td><td>9×10⁻⁸</td><td>4.4 (meaningless)</td></tr>
+      <tr><td>12</td><td>1.6×10¹⁶</td><td>0.19</td><td>—</td></tr></table>
+    <div class="ex" id="e5-3a" data-ans="10" data-tol="0.5"><div class="ex-h">EXERCISE <span class="lvl">Basic</span></div><div class="ex-q">κ = 10⁶ in double precision: about how many digits are left? (16 − 6)</div><div class="ex-in"><input placeholder="your answer"> <button class="btn go check">Check</button><span class="ex-res"></span></div><details><summary>Hint</summary>16 − log₁₀ κ.</details><details><summary>Full solution</summary>≈ 10.</details></div>
+    <div class="ex" id="e5-3b" data-ans="0" data-tol="0.5"><div class="ex-h">EXERCISE <span class="lvl">Core</span></div><div class="ex-q">κ = 10⁸ in single precision: digits left?</div><div class="ex-in"><input placeholder="your answer"> <button class="btn go check">Check</button><span class="ex-res"></span></div><details><summary>Hint</summary>7 − 8 &lt; 0.</details><details><summary>Full solution</summary>0: the float32 solution is noise.</details></div>
+  </div>
+</section>
+
+<!-- ================================================================== 4 -->
+<section class="lesson" data-title="Iterative refinement" data-short="Refinement" data-badge="ALGORITHM" data-time="30 min" data-level="Intermediate"
+  data-sub="Solve for the error: Ad = r with the factors you already have. With the residual in higher precision, a single-precision LU gives double-precision answers.">
+  <div class="stage" data-widget="refine"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>A computed x̂ leaves a residual r = b − Ax̂. The exact correction d solves Ad = r — and the LU factors are already there: each correction costs 2n².</p><p>Above: LU in single precision (Math.fround), residual in double, a few corrections.</p></div>
+    <div class="s-key">The residual must be computed in higher precision: b and Ax̂ agree to almost all digits and their difference is a cancellation.</div>
+    <ul class="s-learn"><li>Residual vs error</li><li>The refinement loop</li><li>Why the residual needs more precision</li><li>Mixed precision on GPUs</li><li>When it fails: κ ε<sub>low</sub> ≥ 1</li></ul>
+  </aside>
+  <div class="prose">
+    <div class="formula" data-name="Iterative refinement"><div class="f-head"><span class="t">ALGORITHM</span>Iterative refinement<span class="hint">hover the symbols ↓</span></div><div class="tex">\mathbf r^{(k)}=\mathbf b-A\mathbf x^{(k)}\ \ (\text{high precision}),\qquad LU\,\mathbf d^{(k)}=P\,\mathbf r^{(k)},\qquad \mathbf x^{(k+1)}=\mathbf x^{(k)}+\mathbf d^{(k)}</div><div class="f-note">Stop when ‖d‖/‖x‖ &lt; tol. Each step multiplies the error by about κ ε<sub>low</sub>: it converges if κ ε<sub>low</sub> &lt; 1. Small residual ≠ small error: ‖e‖/‖x‖ ≤ κ ‖r‖/‖b‖.</div><div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><button data-lang="f90" data-file="" class="">Fortran</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code>lu32 = la.lu_factor(A.astype(np.float32))           # O(n^3) in single precision
+x = la.lu_solve(lu32, b.astype(np.float32)).astype(float)
+for k in range(5):
+    r = b - A @ x                                   # double precision residual
+    x += la.lu_solve(lu32, r.astype(np.float32))</code></pre><pre data-lang="f90" hidden><code>call sgetrf(n, n, a32, n, ipiv, info)               ! single-precision LU
+do k = 1, 6
+   r = b - matmul(A, x)                             ! double precision
+   r32 = real(r, sp)
+   call sgetrs('N', n, 1, a32, n, ipiv, r32, n, info)
+   x = x + real(r32, dp)
+end do</code></pre></div></div>
+    <h3>Measured (n = 300, κ = 10⁴)</h3>
+    <table><tr><th></th><th>Python</th><th>Fortran (sgetrf + double residual)</th></tr>
+      <tr><td>float32 LU alone</td><td>2.0×10⁻⁴</td><td>4.6×10⁻⁴</td></tr>
+      <tr><td>after 1 step</td><td>3.9×10⁻⁸</td><td>7.3×10⁻⁸</td></tr>
+      <tr><td>after 2 steps</td><td>5.4×10⁻¹²</td><td>1.1×10⁻¹¹</td></tr>
+      <tr><td>after 3 steps</td><td>2.1×10⁻¹³</td><td>1.3×10⁻¹²</td></tr>
+      <tr><td>float64 LU</td><td>3.8×10⁻¹³</td><td>—</td></tr></table>
+    <p>With κ = 10⁹ &gt; 1/ε₃₂ ≈ 8×10⁶ the same loop diverges (errors 3×10², 3×10³, …). Mixed precision (FP32 or FP16 factorisation, FP64 residual) is how modern GPUs reach double-precision accuracy at low-precision speed.</p>
+    <div class="ex" id="e5-4a" data-ans="0.012" data-tol="0.002"><div class="ex-h">EXERCISE <span class="lvl">Core</span></div><div class="ex-q">Error reduction factor per step ≈ κ ε₃₂ for κ = 10⁵?</div><div class="ex-in"><input placeholder="your answer"> <button class="btn go check">Check</button><span class="ex-res"></span></div><details><summary>Hint</summary>10⁵ × 1.19×10⁻⁷.</details><details><summary>Full solution</summary>≈ 0.012: each step gains about two digits.</details></div>
+  </div>
+</section>
+
+<!-- ================================================================== 5 -->
+<section class="lesson" data-title="Eigendecomposition: modes and its limits" data-short="EVD" data-badge="MATH" data-time="35 min" data-level="Intermediate"
+  data-sub="Ax = λx gives the invariant directions of a system: oscillation modes, principal axes, growth rates. Perfect for symmetric matrices, fragile otherwise.">
+  <div class="stage" data-widget="evd"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>A symmetric matrix maps the unit circle to an ellipse whose axes are the eigenvectors. A non-symmetric one shears: its eigenvectors are not orthogonal, its eigenvalues may be complex.</p><p>Above: edit the matrix entries and watch the circle, the eigenvectors and the ellipse.</p></div>
+    <div class="s-key">Symmetric: A = QΛQᵀ, real λ, orthogonal Q, perfectly stable. Non-symmetric: A = XΛX⁻¹ can be ill-conditioned, complex or not exist. Never use the EVD to solve Ax = b.</div>
+    <ul class="s-learn"><li>Physical meaning of eigenvalues</li><li>The spectral theorem</li><li>κ₂ = |λ|<sub>max</sub>/|λ|<sub>min</sub> for symmetric A</li><li>Non-normal matrices: shear, complex λ</li><li>Sensitivity and defective matrices</li></ul>
+  </aside>
+  <div class="prose">
+    <div class="formula" data-name="Spectral theorem"><div class="f-head"><span class="t">THEOREM</span>Spectral theorem<span class="hint">hover the symbols ↓</span></div><div class="tex">A=A^T\ \Rightarrow\ A=\h{Qm}{Q}\h{Lam}{\Lambda}Q^T,\quad Q^TQ=I,\quad \Lambda=\mathrm{diag}(\lambda_1,\dots,\lambda_n)\in\mathbb R^n,\qquad \kappa_2(A)=\frac{\max|\lambda_i|}{\min|\lambda_i|}</div><div class="f-note">Covariance matrices, Hessians of a potential, inertia tensors, Laplacians: all symmetric. Eigenvalues move by at most ‖δA‖₂ under a symmetric perturbation (Weyl): measured 3×10⁻¹⁰ for ‖δA‖ = 1.2×10⁻⁹. [[2, 1], [1, 3]]: λ = 1.382, 3.618, κ = 2.618.</div><div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><button data-lang="f90" data-file="" class="">Fortran</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code>w, Q = np.linalg.eigh(A)          # symmetric: LAPACK dsyevd, ~9n^3 flops with vectors</code></pre><pre data-lang="f90" hidden><code>call dsyev('V', 'U', n, A, n, w, work, lwork, info)</code></pre></div></div>
+    <h2><span class="lv adv">ADVANCED</span>Non-symmetric pathologies</h2>
+    <ul>
+      <li><b>Complex spectrum</b>: a 90° rotation has λ = ±i but singular values 1, 1.</li>
+      <li><b>Non-orthogonal eigenvectors</b>: X⁻¹ ≠ Xᵀ and can be badly conditioned.</li>
+      <li><b>Extreme sensitivity</b>: a 20×20 Jordan block (eigenvalue 0) with one entry changed by 10⁻¹⁶ gets eigenvalues of modulus 0.158 = (10⁻¹⁶)<sup>1/20</sup>.</li>
+      <li><b>Defective matrices</b>: fewer than n independent eigenvectors, X⁻¹ does not exist.</li>
+    </ul>
+    <table><tr><th></th><th>symmetric EVD</th><th>non-symmetric EVD</th></tr>
+      <tr><td>eigenvectors</td><td>orthogonal</td><td>non-orthogonal</td></tr>
+      <tr><td>eigenvalues</td><td>real</td><td>possibly complex</td></tr>
+      <tr><td>stability</td><td>excellent</td><td>can be very poor</td></tr>
+      <tr><td>cost</td><td>≈ 9n³</td><td>≈ 25n³</td></tr></table>
+    <div class="uses">
+      <div class="use"><b>Helioseismology</b>Stellar p- and g-mode frequencies are eigenvalues of the oscillation operator.</div>
+      <div class="use"><b>Stability</b>Eigenvalues of a Jacobian: Re λ &gt; 0 means exponential growth (instabilities in fluids, orbits).</div>
+      <div class="use"><b>PCA</b>Eigenvectors of a covariance matrix: principal components of a data set.</div>
+    </div>
+    <div class="ex" id="e5-5a" data-ans="2.618" data-tol="0.002"><div class="ex-h">EXERCISE <span class="lvl">Core</span></div><div class="ex-q">κ₂ of [[2, 1], [1, 3]]? (λ = (5 ± √5)/2)</div><div class="ex-in"><input placeholder="your answer"> <button class="btn go check">Check</button><span class="ex-res"></span></div><details><summary>Hint</summary>3.618/1.382.</details><details><summary>Full solution</summary>2.618 (= golden ratio squared).</details></div>
+  </div>
+</section>
+
+<!-- ================================================================== 6 -->
+<section class="lesson" data-title="The singular value decomposition" data-short="SVD" data-badge="MATH" data-time="45 min" data-level="Intermediate"
+  data-sub="Every matrix, square or rectangular, singular or not, is a rotation, a stretch along axes, and another rotation. The SVD tells rank, null space and conditioning.">
+  <div class="stage" data-widget="svdgeom"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>Vᵀ rotates the input so that the special directions v<sub>i</sub> lie on the axes, Σ stretches each axis by σ<sub>i</sub>, U rotates into the output space.</p><p>Above: step through the three stages for a 2×2 matrix.</p></div>
+    <div class="s-key">A = UΣVᵀ always exists, σ<sub>i</sub> ≥ 0, U and V orthogonal. Av<sub>i</sub> = σ<sub>i</sub>u<sub>i</sub>; v<sub>r+1</sub>… span the null space.</div>
+    <ul class="s-learn"><li>The SVD theorem</li><li>Rotation – stretch – rotation</li><li>σ<sub>i</sub> = √λ<sub>i</sub>(AᵀA)</li><li>Rank, null space, four subspaces</li><li>Numerical rank and the cutoff</li></ul>
+  </aside>
+  <div class="prose">
+    <div class="formula" data-name="Singular value decomposition"><div class="f-head"><span class="t">THEOREM</span>Singular value decomposition<span class="hint">hover the symbols ↓</span></div><div class="tex">\h{A}{A}=\h{Um}{U}\h{Sigm}{\Sigma}\h{Vm}{V}^T,\quad U\in\mathbb R^{m\times m},\ V\in\mathbb R^{n\times n}\ \text{orthogonal},\quad \Sigma=\mathrm{diag}(\h{sigi}{\sigma_1}\ge\sigma_2\ge\dots\ge\sigma_r>0,0,\dots)</div><div class="f-note">σ<sub>i</sub> = √λ<sub>i</sub>(AᵀA), always real and non-negative. κ₂ = σ₁/σ<sub>r</sub>. A v<sub>i</sub> = σ<sub>i</sub> u<sub>i</sub> for i ≤ r, A v<sub>j</sub> = 0 for j &gt; r. Cost ≈ 2mn² + 11n³ (LAPACK dgesdd).</div><div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><button data-lang="f90" data-file="" class="">Fortran</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code>U, s, Vt = np.linalg.svd(A)              # s: singular values, descending</code></pre><pre data-lang="f90" hidden><code>call dgesvd('A', 'A', m, n, A, m, s, U, m, VT, n, work, lwork, info)</code></pre></div></div>
+    <h2><span class="lv core">CORE</span>The four subspaces</h2>
+    <table><tr><th>subspace</th><th>basis from the SVD</th><th>dimension</th></tr>
+      <tr><td>row space (inputs that matter)</td><td>v₁ … v<sub>r</sub></td><td>r</td></tr>
+      <tr><td>null space ker A (inputs that vanish)</td><td>v<sub>r+1</sub> … v<sub>n</sub></td><td>n − r</td></tr>
+      <tr><td>column space (reachable outputs)</td><td>u₁ … u<sub>r</sub></td><td>r</td></tr>
+      <tr><td>left null space (unreachable outputs)</td><td>u<sub>r+1</sub> … u<sub>m</sub></td><td>m − r</td></tr></table>
+    <p>Rank–nullity: r + (n − r) = n. Physical null spaces: a projection along the line of sight loses one dimension; a differential (AC-coupled) CMB scan cannot measure the monopole — a constant sky map is in the kernel (see the map-maker of Lecture 6).</p>
+    <div class="formula" data-name="Numerical rank"><div class="f-head"><span class="t">RULE</span>Numerical rank<span class="hint">hover the symbols ↓</span></div><div class="tex">r_\delta=\#\{\sigma_i>\delta\},\qquad \delta=\max(m,n)\,\varepsilon_{\rm mach}\,\sigma_1</div><div class="f-note">In floating point exact zeros come out as ~10⁻¹⁵σ₁; dividing by them gives 10¹⁵. The 4×3 matrix with row 2 = 2 × row 1 has σ = 18.35, 2.04, ~10⁻¹⁶: numerical rank 2. The one with col 3 = col 1 + col 2: σ = 5.196, 1.732, 0, and v₃ ∝ (1, 1, −1), ‖Av₃‖ = 6×10⁻¹⁶.</div><div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><button data-lang="f90" data-file="" class="">Fortran</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code>tol = max(A.shape) * np.finfo(float).eps * s[0]
+rank = np.sum(s &gt; tol)                     # = np.linalg.matrix_rank(A)</code></pre><pre data-lang="f90" hidden><code>rank = count(s &gt; max(m,n)*epsilon(1.0_dp)*s(1))</code></pre></div></div>
+    <div class="ex" id="e5-6a" data-ans="2" data-tol="0.01"><div class="ex-h">EXERCISE <span class="lvl">Basic</span></div><div class="ex-q">A 3×3 matrix has σ = 5, 2, 3×10⁻¹⁷. Numerical rank?</div><div class="ex-in"><input placeholder="your answer"> <button class="btn go check">Check</button><span class="ex-res"></span></div><details><summary>Hint</summary>Threshold ≈ 3 × 2.2×10⁻¹⁶ × 5.</details><details><summary>Full solution</summary>2.</details></div>
+    <div class="ex" id="e5-6b" data-ans="1" data-tol="0.01"><div class="ex-h">EXERCISE <span class="lvl">Core</span></div><div class="ex-q">Same matrix: dimension of the null space?</div><div class="ex-in"><input placeholder="your answer"> <button class="btn go check">Check</button><span class="ex-res"></span></div><details><summary>Hint</summary>n − r.</details><details><summary>Full solution</summary>1.</details></div>
+    <a class="hsi-link" href="../Hyperspectral%20Project/index.html#s2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg><span><small>RELATED · HYPERSPECTRAL PROJECT</small>The SVD of a hyperspectral cube: how many independent spectra (materials) are really there?</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+  </div>
+</section>
+
+<!-- ================================================================== 7 -->
+<section class="lesson" data-title="Pseudoinverse and least squares" data-short="Least squares" data-badge="MATH" data-time="45 min" data-level="Advanced"
+  data-sub="A⁺ = VΣ⁺Uᵀ inverts only what can be inverted: least-squares solutions for m > n, minimum-norm solutions for m < n, and safe truncation of tiny σ.">
+  <div class="stage" data-widget="lsqfit"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>Fitting a model with n parameters to m ≫ n data points: no exact solution, minimise ‖Ax − b‖₂. Three algorithms, very different in stability.</p><p>Above: fit polynomials of growing degree with normal equations, QR and SVD.</p></div>
+    <div class="s-key">Normal equations square the condition number (κ(AᵀA) = κ(A)²). QR keeps κ(A). SVD also handles rank deficiency by truncation.</div>
+    <ul class="s-learn"><li>Moore–Penrose pseudoinverse</li><li>Overdetermined: least squares</li><li>Underdetermined: minimum norm</li><li>Normal equations vs QR vs SVD</li><li>Truncated SVD</li><li>Production rules</li></ul>
+  </aside>
+  <div class="prose">
+    <div class="formula" data-name="Pseudoinverse"><div class="f-head"><span class="t">DEFINITION</span>Pseudoinverse<span class="hint">hover the symbols ↓</span></div><div class="tex">\h{Ap}{A^+}=\h{Vm}{V}\Sigma^+\h{Um}{U}^T,\qquad \Sigma^+=\mathrm{diag}\Big(\frac1{\sigma_1},\dots,\frac1{\sigma_{r_\delta}},0,\dots,0\Big)\in\mathbb R^{n\times m}</div><div class="f-note">A⁺ = A⁻¹ when A is invertible; AA⁺A = A, A⁺AA⁺ = A⁺; always exists and is unique. A⁺u<sub>i</sub> = v<sub>i</sub>/σ<sub>i</sub> for i ≤ r and 0 otherwise: directions that cannot be resolved are mapped to zero instead of to infinity.</div><div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><button data-lang="f90" data-file="" class="">Fortran</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code>x = np.linalg.pinv(A, rcond=1e-13) @ b      # or scipy.linalg.lstsq (LAPACK dgelsd)</code></pre><pre data-lang="f90" hidden><code>call dgelsd(m, n, 1, A, m, b, max(m,n), s, rcond, rank, work, lwork, iwork, info)</code></pre></div></div>
+    <div class="formula" data-name="What x = A⁺b solves"><div class="f-head"><span class="t">THEOREM</span>What x = A⁺b solves<span class="hint">hover the symbols ↓</span></div><div class="tex">m>n:\ \ \mathbf x^\star=\arg\min_{\mathbf x}\|A\mathbf x-\mathbf b\|_2;\qquad m<n:\ \ \mathbf x^\star=\arg\min_{A\mathbf x=\mathbf b}\|\mathbf x\|_2</div><div class="f-note">Overdetermined (fitting a spectrum with 5 parameters to 1000 wavelengths): the least-squares solution. Underdetermined (aperture synthesis, tomography): the solution with the smallest norm; adding any null-space vector keeps Ax = b but increases ‖x‖ (measured 0.648 → 1.192).</div></div>
+    <h2><span class="lv core">CORE</span>Three least-squares algorithms</h2>
+    <table><tr><th>method</th><th>flops</th><th>stability</th><th>limits</th></tr>
+      <tr><td>normal equations AᵀAx = Aᵀb (Cholesky)</td><td>mn² + n³/3</td><td>κ(AᵀA) = κ(A)²</td><td>only if κ(A) ≲ 10³</td></tr>
+      <tr><td>QR: Rx = Qᵀb</td><td>2mn² − (2/3)n³</td><td>keeps κ(A)</td><td>needs full column rank</td></tr>
+      <tr><td>SVD: x = VΣ⁺Uᵀb</td><td>2mn² + 11n³</td><td>best, handles rank deficiency</td><td>most expensive</td></tr></table>
+    <p>Measured, polynomial fit on t ∈ [0, 10], 100 points, exact data (coefficient error = pure numerics):</p>
+    <table><tr><th>degree</th><th>κ(A)</th><th>normal eq.</th><th>QR</th><th>SVD (lstsq)</th></tr>
+      <tr><td>2</td><td>1.4×10²</td><td>5×10⁻¹⁵</td><td>6×10⁻¹⁶</td><td>5×10⁻¹⁵</td></tr>
+      <tr><td>5</td><td>4.4×10⁵</td><td>3×10⁻¹²</td><td>6×10⁻¹⁶</td><td>6×10⁻¹³</td></tr>
+      <tr><td>8</td><td>1.9×10⁹</td><td>3×10⁻⁹</td><td>4×10⁻¹⁴</td><td>2×10⁻⁹</td></tr>
+      <tr><td>11</td><td>9.8×10¹²</td><td>1.0 (100%)</td><td>1×10⁻¹³</td><td>7×10⁻⁷</td></tr></table>
+    <p>The SVD solver truncates singular values below its default cutoff: it returns a stable, slightly regularised solution rather than the exact one. With noisy data that is usually what you want (truncated SVD: degree-11 basis on [0, 1], noise 10⁻⁶, keeping 9 of 12 singular values reduces ‖c‖ from 7.6 to 2.6 at the same residual level).</p>
+    <div class="ex" id="e5-7a" data-ans="1000000" data-tol="1"><div class="ex-h">EXERCISE <span class="lvl">Basic</span></div><div class="ex-q">κ(A) = 10³. κ(AᵀA)?</div><div class="ex-in"><input placeholder="your answer"> <button class="btn go check">Check</button><span class="ex-res"></span></div><details><summary>Hint</summary>Squared.</details><details><summary>Full solution</summary>10⁶.</details></div>
+    <div class="ex" id="e5-7b" data-ans="0.5" data-tol="0.001"><div class="ex-h">EXERCISE <span class="lvl">Core</span></div><div class="ex-q">A = diag(2, 0) (σ = 2, 0). Upper-left entry of A⁺?</div><div class="ex-in"><input placeholder="your answer"> <button class="btn go check">Check</button><span class="ex-res"></span></div><details><summary>Hint</summary>Invert only the non-zero σ.</details><details><summary>Full solution</summary>1/2; the other diagonal entry is 0, not ∞.</details></div>
+    <a class="hsi-link" href="../Hyperspectral%20Project/index.html#s2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg><span><small>RELATED · HYPERSPECTRAL PROJECT</small>Unmixing with QR and SVD: conditioning of the endmember matrix and the pseudoinverse</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+  </div>
+</section>
+
+<!-- ================================================================== 8 -->
+<section class="lesson" data-title="Code lab: conditioning, refinement, SVD" data-short="Code lab" data-badge="CODE" data-time="45 min" data-level="Intermediate"
+  data-sub="Norms, the 2×2 collapse, Hilbert matrices, mixed-precision refinement in Python and Fortran, EVD sensitivity, SVD rank and least squares.">
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>Choose by structure, monitor κ, never invert explicitly.</p></div>
+    <div class="s-key">Speed and robustness pull in opposite directions: Cholesky (SPD) → LU (square) → QR (full-rank least squares) → SVD (anything, ill-conditioned).</div>
+    <ul class="s-learn"><li>Run conditioning_svd.py</li><li>Compile refine_mixed.f90</li><li>Do the tasks</li></ul>
+  </aside>
+  <div class="prose">
+    <div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><button data-lang="f90" data-file="" class="">Fortran</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code># inside "05. Conditioning and SVD/code"
+python conditioning_svd.py</code></pre><pre data-lang="f90" hidden><code>gfortran -O2 refine_mixed.f90 -llapack -lblas -o refine_mixed &amp;&amp; ./refine_mixed</code></pre></div>
+    <table><tr><th>method</th><th>matrix</th><th>flops</th><th>stability</th><th>use</th></tr>
+      <tr><td>Cholesky</td><td>square SPD</td><td>n³/3</td><td>unconditional</td><td>covariances, SPD systems</td></tr>
+      <tr><td>LU (PA = LU)</td><td>square</td><td>2n³/3</td><td>high (pivoted)</td><td>general square systems</td></tr>
+      <tr><td>QR</td><td>m × n, full rank</td><td>2mn² − 2n³/3</td><td>high (orthogonal)</td><td>least squares</td></tr>
+      <tr><td>SVD</td><td>any m × n</td><td>2mn² + 11n³</td><td>maximal</td><td>rank-deficient, ill-conditioned</td></tr></table>
+    <p><b>Practical rules</b>: Fortran/LAPACK are column-major, NumPy row-major — passing non-contiguous slices forces silent copies. Prefer matrix–matrix (Level-3 BLAS) operations. Never form A⁻¹. Monitor κ in pipelines (dgecon, np.linalg.cond).</p>
+    <div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="conditioning_svd.py" class="on">Python</button><button data-lang="f90" data-file="refine_mixed.f90" class="">Fortran</button><span class="fn">conditioning_svd.py</span><button class="copy">copy</button></div><pre data-lang="py"><code>"""
+conditioning_svd.py  --  Lecture 5: norms, condition number, iterative refinement, EVD and SVD.
+
+  1. Vector and matrix norms (the 3x3 matrix of the notes); ||A||_2 = sigma_max, ||A||_F = sqrt(sum sigma^2)
+  2. The 2x2 example: kappa ~ 4/eps and a 100% error from a tiny perturbation of b
+  3. Hilbert matrices: kappa, digits lost, observed error in float32 and float64 against the bound
+  4. Iterative refinement: LU in float32, residual in float64 -&gt; double-precision accuracy
+  5. EVD: symmetric (stable, orthogonal) vs non-symmetric (sensitive eigenvalues)
+  6. SVD: numerical rank, kernel vectors, the four subspaces
+  7. Least squares: normal equations vs QR vs SVD on an ill-conditioned polynomial fit;
+     truncated SVD; minimum-norm solution of an underdetermined system
+
+Run:  python conditioning_svd.py          Figure: conditioning_svd.png
+"""
+import warnings
+import numpy as np
+import scipy.linalg as la
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+
+warnings.filterwarnings("ignore", category=la.LinAlgWarning)    # we WANT to solve ill-conditioned systems here
+rng = np.random.default_rng(3)
+np.set_printoptions(precision=4, suppress=True)
+
+# ---------------------------------------------------------------- 1. norms
+A = np.array([[10.0, -1.0, 2.0], [-1.0, 11.0, -1.0], [2.0, -1.0, 10.0]])
+x = np.array([1.0, -2.0, 3.0])
+s = la.svdvals(A)
+print("1. norms")
+print(f"   x = {x}: ||x||_1 = {la.norm(x, 1):.4f}, ||x||_2 = {la.norm(x):.4f}, ||x||_inf = {la.norm(x, np.inf):.4f}")
+print(f"   ||A||_1 = {la.norm(A, 1):.4f} (max column sum), ||A||_inf = {la.norm(A, np.inf):.4f} (max row sum),"
+      f" ||A||_2 = {la.norm(A, 2):.4f} = sigma_max {s[0]:.4f}, ||A||_F = {la.norm(A, 'fro'):.4f} = sqrt(sum sigma^2) {np.sqrt((s ** 2).sum()):.4f}")
+B = rng.standard_normal((3, 3))
+print(f"   submultiplicativity: ||AB||_2 = {la.norm(A @ B, 2):.3f} &lt;= ||A|| ||B|| = {la.norm(A, 2) * la.norm(B, 2):.3f}")
+
+# ---------------------------------------------------------------- 2. the 2x2 example
+print("\n2. A = [[1, 1], [1, 1+eps]], b = [2, 2+eps], perturbation db = [0, eps]")
+for eps in (1e-2, 1e-6, 1e-10):
+    A2 = np.array([[1.0, 1.0], [1.0, 1.0 + eps]]); b2 = np.array([2.0, 2.0 + eps])
+    x0 = la.solve(A2, b2); x1 = la.solve(A2, b2 + np.array([0.0, eps]))
+    k = la.norm(A2, np.inf) * la.norm(la.inv(A2), np.inf)
+    rel_b = eps / la.norm(b2, np.inf); rel_x = la.norm(x1 - x0, np.inf) / la.norm(x0, np.inf)
+    print(f"   eps = {eps:.0e}: kappa_inf = {k:.3e} (4/eps = {4 / eps:.1e}); x = {x0}, perturbed x = {x1};"
+          f" relative change b {rel_b:.1e} -&gt; x {rel_x:.2f}")
+
+# ---------------------------------------------------------------- 3. Hilbert matrices
+print("\n3. Hilbert matrices H_ij = 1/(i+j-1), exact x = ones")
+print(f"{'n':&gt;3} {'kappa_2':&gt;10} {'digits lost':&gt;12} {'err f64':&gt;10} {'err f32':&gt;10} {'bound kappa*eps64':&gt;18}")
+H_rows = []
+for n in range(2, 14):
+    H = la.hilbert(n); xt = np.ones(n); b = H @ xt
+    k = np.linalg.cond(H)
+    e64 = la.norm(la.solve(H, b) - xt) / la.norm(xt)
+    e32 = la.norm(la.solve(H.astype(np.float32), b.astype(np.float32)).astype(float) - xt) / la.norm(xt)
+    H_rows.append((n, k, e64, e32))
+    print(f"{n:3d} {k:10.2e} {np.log10(k):12.1f} {e64:10.1e} {e32:10.1e} {k * np.finfo(float).eps:18.1e}")
+
+
+# ---------------------------------------------------------------- 4. mixed-precision iterative refinement
+def refine(A, b, iters=8):
+    lu32 = la.lu_factor(A.astype(np.float32))                       # O(n^3) work in single precision
+    x = la.lu_solve(lu32, b.astype(np.float32)).astype(np.float64)
+    hist = []
+    for _ in range(iters):
+        r = b - A @ x                                                # residual in DOUBLE precision
+        d = la.lu_solve(lu32, r.astype(np.float32)).astype(np.float64)
+        x = x + d
+        hist.append(x.copy())
+    return hist
+
+
+n = 300
+Q1, _ = la.qr(rng.standard_normal((n, n))); Q2, _ = la.qr(rng.standard_normal((n, n)))
+A = Q1 @ np.diag(np.logspace(0, -4, n)) @ Q2.T                     # kappa = 1e4
+xt = rng.standard_normal(n); b = A @ xt
+hist = refine(A, b)
+err0 = la.norm(la.solve(A.astype(np.float32), b.astype(np.float32)) - xt) / la.norm(xt)
+errs_ref = [la.norm(h - xt) / la.norm(xt) for h in hist]
+print(f"\n4. iterative refinement, n = {n}, kappa = {np.linalg.cond(A):.1e}")
+print(f"   float32 LU alone: error {err0:.1e};  after refinement steps 1..6: " + ", ".join(f"{e:.1e}" for e in errs_ref[:6]))
+print(f"   float64 LU: error {la.norm(la.solve(A, b) - xt) / la.norm(xt):.1e}")
+A_bad = Q1 @ np.diag(np.logspace(0, -9, n)) @ Q2.T                 # kappa = 1e9 &gt; 1/eps32: refinement cannot converge
+h_bad = refine(A_bad, A_bad @ xt)
+print(f"   kappa = 1e9 (above 1/eps32 = {1 / np.finfo(np.float32).eps:.0e}): errors " +
+      ", ".join(f"{la.norm(h - xt) / la.norm(xt):.1e}" for h in h_bad[:4]) + "  -&gt; does not converge")
+
+# ---------------------------------------------------------------- 5. EVD
+print("\n5. eigenvalues")
+S = np.array([[2.0, 1.0], [1.0, 3.0]])
+w, Q = la.eigh(S)
+print(f"   symmetric [[2,1],[1,3]]: lambda = {w}, Q^T Q = I to {np.abs(Q.T @ Q - np.eye(2)).max():.0e},"
+      f" kappa_2 = |lmax|/|lmin| = {abs(w).max() / abs(w).min():.4f} = cond {np.linalg.cond(S):.4f}")
+R = np.array([[0.0, -1.0], [1.0, 0.0]])
+print(f"   rotation by 90 deg: eigenvalues {la.eigvals(R)} (complex), singular values {la.svdvals(R)}")
+n = 20
+J = np.diag(np.ones(n - 1), 1)                                       # Jordan block with eigenvalue 0 (defective)
+Jp = J.copy(); Jp[-1, 0] = 1e-16 ** 1                                # perturbation of size 1e-16
+lam = la.eigvals(Jp)
+print(f"   20x20 Jordan block, one entry changed by 1e-16: |eigenvalues| become {np.abs(lam).max():.3f}"
+      f" (= 1e-16^(1/20) = {1e-16 ** (1 / 20):.3f}) instead of 0")
+Sym = rng.standard_normal((n, n)); Sym = Sym + Sym.T; E = 1e-10 * rng.standard_normal((n, n)); E = E + E.T
+print(f"   symmetric 20x20, perturbation 2e-10: eigenvalues move by at most {np.abs(la.eigvalsh(Sym + E) - la.eigvalsh(Sym)).max():.1e}"
+      f" (Weyl bound ||E||_2 = {la.norm(E, 2):.1e})")
+
+# ---------------------------------------------------------------- 6. SVD, rank and subspaces
+A = np.array([[1.0, 2.0, 3.0], [2.0, 4.0, 6.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]])
+U, s, Vt = la.svd(A)
+tol = max(A.shape) * np.finfo(float).eps * s[0]
+print(f"\n6. SVD of the rank-deficient 4x3 matrix of the notes: sigma = {s}")
+print(f"   tolerance max(m,n) eps sigma_1 = {tol:.1e} -&gt; numerical rank {np.sum(s &gt; tol)}; matrix_rank: {np.linalg.matrix_rank(A)}")
+A = np.array([[1.0, 2.0, 3.0], [0.0, 1.0, 1.0], [2.0, 0.0, 2.0], [1.0, 1.0, 2.0]])
+U, s, Vt = la.svd(A); V = Vt.T
+print(f"   4x3 with col3 = col1 + col2: sigma = {s}; ||A v1|| = {la.norm(A @ V[:, 0]):.4f} = sigma_1,"
+      f" ||A v3|| = {la.norm(A @ V[:, 2]):.1e}; kernel direction v3 = {V[:, 2]} (proportional to [1, 1, -1])")
+
+# ---------------------------------------------------------------- 7. least squares
+print("\n7. least squares: fit y = sum_k c_k t^k on t in [0, 10], 100 points, noise 0.5")
+t = np.linspace(0, 10, 100); y_exact = 2.5 + 1.2 * t - 0.05 * t ** 2
+y = y_exact + rng.normal(0, 0.5, t.size)
+rows = []
+for deg in (2, 5, 8, 11):
+    Am = np.vander(t, deg + 1, increasing=True)
+    ctrue = np.zeros(deg + 1); ctrue[:3] = [2.5, 1.2, -0.05]
+    yt = Am @ ctrue                                                  # noiseless data from the true model: error is pure numerics
+    c_ne = la.solve(Am.T @ Am, Am.T @ yt, assume_a="pos") if deg &lt; 11 else np.linalg.lstsq(Am.T @ Am, Am.T @ yt, rcond=None)[0]
+    Qm, Rm = la.qr(Am, mode="economic"); c_qr = la.solve_triangular(Rm, Qm.T @ yt)
+    c_svd = la.lstsq(Am, yt, cond=None)[0]
+    k = np.linalg.cond(Am)
+    rows.append((deg, k, *[la.norm(c - ctrue) / la.norm(ctrue) for c in (c_ne, c_qr, c_svd)]))
+    print(f"   degree {deg:2d}: kappa(A) = {k:.1e}, kappa(A^T A) = {k * k:.1e};  coefficient error:"
+          f" normal eq {rows[-1][2]:.1e}, QR {rows[-1][3]:.1e}, SVD {rows[-1][4]:.1e}")
+Am = np.vander(t, 3, increasing=True)
+c, res, rank, sv = la.lstsq(Am, y)
+print(f"   noisy quadratic fit (SVD lstsq): c = {c} (true [2.5, 1.2, -0.05]), kappa = {sv[0] / sv[-1]:.1f}")
+# truncated SVD on a nearly singular problem
+Am = np.vander(t / 10, 12, increasing=True); ct = rng.standard_normal(12)
+yn = Am @ ct + 1e-6 * rng.standard_normal(t.size)
+U, s, Vt = la.svd(Am, full_matrices=False)
+print(f"   degree-11 basis on [0,1], data noise 1e-6: sigma from {s[0]:.1e} to {s[-1]:.1e}")
+for rc in (0.0, 1e-12, 1e-8, 1e-5):
+    keep = s &gt; rc * s[0]
+    cx = Vt.T[:, keep] @ ((U[:, keep].T @ yn) / s[keep])
+    print(f"     rcond {rc:.0e}: keep {keep.sum():2d} singular values, residual {la.norm(Am @ cx - yn):.2e}, ||c|| = {la.norm(cx):.2e}")
+# minimum-norm solution
+A_u = rng.standard_normal((3, 6)); b_u = rng.standard_normal(3)
+x_mn = la.pinv(A_u) @ b_u; x_other = x_mn + la.null_space(A_u)[:, 0]
+print(f"   underdetermined 3x6: pinv solution ||x|| = {la.norm(x_mn):.4f}, residual {la.norm(A_u @ x_mn - b_u):.1e};"
+      f" adding a kernel vector: residual {la.norm(A_u @ x_other - b_u):.1e}, ||x|| = {la.norm(x_other):.4f}")
+
+fig, ax = plt.subplots(1, 2, figsize=(11, 4))
+ns, ks, e64, e32 = map(np.array, zip(*H_rows))
+ax[0].semilogy(ns, ks * np.finfo(float).eps, "k--", label="kappa eps_64"); ax[0].semilogy(ns, e64, "o-", label="error float64")
+ax[0].semilogy(ns, np.minimum(ks * np.finfo(np.float32).eps, 10), "k:", label="kappa eps_32"); ax[0].semilogy(ns, e32, "s-", label="error float32")
+ax[0].set(xlabel="Hilbert size n", ylabel="relative error", title="conditioning sets the error"); ax[0].legend(fontsize=8)
+ax[1].semilogy(range(1, len(errs_ref) + 1), errs_ref, "o-", label="refined (LU float32, r float64)")
+ax[1].axhline(err0, color="C3", ls="--", label="float32 LU alone"); ax[1].axhline(np.finfo(float).eps * 1e4, color="k", ls=":", label="kappa eps_64")
+ax[1].set(xlabel="refinement step", ylabel="relative error", title="mixed-precision iterative refinement"); ax[1].legend(fontsize=8)
+fig.tight_layout(); fig.savefig("conditioning_svd.png", dpi=120)
+print("\nsaved conditioning_svd.png")</code></pre><pre data-lang="f90" hidden><code>! refine_mixed.f90 -- Lecture 5: condition number from the SVD (LAPACK dgesvd) and mixed-precision
+! iterative refinement: LU factorisation in SINGLE precision (sgetrf), residual r = b - A x in DOUBLE
+! precision, corrections solved with the single-precision factors (sgetrs).
+!
+! Build:  gfortran -O2 refine_mixed.f90 -llapack -lblas -o refine_mixed &amp;&amp; ./refine_mixed
+program refine_mixed
+  implicit none
+  integer, parameter :: sp = kind(1.0), dp = kind(1.0d0)
+  integer, parameter :: n = 300
+  real(dp) :: a(n,n), q1(n,n), q2(n,n), xt(n), b(n), x(n), r(n), s(n), work(10*n*n), tau(n)
+  real(dp) :: u(1,1), vt(1,1), tmp(n,n)
+  real(sp) :: a32(n,n), r32(n)
+  integer :: ipiv(n), info, i, k
+  external :: dgesvd, dgeqrf, dorgqr, sgetrf, sgetrs
+
+  call random_seed(put=[(7, i = 1, 64)])
+  ! A = Q1 diag(logspace(0, -4)) Q2^T: condition number 1e4 by construction
+  call random_number(q1); call random_number(q2)
+  call dgeqrf(n, n, q1, n, tau, work, size(work), info); call dorgqr(n, n, n, q1, n, tau, work, size(work), info)
+  call dgeqrf(n, n, q2, n, tau, work, size(work), info); call dorgqr(n, n, n, q2, n, tau, work, size(work), info)
+  do i = 1, n
+    q1(:,i) = q1(:,i) * 10.0_dp**(-4.0_dp*real(i-1,dp)/real(n-1,dp))
+  end do
+  a = matmul(q1, transpose(q2))
+
+  tmp = a                                            ! dgesvd destroys its input
+  call dgesvd('N', 'N', n, n, tmp, n, s, u, 1, vt, 1, work, size(work), info)
+  print '(a, es10.3, a, es10.3, a, es10.3)', "sigma_max = ", s(1), "  sigma_min = ", s(n), "  kappa_2 = ", s(1)/s(n)
+
+  call random_number(xt); b = matmul(a, xt)
+  a32 = real(a, sp)
+  call sgetrf(n, n, a32, n, ipiv, info)              ! the O(n^3) work, in single precision
+  r32 = real(b, sp)
+  call sgetrs('N', n, 1, a32, n, ipiv, r32, n, info)
+  x = real(r32, dp)
+  print '(a, es10.2)', "single-precision LU alone:  relative error ", norm2(x - xt)/norm2(xt)
+  do k = 1, 6
+    r = b - matmul(a, x)                             ! residual in double precision
+    r32 = real(r, sp)
+    call sgetrs('N', n, 1, a32, n, ipiv, r32, n, info)   ! correction: O(n^2) in single precision
+    x = x + real(r32, dp)
+    print '(a, i0, a, es10.2)', "refinement step ", k, ": relative error ", norm2(x - xt)/norm2(xt)
+  end do
+end program refine_mixed</code></pre></div>
+    <div class="task"><b>TASK 5.1 — CONDITION ESTIMATE</b>Compare np.linalg.cond(A, 1) (exact, via the inverse) with LAPACK's cheap estimate 1/rcond from dgecon (scipy.linalg.lapack.dgecon) for random and Hilbert matrices.</div>
+    <div class="task"><b>TASK 5.2 — A BETTER BASIS</b>Repeat the degree-11 fit with Chebyshev polynomials on t mapped to [−1, 1] (numpy.polynomial.chebyshev.chebvander). What is κ(A) now, and do the normal equations still fail?</div>
+    <div class="task"><b>TASK 5.3 — SVD OF AN IMAGE</b>Take the SVD of a 512×512 grey image; reconstruct it with the first k singular triplets. Plot σ<sub>i</sub> and the rms error vs k: how much storage for 1% error?</div>
+    <div class="task"><b>TASK 5.4 — REFINEMENT LIMIT</b>Run refine_mixed.f90 with κ = 10⁵, 10⁶, 10⁷, 10⁸ and find where it stops converging. Compare with 1/ε₃₂.</div>
+  </div>
+</section>
+
+      </div>
+      <div class="view v-practice"><h1 style="margin:6px 0 2px">Practice</h1><p class="subtitle">Every exercise of this unit in one place. Answers are checked to about 1%; fractions like 1/3 are accepted.</p></div>
+      <div class="view v-code"><h1 style="margin:6px 0 2px">Code Lab</h1><p class="subtitle">Every Python and Fortran snippet of this unit, plus the hyperspectral project tasks. The full files are in the <code>code</code> folder next to this page.</p></div>
+      <div class="view v-sheet"><h1 style="margin:6px 0 2px">Cheatsheet</h1><p class="subtitle">All the formulas of this unit. Hover any symbol for its name, meaning and code.</p></div>
+    </div>
+  </main>
+  <aside class="right learnonly">
+    <div class="rcard">
+      <div class="rtop"><span id="r-step"></span><span class="badge" id="r-badge"></span></div>
+      <h2 id="r-title"></h2>
+      <div id="r-body"></div>
+      <div class="keyidea" id="r-key"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3c.5 4 2 5.5 6 6-4 .5-5.5 2-6 6-.5-4-2-5.5-6-6 4-.5 5.5-2 6-6zM18.5 15.5c.2 1.6.9 2.3 2.5 2.5-1.6.2-2.3.9-2.5 2.5-.2-1.6-.9-2.3-2.5-2.5 1.6-.2 2.3-.9 2.5-2.5z"/></svg><b>KEY IDEA</b><span id="r-key-t"></span></div>
+      <div class="navbtns"><button class="btn back" id="r-back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M19 12H5M11 6l-6 6 6 6"/></svg> Back</button><button class="btn next" id="r-next"><span id="r-next-t">Next</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></div>
+      <div class="keys"><span class="kbd">←</span><span class="kbd">→</span> step · <span class="kbd">Ctrl K</span> search · hover symbols</div>
+    </div>
+    <div class="rcard"><div class="rtop">YOU'LL LEARN</div><ul class="learn" id="r-learn"></ul></div>
+  </aside>
+</div>
+<script src="../assets/katex/katex.min.js"></script>
+<script src="../assets/katex/auto-render.min.js"></script>
+<script src="../assets/js/course.js"></script>
+<script src="../assets/js/plot.js"></script>
+<script src="../assets/js/symbols-common.js"></script>
+<script src="lesson05.js"></script>
+<script src="../assets/js/app.js"></script>
+</body></html>

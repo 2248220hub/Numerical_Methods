@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Project · Hyperspectral Project · Comp Astro</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='14' fill='%23cfe3b2' stroke='%231d1b18' stroke-width='3'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="../assets/katex/katex.min.css">
+<link rel="stylesheet" href="../assets/css/style.css">
+<script>try{document.documentElement.dataset.theme=JSON.parse(localStorage.getItem("cma.theme"))||"light"}catch(e){}</script>
+</head>
+<body data-unit="HSI" data-root="../">
+<header class="topbar">
+  <button class="iconbtn burger" data-act="burger" aria-label="menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+  <a class="brand" href="../index.html"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="15.5" fill="none" stroke="currentColor" stroke-width="2.5"/>
+<ellipse cx="20" cy="20" rx="19" ry="6.5" fill="none" stroke="currentColor" stroke-width="2.2" transform="rotate(-24 20 20)"/>
+<circle cx="20" cy="20" r="6" fill="#cfe3b2" stroke="currentColor" stroke-width="2.2"/><circle cx="35" cy="11.5" r="2.6" fill="#e6824c" stroke="currentColor" stroke-width="1.5"/></svg><span>Comp <mark>Astro</mark></span></a>
+  <nav class="tabs"><a class="tab on" data-view="learn" href="../index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 5.5C5 4 8.5 4 12 6c3.5-2 7-2 10-.5V19c-3-1.5-6.5-1.5-10 .5-3.5-2-7-2-10-.5z"/><path d="M12 6v13.5"/></svg><span>Learn</span></a><a class="tab" data-view="practice" href="../index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg><span>Practice</span></a><a class="tab" data-view="code" href="../index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2.5" y="4" width="19" height="16" rx="2"/><path d="M2.5 8.5h19M7 13l-2 2 2 2M11 17h5"/></svg><span>Code Lab</span></a><a class="tab" data-view="sheet" href="../index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 17.5h7M17.5 14v7"/></svg><span>Cheatsheet</span></a></nav>
+  <div class="search" data-act="search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><span>Search lessons &amp; formulas…</span><kbd>Ctrl K</kbd></div>
+  <button class="iconbtn" data-act="theme" aria-label="dark mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg></button>
+  <div class="credit"><div class="av">∑</div><div>open study guide<b>numerical methods</b></div></div>
+</header>
+<div class="layout">
+  <aside class="sidebar"><nav class="tree"></nav><div class="progress"></div></aside>
+  <main class="main">
+    <div class="stepper learnonly"><div class="stepper-h">IN THIS LESSON <small id="stepper-n"></small></div><div class="dots"></div></div>
+    <div class="card">
+      <div class="crumbs"><span>Project · Hyperspectral Project</span><span class="sep">/</span><span id="crumb-sub"></span></div>
+      <div class="learnonly">
+        <div class="titlebar"><h1 id="title"></h1>
+          <div class="badges"><span class="badge y" id="b-time"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> </span><span class="badge g" id="b-level"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="15" width="3.2" height="6" rx="1"/><rect x="8.5" y="11" width="3.2" height="10" rx="1"/><rect x="14" y="7" width="3.2" height="14" rx="1"/><rect x="19.5" y="3" width="2.5" height="18" rx="1" opacity=".35"/></svg> </span><span class="badge p" id="b-steps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 6h12M9 12h12M9 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg> </span></div>
+        </div>
+        <p class="subtitle" id="subtitle"></p>
+        <!-- ================================================================== 1 -->
+<section class="lesson" data-title="The hyperspectral project: overview and data" data-short="Overview" data-badge="PROJECT" data-time="30 min" data-level="Project"
+  data-sub="One data cube, every method of the guide: sampling, FFT, convolution, spectral estimation, Bayesian inference and Monte Carlo applied to the same scene.">
+  <div class="stage" data-widget="cubeview"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>A hyperspectral image is a <b>cube</b>: two spatial axes and 100–200 wavelength bands. Each pixel is a full spectrum, a fingerprint of the materials on the ground.</p><p>This page collects the project parts of every lesson. Each part starts with a link back to the theory.</p></div>
+    <div class="s-key">Start on synthetic data where the truth is known (abundances, noise per band), check that every method recovers it, then move to real scenes.</div>
+    <ul class="s-learn"><li>What a data cube is</li><li>The files of the project folder</li><li>The synthetic scene and its truth</li><li>Real benchmark scenes and how to get them</li><li>The order of the parts</li></ul>
+  </aside>
+  <div class="prose">
+    <h2><span class="lv proj">PROJECT</span>Objective</h2>
+    <p>Build, step by step, a complete analysis of a hyperspectral scene: treat the cube as a matrix and solve the unmixing least-squares problems (part 2), understand how the sensor samples the spectrum (part 3), clean detector artefacts (part 4), model the instrument response (part 5), measure the noise of every band (part 6), then classify pixels and estimate material fractions with honest error bars (parts 7–9).</p>
+    <h2><span class="lv proj">PROJECT</span>The folder <code>Hyperspectral Project</code></h2>
+    <table><tr><th>file</th><th>what it does</th></tr>
+      <tr><td><code>make_synthetic_cube.py</code></td><td>writes <code>data/synthetic_cube.npz</code>: 128×128 px, 120 bands 400–2500 nm, 4 materials with known abundances and noise per band</td></tr>
+      <tr><td><code>get_hyperspectral_data.py</code></td><td>downloads real benchmark scenes (Indian Pines, Pavia University, Salinas) into <code>data/</code></td></tr>
+      <tr><td><code>hsi_io.py</code></td><td><code>load(name)</code> for every scene, <code>band(wl, nm)</code>, <code>rgb(cube, wl)</code>; creates <code>figures/</code></td></tr>
+      <tr><td><code>hyperspectral_L04_06_linear.py</code></td><td>part 2 — unmixing as least squares, SVD of the cube, regularised unmixing with CG</td></tr>
+      <tr><td><code>hyperspectral_L07_sampling.py</code></td><td>part 3 — band spacing, band width, spectral aliasing, bits</td></tr>
+      <tr><td><code>hyperspectral_L08_destripe.py</code></td><td>part 4 — push-broom stripes and the 2D FFT</td></tr>
+      <tr><td><code>hyperspectral_L09_response.py</code></td><td>part 5 — spectral response and PSF deconvolution</td></tr>
+      <tr><td><code>hyperspectral_L10_noise.py</code></td><td>part 6 — noise per band, along-track spectrum, knee fit</td></tr>
+      <tr><td><code>hyperspectral_L12_bayes.py</code></td><td>parts 7–8 — Bayes classifier, unmixing posterior, coverage</td></tr>
+      <tr><td><code>hyperspectral_L13_mc.py</code></td><td>part 9 — Monte Carlo estimates and importance sampling</td></tr></table>
+    <h2><span class="lv proj">PROJECT</span>The data</h2>
+    <div class="formula" data-name="Linear mixing model of the synthetic scene"><div class="f-head"><span class="t">MODEL</span>Linear mixing model of the synthetic scene<span class="hint">hover the symbols ↓</span></div><div class="tex">\h{ypix}{\mathbf y}=\h{Amat}{A}\,\h{abund}{\boldsymbol\theta}+\mathbf n,\qquad \theta_k\ge0,\ \ \sum_k\theta_k=1,\qquad n_b\sim\mathcal N(0,\sigma_b^2)</div><div class="f-note">Columns of A: endmember spectra of vegetation (red edge at ~715 nm), soil, water (dark), roof (flat). Abundances: smooth random fields through a softmax, plus a river and two buildings. Noise: 0.004 everywhere, up to 0.044 in the water-vapour bands near 1400 and 1900 nm, 0.014 beyond 2350 nm.</div><div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><button data-lang="f90" data-file="" class="">Fortran</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code>from hsi_io import load
+d = load("synthetic")            # or "indian_pines", "paviaU", "salinas"
+cube, wl = d["cube"], d["wavelengths"]          # (128, 128, 120), (120,)</code></pre><pre data-lang="f90" hidden><code>! read the cube written by numpy:  np.asarray(cube, np.float64).tofile("cube.bin")
+real(dp), allocatable :: cube(:,:,:)
+allocate(cube(nb, nx, ny))          ! numpy C order (y, x, b) = Fortran (b, x, y)
+open(10, file="cube.bin", access="stream", form="unformatted"); read(10) cube; close(10)</code></pre></div></div>
+    <table><tr><th>real scene</th><th>sensor</th><th>size</th><th>bands</th><th>classes</th></tr>
+      <tr><td>Indian Pines (Indiana, USA)</td><td>AVIRIS, airborne</td><td>145×145</td><td>200 (400–2500 nm)</td><td>16 crop types</td></tr>
+      <tr><td>Pavia University (Italy)</td><td>ROSIS, airborne</td><td>610×340</td><td>103 (430–860 nm)</td><td>9 urban materials</td></tr>
+      <tr><td>Salinas Valley (California)</td><td>AVIRIS</td><td>512×217</td><td>204</td><td>16 vegetables and soils</td></tr></table>
+    <p>They come from the EHU (University of the Basque Country) archive of hyperspectral remote-sensing scenes. If a download link has moved, download the <code>.mat</code> files from the archive page in a browser and place them in <code>data/</code>. For space-borne data, PRISMA (ASI) and EnMAP (DLR) distribute scenes after free registration.</p>
+    <div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code>cd "Hyperspectral Project"
+python make_synthetic_cube.py          # the scene with known truth
+python get_hyperspectral_data.py       # Indian Pines (6 MB); add paviaU salinas for more
+python hyperspectral_L04_06_linear.py  # then L07, L08, L09, L10, L12, L13: figures go to figures/</code></pre></div>
+    <div class="task"><b>HSI 0 — LOOK BEFORE YOU COMPUTE</b>In the widget, click a vegetation, a water and a roof pixel. At which band does vegetation change most quickly? Why is every spectrum noisy near 1400 and 1900 nm (think of the atmosphere between the sensor and the ground)?</div>
+  </div>
+</section>
+
+<!-- ================================================================== 2 -->
+<section class="lesson" data-title="Part 2 · Linear algebra on the cube" data-short="Linear algebra" data-badge="PROJECT" data-time="50 min" data-level="Project"
+  data-sub="A cube is a matrix (pixels × bands). Unmixing is a least-squares problem, the SVD counts the materials, and a smooth unmixing of the whole image is a sparse system for CG.">
+  <div class="stage" data-widget="linalgcube"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>Each pixel spectrum y (120 bands) is modelled as E θ: four endmember spectra mixed with fractions θ. 16 384 small least-squares problems — or one big one if neighbouring pixels are tied together.</p><p>Above: the singular values of the whitened cube, and how they change with the noise and the number of materials.</p></div>
+    <div class="s-key">Weight the bands by their noise first (divide by σ<sub>b</sub>), then: Cholesky or QR per pixel; SVD to see how many independent spectra there are; CG for the coupled, regularised problem.</div>
+    <ul class="s-learn"><li>The cube as a matrix</li><li>Weighted least squares per pixel</li><li>κ(E) and κ(EᵀE)</li><li>SVD: counting materials above the noise</li><li>Low-rank denoising</li><li>Regularised unmixing with matrix-free PCG</li></ul>
+  </aside>
+  <div class="prose">
+    <a class="hsi-link back" href="../04.%20Direct%20Linear%20Solvers/index.html#s6"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M19 12H5M11 6l-6 6 6 6"/></svg><span><small>THE THEORY · BACK TO THE LESSON</small>Lesson 4.6 · Cholesky and the normal equations</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/></svg></a>
+    <a class="hsi-link back" href="../05.%20Conditioning%20and%20SVD/index.html#s7"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M19 12H5M11 6l-6 6 6 6"/></svg><span><small>THE THEORY · BACK TO THE LESSON</small>Lesson 5.7 · Pseudoinverse and least squares</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/></svg></a>
+    <a class="hsi-link back" href="../06.%20Sparse%20and%20Iterative%20Solvers/index.html#s6"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M19 12H5M11 6l-6 6 6 6"/></svg><span><small>THE THEORY · BACK TO THE LESSON</small>Lesson 6.6 · Preconditioned CG</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/></svg></a>
+    <div class="formula" data-name="Weighted least-squares unmixing"><div class="f-head"><span class="t">MODEL</span>Weighted least-squares unmixing<span class="hint">hover the symbols ↓</span></div><div class="tex">\h{ypix}{\mathbf y}=\h{Amat}{E}\,\h{abund}{\boldsymbol\theta}+\mathbf n,\quad n_b\sim\mathcal N(0,\sigma_b^2);\qquad \hat{\boldsymbol\theta}=\arg\min\|W(\mathbf y-E\boldsymbol\theta)\|_2^2,\ \ W=\mathrm{diag}(1/\sigma_b)</div><div class="f-note">Normal equations (WE)ᵀ(WE)θ = (WE)ᵀWy with one Cholesky of a 4×4 matrix shared by all pixels; or QR / SVD of WE. κ(E) = 76, κ(EᵀE) = 5759: harmless here, so all three agree (rms abundance error 0.0298). Without noise weighting the error is 2.5× larger (0.0735): the noisy water-vapour bands get the same say as the clean ones.</div><div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><button data-lang="f90" data-file="" class="">Fortran</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code>Ew, Yw = E / sig[:, None], Y / sig[:, None]          # whiten the bands
+c = scipy.linalg.cho_factor(Ew.T @ Ew)               # 4 x 4, once
+theta = scipy.linalg.cho_solve(c, Ew.T @ Yw)         # all 16 384 pixels at once</code></pre><pre data-lang="f90" hidden><code>G = matmul(transpose(Ew), Ew)                        ! 4 x 4
+call dpotrf('L', 4, G, 4, info)
+theta = matmul(transpose(Ew), Yw)                    ! 4 x npix right-hand sides
+call dpotrs('L', 4, npix, G, 4, theta, 4, info)</code></pre></div></div>
+    <h3>The SVD counts the materials</h3>
+    <p>Centre the whitened cube (16 384 × 120) and take its SVD (0.25 s). With unit-variance noise, pure noise gives singular values ≈ √N<sub>pix</sub> = 128. Measured: 16 656, 10 301, 5 136, then 138, 138, 138, … — three components above the noise plus the mean: four materials. A rank-3 reconstruction is 6 times closer to the noiseless cube than the data (0.16 σ vs 1 σ): the SVD is a denoiser that knows nothing about the endmembers.</p>
+    <div class="formula" data-name="Spatially regularised unmixing"><div class="f-head"><span class="t">MODEL</span>Spatially regularised unmixing<span class="hint">hover the symbols ↓</span></div><div class="tex">\min_{\Theta}\ \sum_p\|W(\mathbf y_p-E\boldsymbol\theta_p)\|^2+\lambda\sum_{p\sim q}\|\boldsymbol\theta_p-\boldsymbol\theta_q\|^2\ \Rightarrow\ \big(I_N\otimes G+\lambda\,L_{\rm grid}\otimes I_4\big)\,\mathrm{vec}\,\Theta=\mathrm{vec}(E^TW^2Y)</div><div class="f-note">4 × 128 × 128 = 65 536 unknowns, a sparse SPD matrix never built: one product costs a 4×4 multiply per pixel plus a 5-point Laplacian per material. Block-Jacobi preconditioner (G + 4λI)⁻¹ per pixel. With the noise 6× larger: per-pixel error 0.180; λ = 10: 0.055; λ = 50: 0.039 (best); λ = 200: 0.045 (over-smoothed edges). CG at λ = 50: 143 iterations plain, 38 preconditioned, 33 ms.</div><div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code>def mv(v):
+    th = v.reshape(4, H, W)
+    return (np.einsum("ij,jhw-&gt;ihw", G, th) + lam * neg_laplacian(th)).ravel()
+A = scipy.sparse.linalg.LinearOperator((4*H*W, 4*H*W), matvec=mv)
+theta, info = scipy.sparse.linalg.cg(A, rhs.ravel(), M=block_jacobi, rtol=1e-8)</code></pre></div></div>
+    <figure class="fig"><img src="figures/L04_06_fig1.png" alt="Singular values of the cube; vegetation abundance: truth, per-pixel least squares with strong noise, regularised solution"><figcaption>Left: singular values of the whitened cube against the noise level — three plus the mean stand out. Right: vegetation abundance, truth vs per-pixel least squares with 6× noise vs the CG solution with spatial regularisation (λ = 50).</figcaption></figure>
+    <div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="hyperspectral_L04_06_linear.py" class="on">Python</button><span class="fn">hyperspectral_L04_06_linear.py</span><button class="copy">copy</button></div><pre data-lang="py"><code>"""
+hyperspectral_L04_06_linear.py  --  Lectures 4-6 (direct solvers, conditioning/SVD, sparse CG) on the cube.
+
+  Part 1  unmixing every pixel as a least-squares problem  y = E theta + n  (E: 120 bands x 4 endmembers):
+          normal equations + Cholesky, QR, SVD; noise weighting (divide each band by its sigma);
+          condition numbers kappa(E) and kappa(E^T E)
+  Part 2  SVD of the whole cube (pixels x bands, noise-whitened): how many singular values stand above
+          the noise? -&gt; the number of materials; rank-4 reconstruction as a denoiser
+  Part 3  spatially regularised unmixing of the whole image at once:
+              min  sum_p ||W (y_p - E theta_p)||^2 + lambda ||grad theta||^2
+          a sparse SPD system with 4 x 128 x 128 = 65 536 unknowns, solved matrix-free with
+          (block-Jacobi) preconditioned conjugate gradients
+
+Run:  python hyperspectral_L04_06_linear.py       Figure: figures/L04_06_fig1.png
+"""
+import os
+import time
+import numpy as np
+import scipy.linalg as la
+import scipy.sparse.linalg as spla
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+from hsi_io import load, FIG
+
+d = load("synthetic")
+cube, wl, E0, ab_true, sig = d["cube"].astype(float), d["wavelengths"], d["endmembers"], d["abundances"], d["noise_sigma"]
+H, W, B = cube.shape
+E = E0.T                                                    # bands x materials (120 x 4)
+Y = cube.reshape(-1, B).T                                   # bands x pixels
+T = ab_true.reshape(-1, E.shape[1]).T                       # materials x pixels
+rms = lambda a: np.sqrt(np.mean(a ** 2))
+
+# ---------------------------------------------------------------- 1. per-pixel least squares
+Ew = E / sig[:, None]; Yw = Y / sig[:, None]                # whitening: every band in units of its noise
+print("1. unmixing 16 384 pixels, 120 bands, 4 endmembers")
+print(f"   kappa(E) = {np.linalg.cond(E):.1f}, kappa(E^T E) = {np.linalg.cond(E.T @ E):.1f};"
+      f" whitened: kappa(W E) = {np.linalg.cond(Ew):.1f}")
+res = {}
+t0 = time.perf_counter(); c = la.cho_factor(Ew.T @ Ew); th = la.cho_solve(c, Ew.T @ Yw); res["normal eq. + Cholesky"] = (th, time.perf_counter() - t0)
+t0 = time.perf_counter(); Q, R = la.qr(Ew, mode="economic"); th = la.solve_triangular(R, Q.T @ Yw); res["QR"] = (th, time.perf_counter() - t0)
+t0 = time.perf_counter(); th = la.lstsq(Ew, Yw)[0]; res["SVD (lstsq)"] = (th, time.perf_counter() - t0)
+t0 = time.perf_counter(); th = la.lstsq(E, Y)[0]; res["SVD, no noise weighting"] = (th, time.perf_counter() - t0)
+for k, (th, t) in res.items():
+    print(f"   {k:26s}: abundance rms error {rms(th - T):.4f}   ({t * 1e3:6.1f} ms)")
+Fisher = Ew.T @ Ew
+print("   predicted posterior std sqrt(diag((W E)^T (W E))^-1):", np.round(np.sqrt(np.diag(la.inv(Fisher))), 4),
+      " measured:", np.round((res["QR"][0] - T).std(1), 4))
+
+# ---------------------------------------------------------------- 2. SVD of the cube
+X = (Yw - Yw.mean(1, keepdims=True)).T                     # pixels x bands, centred, noise-whitened
+t0 = time.perf_counter(); U, s, Vt = la.svd(X, full_matrices=False); tsvd = time.perf_counter() - t0
+noise_floor = np.sqrt(X.shape[0])                          # a pure unit-variance noise matrix has sigma ~ sqrt(n_pixels)
+above = int(np.sum(s &gt; 1.5 * noise_floor))
+print(f"\n2. SVD of the whitened cube (16 384 x 120) in {tsvd:.2f} s")
+print(f"   first singular values: {np.round(s[:7], 1)}; noise level sqrt(N_pix) = {noise_floor:.1f}")
+print(f"   {above} components stand above 1.5 x the noise level -&gt; {above + 1} materials (the mean removed one dimension)")
+for r in (1, 2, 3, 5, 10):
+    Xr = (U[:, :r] * s[:r]) @ Vt[:r]
+    clean = ((model := (E @ T)) / sig[:, None] - Yw.mean(1, keepdims=True)).T
+    print(f"   rank-{r:2d} reconstruction: rms difference from the noiseless cube {rms(Xr - clean):.3f} (in noise sigmas; raw data: {rms(X - clean):.3f})")
+
+# ---------------------------------------------------------------- 3. spatially regularised unmixing with CG
+boost = 6.0                                                 # make the noise 6x larger: regularisation matters
+rng = np.random.default_rng(2)
+Yn = E @ T + boost * sig[:, None] * rng.standard_normal(Y.shape)
+Ewn = E / (boost * sig[:, None]); Ywn = Yn / (boost * sig[:, None])
+G = Ewn.T @ Ewn                                            # 4 x 4, the same for every pixel
+rhs = Ewn.T @ Ywn                                          # 4 x Npix
+K = E.shape[1]; N = H * W
+
+
+def lap(th):                                               # th: K x H x W -&gt; -Laplacian with Neumann boundaries (graph Laplacian)
+    out = np.zeros_like(th)
+    for ax in (1, 2):
+        dlt = np.diff(th, axis=ax)
+        sl_lo = [slice(None)] * 3; sl_hi = [slice(None)] * 3
+        sl_lo[ax] = slice(0, -1); sl_hi[ax] = slice(1, None)
+        out[tuple(sl_lo)] -= dlt; out[tuple(sl_hi)] += dlt
+    return out
+
+
+def make_op(lam):
+    def mv(v):
+        th = v.reshape(K, H, W)
+        return (np.einsum("ij,jhw-&gt;ihw", G, th) + lam * lap(th)).ravel()
+    return spla.LinearOperator((K * N, K * N), matvec=mv, dtype=float)
+
+
+Ginv = la.inv(G)
+th_ls = (Ginv @ rhs)                                        # per-pixel least squares
+print(f"\n3. noise x {boost:.0f}: per-pixel least squares abundance rms error {rms(th_ls - T):.4f}")
+for lam in (0.0, 1.0, 10.0, 50.0, 200.0):
+    A = make_op(lam)
+    # block-Jacobi preconditioner: (G + 4 lam I)^-1 per pixel (exact for lam = 0)
+    Pinv = la.inv(G + 4 * lam * np.eye(K))
+    M = spla.LinearOperator(A.shape, matvec=lambda v, P=Pinv: (P @ v.reshape(K, N)).ravel(), dtype=float)
+    it = [0]
+    cb = lambda xk: it.__setitem__(0, it[0] + 1)
+    t0 = time.perf_counter(); x, info = spla.cg(A, rhs.ravel(), rtol=1e-8, maxiter=5000, M=M, callback=cb); t = time.perf_counter() - t0
+    it_p = it[0]; it[0] = 0
+    x2, _ = spla.cg(A, rhs.ravel(), rtol=1e-8, maxiter=5000, callback=cb); it_n = it[0]
+    print(f"   lambda = {lam:6.1f}: rms error {rms(x.reshape(K, N) - T):.4f};  CG iterations {it_n:4d} plain, {it_p:4d} block-Jacobi ({t * 1e3:.0f} ms)")
+    if lam == 50.0:
+        th_reg = x.reshape(K, H, W)
+
+fig, ax = plt.subplots(1, 4, figsize=(16, 3.8))
+ax[0].semilogy(np.arange(1, 21), s[:20], "o-"); ax[0].axhline(noise_floor, color="k", ls=":", label="noise level")
+ax[0].set(xlabel="index i", ylabel="singular value", title="SVD of the whitened cube"); ax[0].legend()
+ax[1].imshow(T[0].reshape(H, W), vmin=0, vmax=1, cmap="Greens"); ax[1].set_title("vegetation, truth")
+ax[2].imshow(th_ls[0].reshape(H, W), vmin=0, vmax=1, cmap="Greens"); ax[2].set_title(f"per-pixel LS (noise x{boost:.0f})")
+ax[3].imshow(th_reg[0], vmin=0, vmax=1, cmap="Greens"); ax[3].set_title("regularised, CG, lambda = 50")
+for a in ax[1:]: a.set_xticks([]); a.set_yticks([])
+fig.tight_layout(); fig.savefig(os.path.join(FIG, "L04_06_fig1.png"), dpi=120)
+print("saved figures/L04_06_fig1.png")</code></pre></div>
+    <div class="task"><b>HSI 4.1 — WHICH SOLVER?</b>Time normal equations, QR and SVD for the 16 384 pixels. Then make two endmembers almost equal (E[:,1] = E[:,0] + 0.001·noise): what happens to κ(E), and which solver still gives sensible abundances?</div>
+    <div class="task"><b>HSI 5.1 — HOW MANY MATERIALS IN A REAL SCENE?</b>Whiten Indian Pines with σ̂ from part 6 and plot its singular values. Where is the elbow? Compare with the 16 classes.</div>
+    <div class="task"><b>HSI 6.1 — CHOOSING λ</b>Plot the abundance error and the data residual against λ (L-curve). Which λ would you pick without knowing the truth?</div>
+    <div class="task"><b>HSI 6.2 — SUM TO ONE</b>Add the constraint Σθ = 1 as a heavily weighted extra row of E. How do the CG iterations and the errors change?</div>
+  </div>
+</section>
+
+<!-- ================================================================== 2 -->
+<section class="lesson" data-title="Part 3 · Sampling the spectrum" data-short="Sampling" data-badge="PROJECT" data-time="40 min" data-level="Project"
+  data-sub="A band integrates the spectrum over its response function and is sampled every Δλ: anti-aliasing, spectral aliasing and quantisation along wavelength.">
+  <div class="stage" data-widget="hsisample"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>Everything in Lesson 7 happens along the wavelength axis too: the spectrum is a continuous signal, the band centres are the samples, the band response is the anti-alias filter.</p></div>
+    <div class="s-key">If the bands are narrower than their spacing (FWHM &lt; Δλ), features narrower than Δλ are recorded or missed depending on where the band grid falls: spectral aliasing.</div>
+    <ul class="s-learn"><li>Band = SRF convolution + sampling</li><li>Spacing vs FWHM</li><li>Grid-phase test for aliasing</li><li>Reconstruction error</li><li>Bits vs sensor noise</li></ul>
+  </aside>
+  <div class="prose">
+    <a class="hsi-link back" href="../07.%20Discrete%20Signal%20Analysis/index.html#s3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M19 12H5M11 6l-6 6 6 6"/></svg><span><small>THE THEORY · BACK TO THE LESSON</small>Lesson 7.3 · Sampling, Nyquist and aliasing</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/></svg></a>
+    <div class="formula" data-name="What a band measures"><div class="f-head"><span class="t">MODEL</span>What a band measures<span class="hint">hover the symbols ↓</span></div><div class="tex">y_j=\frac{\int \h{srf}{R_j(\lambda)}\,\rho(\lambda)\,d\lambda}{\int R_j(\lambda)\,d\lambda},\qquad R_j(\lambda)=\exp\!\Big[-\frac{(\lambda-\lambda_0-j\,\h{dlam}{\Delta\lambda})^2}{2s^2}\Big],\quad s=\frac{\h{fwhm}{\rm FWHM}}{2.355}</div><div class="f-note">The spectrum ρ(λ) is convolved with the response R and sampled every Δλ. A Gaussian SRF with FWHM ≳ Δλ suppresses detail finer than the sampling — the role of the anti-alias filter of Lesson 7.</div><div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><button data-lang="f90" data-file="" class="">Fortran</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code>W = np.exp(-0.5*((lam[None, :] - centres[:, None]) / s)**2)
+bands = (W * spectrum).sum(1) / W.sum(1)</code></pre><pre data-lang="f90" hidden><code>do j = 1, nb
+   w = exp(-0.5_dp*((lam - centres(j))/s)**2)
+   bands(j) = sum(w*spectrum)/sum(w)
+end do</code></pre></div></div>
+    <h3>Results (hyperspectral_L07_sampling.py)</h3>
+    <table><tr><th>sensor</th><th>O2-A depth over 10 grid phases (truth 0.60)</th><th>reconstruction rms</th></tr>
+      <tr><td>AVIRIS-like: Δλ 10 nm, FWHM 10 nm</td><td>0.11 – 0.20 (smoothed, stable)</td><td>0.0074</td></tr>
+      <tr><td>undersampled: Δλ 30 nm, FWHM 4 nm</td><td>0.00 – 0.40 (aliased: depends on the phase)</td><td>0.0187</td></tr>
+      <tr><td>multispectral: Δλ 100 nm, FWHM 60 nm</td><td>0.01 – 0.04 (line invisible)</td><td>0.0332</td></tr></table>
+    <figure class="fig"><img src="figures/L07_fig1.png" alt="Three sensors observing the red edge and the O2-A line; measured depth against the band-grid shift"><figcaption>Left: the red edge and the O2-A line seen by three sensors. Right: the measured line depth when the band grid is shifted by a fraction of the spacing. The undersampled sensor swings from 0 to 0.40.</figcaption></figure>
+    <p><b>Quantisation</b>: rounding reflectance in [0, 1] to B bits adds Δ/√12 = 2<sup>−B</sup>/√12. With 6 bits (4.5×10⁻³) this is as large as the sensor noise (4×10⁻³); with 8 bits it is 1.1×10⁻³, negligible. Real sensors digitise radiance with 12–16 bits because bright snow and dark water must fit in the same range.</p>
+    <div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="hyperspectral_L07_sampling.py" class="on">Python</button><span class="fn">hyperspectral_L07_sampling.py</span><button class="copy">copy</button></div><pre data-lang="py"><code>"""
+hyperspectral_L07_sampling.py  --  Lecture 7 (sampling, quantisation, aliasing) applied to spectra.
+
+A hyperspectral sensor SAMPLES a continuous spectrum: each band integrates the light over its
+spectral response function (SRF, ~Gaussian of width FWHM) centred every `spacing` nm.
+That is exactly sampling + an anti-alias filter, along wavelength instead of time.
+
+  Part 1  a 1-nm "true" spectrum (vegetation + narrow O2-A line at 760 nm + a 2200-nm mineral dip)
+          observed by three sensors: AVIRIS-like (10 nm / FWHM 10), undersampled (30 nm / FWHM 4)
+          and multispectral (100 nm / FWHM 60).
+  Part 2  "sampling phase": shift the band grid by a fraction of the spacing. If FWHM &lt;&lt; spacing
+          the measured depth of a narrow line depends on where the bands fall: spectral aliasing.
+  Part 3  reconstruction error (linear interpolation back to 1 nm) for each sensor.
+  Part 4  quantisation: bits per band against the sensor noise of the synthetic cube.
+
+Run:  python hyperspectral_L07_sampling.py        Figures: figures/L07_fig1.png
+"""
+import os
+import numpy as np
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+from hsi_io import load, FIG
+
+# ---------------------------------------------------------------- 1. the true spectrum, 1 nm
+lam = np.arange(400.0, 2501.0, 1.0)
+g = lambda x, m, s: np.exp(-0.5 * ((x - m) / s) ** 2)
+sig = lambda x, x0, k: 1 / (1 + np.exp(-(x - x0) / k))
+truth = ((0.04 + 0.06 * g(lam, 550, 35) + 0.46 * sig(lam, 715, 12) - 0.20 * sig(lam, 1300, 80)
+          - 0.08 * sig(lam, 2000, 90)) * (1 - 0.55 * g(lam, 1450, 45) - 0.75 * g(lam, 1940, 60))
+         * (1 - 0.25 * g(lam, 2200, 6)))           # narrow mineral feature
+no_line = truth.copy()
+truth = truth * (1 - 0.6 * g(lam, 760, 1.5))       # O2-A absorption: ~3.5 nm wide
+
+
+def observe(centres, fwhm, spec=None):
+    """Each band = SRF-weighted mean of the spectrum (a convolution, then sampling)."""
+    spec = truth if spec is None else spec
+    s = fwhm / 2.3548
+    W = g(lam[None, :], centres[:, None], s)
+    return (W * spec).sum(1) / W.sum(1)
+
+
+def line_depth(centres, fwhm):
+    """Largest fractional dip that the O2 line causes in any band: 1 - band / same band without the line."""
+    return np.max(1 - observe(centres, fwhm) / observe(centres, fwhm, no_line))
+
+
+sensors = {"AVIRIS-like  10 nm, FWHM 10": (10.0, 10.0),
+           "undersampled 30 nm, FWHM 4 ": (30.0, 4.0),
+           "multispectral 100 nm, FWHM 60": (100.0, 60.0)}
+
+print("1-3. three sensors looking at the same 1-nm spectrum")
+print(f"   true O2-A depth at 760 nm: {np.max(1 - truth / no_line):.3f}")
+fig, ax = plt.subplots(1, 2, figsize=(13, 4.5))
+ax[0].plot(lam, truth, "k", lw=0.8, label="truth, 1 nm")
+for (name, (sp, fw)), col in zip(sensors.items(), ["C0", "C3", "C2"]):
+    depths = []
+    for phase in np.linspace(0, 1, 11)[:-1]:          # shift the band grid
+        c = np.arange(400 + phase * sp, 2500, sp)
+        depths.append(line_depth(c, fw))
+    c = np.arange(400, 2500, sp); v = observe(c, fw)
+    rec = np.interp(lam, c, v)
+    rms = np.sqrt(np.mean((rec - truth)[(lam &gt; 450) &amp; (lam &lt; 2450)] ** 2))
+    print(f"   {name}: O2 depth {min(depths):.3f} .. {max(depths):.3f} over 10 grid phases,"
+          f"  reconstruction rms {rms:.4f}")
+    ax[0].plot(c, v, "o-", ms=3, lw=1, color=col, label=name)
+    ax[1].plot(np.linspace(0, 1, 11)[:-1], depths, "o-", color=col, label=name)
+ax[0].set(xlabel="wavelength [nm]", ylabel="reflectance", xlim=(650, 900), title="red edge and O2-A line")
+ax[0].legend(fontsize=7)
+ax[1].axhline(np.max(1 - truth / no_line), color="k", ls="--", label="true depth")
+ax[1].set(xlabel="band-grid shift [fraction of the spacing]", ylabel="measured O2-A depth",
+          title="spectral aliasing: the answer depends on where the bands fall")
+ax[1].legend(fontsize=7)
+fig.tight_layout(); fig.savefig(os.path.join(FIG, "L07_fig1.png"), dpi=120)
+
+# ---------------------------------------------------------------- 4. quantisation vs sensor noise
+d = load("synthetic")
+sigma_min = d["noise_sigma"].min()
+print("\n4. quantisation of reflectance in [0, 1] with B bits: rms error Delta/sqrt(12)")
+for B in (6, 8, 10, 12, 14):
+    delta = 1 / 2 ** B
+    q = delta * np.round(d["cube"][..., 30] / delta)
+    meas = np.std(q - d["cube"][..., 30])
+    print(f"   B = {B:2d}: Delta/sqrt(12) = {delta / np.sqrt(12):.2e}  (measured {meas:.2e});"
+          f"  vs smallest sensor noise {sigma_min:.1e}: {'negligible' if delta / np.sqrt(12) &lt; 0.3 * sigma_min else 'NOT negligible'}")
+print("   Real sensors digitise RADIANCE with 12-16 bits: bright snow and dark water must both fit.")
+print("saved L07_fig1.png")</code></pre></div>
+    <div class="task"><b>HSI 7.1 — DESIGN A SENSOR</b>With the widget, find the largest band spacing for which the measured O2-A depth changes by less than 20% when the grid phase moves, with FWHM = spacing. Then with FWHM = spacing/2.</div>
+    <div class="task"><b>HSI 7.2 — NYQUIST IN WAVELENGTH</b>The red edge rises over ≈ 40 nm. Using the sampling theorem, estimate the band spacing needed to reconstruct it, then check with the reconstruction rms.</div>
+    <div class="task"><b>HSI 7.3 — REAL BANDS</b>Indian Pines has 200 bands over 400–2500 nm (≈ 10 nm). Which of the features of the synthetic endmembers would it resolve? Which would Sentinel-2 (13 bands) miss?</div>
+  </div>
+</section>
+
+<!-- ================================================================== 3 -->
+<section class="lesson" data-title="Part 4 · 2D FFT: destriping a push-broom band" data-short="Destriping" data-badge="PROJECT" data-time="40 min" data-level="Project"
+  data-sub="One detector per column: gain differences become vertical stripes, which live on a single line of the 2D spectrum.">
+  <div class="stage" data-widget="destripe"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>A push-broom imager (PRISMA, EnMAP, AVIRIS-NG) has a line of detectors across the track and builds the image row by row as the platform moves. A detector a bit brighter than its neighbours draws a stripe down the whole image.</p></div>
+    <div class="s-key">A pattern that depends on x only has its 2D spectrum on the v = 0 axis. Removing that line (except the lowest |u|) is the column-mean destriper written in Fourier space.</div>
+    <ul class="s-learn"><li>Push-broom geometry</li><li>Stripes in the 2D spectrum</li><li>Notch on v = 0 vs column means</li><li>Periodic module patterns</li><li>Errors on every band</li></ul>
+  </aside>
+  <div class="prose">
+    <a class="hsi-link back" href="../08.%20The%20FFT/index.html#s6"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M19 12H5M11 6l-6 6 6 6"/></svg><span><small>THE THEORY · BACK TO THE LESSON</small>Lesson 8.6 · Magnitude, phase and notch filtering</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/></svg></a>
+    <div class="formula" data-name="Stripes in the 2D spectrum"><div class="f-head"><span class="t">RESULT</span>Stripes in the 2D spectrum<span class="hint">hover the symbols ↓</span></div><div class="tex">f(x,y)+\h{stripe}{s(x)}\ \ \Longrightarrow\ \ \h{Fuv}{F(u,v)}+N_y\,S(u)\,\delta_{v,0}</div><div class="f-note">A function of x alone transforms into a line on v = 0: its 2D DFT is the 1D DFT of s times N<sub>y</sub> on that row and zero elsewhere. Zeroing F(u, 0) for |u| &gt; keep subtracts from each column its mean minus the low-frequency part of the column means.</div><div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><button data-lang="f90" data-file="" class="">Fortran</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code>F = np.fft.fft2(img)
+u = np.fft.fftfreq(nx) * nx
+F[0, np.abs(u) &gt; keep] = 0            # the v = 0 row of the unshifted spectrum
+clean = np.real(np.fft.ifft2(F))</code></pre><pre data-lang="f90" hidden><code>call fftw_execute_dft(pf, img_c, F)
+do i = 1, nx                          ! F(i, j): i along x (u), j along y (v); j = 1 is v = 0
+   if (abs(u(i)) &gt; keep) F(i, 1) = 0
+end do
+call fftw_execute_dft(pb, F, img_c);  img = real(img_c)/(nx*ny)</code></pre></div></div>
+    <h3>Results (hyperspectral_L08_destripe.py, 650 nm, stripe rms 0.021, sensor noise 0.004)</h3>
+    <table><tr><th>destriper</th><th>rms error vs the clean band</th></tr>
+      <tr><td>none</td><td>0.0211</td></tr>
+      <tr><td>notch on v = 0, keep |u| ≤ 8</td><td>0.0072</td></tr>
+      <tr><td>column mean − smoothed column mean (15 px)</td><td>0.0078</td></tr>
+      <tr><td>periodic notch only (8-column module)</td><td>0.0157</td></tr></table>
+    <p>Over all 120 bands the notch leaves a median error of 0.0066, close to the sensor noise. The remaining error is the slow random part of the stripes (|u| ≤ 8), indistinguishable from real structure that varies only across the track.</p>
+    <figure class="fig"><img src="figures/L08_fig1.png" alt="Striped band, its 2D spectrum with a bright horizontal line, the destriped band and the error over all bands"><figcaption>The stripes concentrate on the v = 0 line (bright horizontal axis of the spectrum). After the notch the image is clean except for a slow residual; the right panel shows the error of both destripers in every band.</figcaption></figure>
+    <div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="hyperspectral_L08_destripe.py" class="on">Python</button><span class="fn">hyperspectral_L08_destripe.py</span><button class="copy">copy</button></div><pre data-lang="py"><code>"""
+hyperspectral_L08_destripe.py  --  Lecture 8 (2D FFT, notch filters) applied to a push-broom band.
+
+A push-broom imager has one detector per image COLUMN. Unequal gains/offsets between detectors
+give vertical stripes: a pattern that depends on x only, constant along y.
+In the 2D spectrum a function of x only lives on the line v = 0 (the u axis): a notch along that
+line (keeping the lowest |u|, which carry real large-scale structure) removes the stripes.
+
+  Part 1  add column offsets (random + a periodic 8-column module pattern) to the 650-nm band
+  Part 2  2D FFT: where does the stripe energy go?
+  Part 3  three destripers: notch on v = 0, column-mean subtraction, and their rms errors
+  Part 4  the same on every band: rms error before/after, worst band
+
+Run:  python hyperspectral_L08_destripe.py         Figures: figures/L08_fig1.png
+"""
+import os
+import numpy as np
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+from scipy.ndimage import uniform_filter1d
+from hsi_io import load, band, FIG
+
+d = load("synthetic")
+cube, wl = d["cube"].astype(float), d["wavelengths"]
+H, W, B = cube.shape
+rng = np.random.default_rng(3)
+cols = np.arange(W)
+stripe = 0.015 * rng.standard_normal(W) + 0.02 * np.cos(2 * np.pi * cols / 8)   # per-column offset
+
+
+def notch_v0(img, keep=8, width=0.3):
+    """Suppress the v = 0 line of the 2D spectrum except |u| &lt;= keep (Gaussian in v, both signs)."""
+    F = np.fft.fft2(img)
+    v = np.fft.fftfreq(img.shape[0]) * img.shape[0]          # cycles per image, rows
+    u = np.fft.fftfreq(img.shape[1]) * img.shape[1]          # columns
+    Hn = 1 - np.exp(-v[:, None] ** 2 / (2 * width ** 2)) * (np.abs(u[None, :]) &gt; keep)
+    return np.real(np.fft.ifft2(F * Hn))
+
+
+def notch_periodic(img, period=8, width=0.3):
+    """Remove only the periodic module pattern: spikes at u = +-k W/period on the v = 0 line."""
+    F = np.fft.fft2(img)
+    v = np.fft.fftfreq(img.shape[0]) * img.shape[0]
+    u = np.fft.fftfreq(img.shape[1]) * img.shape[1]
+    Hn = np.ones(F.shape)
+    for u0 in np.arange(1, period) * img.shape[1] / period:
+        for s in (u0, -u0):
+            Hn *= 1 - np.exp(-(v[:, None] ** 2 + (u[None, :] - s) ** 2) / (2 * width ** 2))
+    return np.real(np.fft.ifft2(F * Hn))
+
+
+def column_mean(img, smooth=15):
+    """Classic destriper: subtract each column's mean minus a smoothed version of the column means."""
+    m = img.mean(0)
+    return img - (m - uniform_filter1d(m, smooth, mode="reflect"))[None, :]
+
+
+rms = lambda a: np.sqrt(np.mean(a ** 2))
+b = band(wl, 650)
+clean = cube[..., b]
+striped = clean + stripe[None, :]
+F = np.fft.fftshift(np.abs(np.fft.fft2(striped - striped.mean())))
+F0 = np.fft.fftshift(np.abs(np.fft.fft2(clean - clean.mean())))
+e_line = (F[H // 2, :] ** 2).sum() / (F ** 2).sum()
+e_line0 = (F0[H // 2, :] ** 2).sum() / (F0 ** 2).sum()
+print("1-2. 650-nm band with column stripes")
+print(f"   fraction of spectral power on the v = 0 line: clean {e_line0:.3f}, striped {e_line:.3f}")
+outs = {"striped": striped, "notch v=0, |u|&gt;8": notch_v0(striped), "column mean": column_mean(striped),
+        "periodic notch": notch_periodic(striped)}
+print("3. rms error against the clean band (noise sigma there "
+      f"{d['noise_sigma'][b]:.4f}, stripe rms {rms(stripe):.4f})")
+for k, v in outs.items():
+    print(f"   {k:16s}: {rms(v - clean):.4f}")
+
+print("   the v = 0 notch and the column-mean destriper are the same operation (one in Fourier space):")
+print("   both remove every column pattern above |u| ~ 8; the periodic notch removes only the module pattern.")
+print("4. every band")
+before = np.array([rms(stripe) for _ in range(B)])
+after_n = np.array([rms(notch_v0(cube[..., j] + stripe[None, :]) - cube[..., j]) for j in range(B)])
+after_c = np.array([rms(column_mean(cube[..., j] + stripe[None, :]) - cube[..., j]) for j in range(B)])
+print(f"   notch: median {np.median(after_n):.4f}, worst {after_n.max():.4f} at {wl[after_n.argmax()]:.0f} nm;"
+      f"  column mean: median {np.median(after_c):.4f}")
+
+fig, ax = plt.subplots(1, 4, figsize=(16, 4))
+lo, hi = np.percentile(clean, (1, 99))
+ax[0].imshow(striped, cmap="gray", vmin=lo, vmax=hi); ax[0].set_title("650 nm, striped")
+ax[1].imshow(np.log10(F + 1e-6), cmap="magma", extent=(-W / 2, W / 2, -H / 2, H / 2))
+ax[1].set_title("log |F|: stripes on the v = 0 line"); ax[1].set_xlabel("u"); ax[1].set_ylabel("v")
+ax[2].imshow(outs["notch v=0, |u|&gt;8"], cmap="gray", vmin=lo, vmax=hi); ax[2].set_title("after the notch")
+ax[3].plot(wl, after_n, label="notch"); ax[3].plot(wl, after_c, label="column mean")
+ax[3].plot(wl, d["noise_sigma"], "k:", label="sensor noise"); ax[3].axhline(rms(stripe), color="r", ls="--", label="stripes")
+ax[3].set(xlabel="wavelength [nm]", ylabel="rms error", yscale="log", title="every band"); ax[3].legend(fontsize=7)
+fig.tight_layout(); fig.savefig(os.path.join(FIG, "L08_fig1.png"), dpi=120)
+print("saved L08_fig1.png")</code></pre></div>
+    <div class="task"><b>HSI 8.1 — WHAT DOES KEEP DO?</b>Plot the rms error against keep = 0 … 32. Explain the minimum: what is removed for small keep, what is left for large keep?</div>
+    <div class="task"><b>HSI 8.2 — MULTIPLICATIVE STRIPES</b>Real stripes are gains: y = g(x)·f. Take the logarithm of the band, destripe, exponentiate. Compare with destriping the band directly.</div>
+    <div class="task"><b>HSI 8.3 — REAL SCENE</b>Look at |F| of a few bands of Indian Pines near 1400 nm. Are there lines on the axes? Are they stripes, or the image edges (apodise first)?</div>
+  </div>
+</section>
+
+<!-- ================================================================== 4 -->
+<section class="lesson" data-title="Part 5 · Convolution: the sensor response" data-short="Response" data-badge="PROJECT" data-time="40 min" data-level="Project"
+  data-sub="Every measurement is blurred twice: along wavelength by the band response, in space by the point-spread function. Model one, undo the other.">
+  <div class="stage" data-widget="srfpsf"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>To compare a laboratory spectrum (1 nm) with a sensor spectrum, convolve the library spectrum with the SRF of each band. To sharpen an image, deconvolve the PSF — carefully.</p></div>
+    <div class="s-key">Forward modelling (convolve the model) is always safe; inversion (deconvolve the data) needs regularisation. Wiener reads the regularisation from the data.</div>
+    <ul class="s-learn"><li>SRF convolution of a library spectrum</li><li>Boundary choice at the ends of the range</li><li>PSF blur of a band</li><li>Inverse, Tikhonov, Wiener</li><li>Noise floor from the data</li></ul>
+  </aside>
+  <div class="prose">
+    <a class="hsi-link back" href="../09.%20Convolution%20and%20Correlation/index.html#s5"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M19 12H5M11 6l-6 6 6 6"/></svg><span><small>THE THEORY · BACK TO THE LESSON</small>Lesson 9.5 · Deconvolution and the Wiener filter</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/></svg></a>
+    <div class="formula" data-name="Two convolutions"><div class="f-head"><span class="t">MODEL</span>Two convolutions<span class="hint">hover the symbols ↓</span></div><div class="tex">y_j(x)=\big[(\h{srf}{R_j}*_\lambda\rho)\big](x)\ *_{x}\ \mathrm{PSF}(x)+n,\qquad \hat X=\frac{\Phi}{H}\,Y,\ \ \Phi=\frac{|Y|^2-\hat S_n}{|Y|^2}</div><div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><button data-lang="f90" data-file="" class="">Fortran</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code>k = np.exp(-0.5*(np.arange(-30, 31)/s)**2); k /= k.sum()
+conv = np.convolve(np.pad(spec, 30, mode="reflect"), k, mode="valid")
+Hk = np.exp(-2*np.pi**2*sig_psf**2*(fx**2 + fy**2))       # Gaussian PSF in Fourier space
+xhat = np.real(np.fft.ifft2(Phi * np.fft.fft2(y) / Hk))</code></pre><pre data-lang="f90" hidden><code>! spectral: overlap-save from Lesson 9 with a centred kernel (m_minus = 30)
+call overlap_save(spec_padded, k, 512, 30, conv)
+! spatial: Xk = phi*Yk/Hk with a 2D FFTW plan</code></pre></div></div>
+    <h3>Results (hyperspectral_L09_response.py)</h3>
+    <ul>
+      <li>SRF of FWHM 10 nm: FFT and <code>np.convolve</code> agree to 4×10⁻¹⁶; the O2-A dip drops from 0.59 (1 nm) to 0.17. Zero vs reflect boundary differ by 0.018 in the first 30 nm, not at all inside.</li>
+      <li>860-nm band, Gaussian PSF σ = 1.5 px, noise 0.003: rms error blurred 0.0176, plain inverse 3×10⁵, best Tikhonov 0.0130 (needs the truth), Wiener from the data 0.0129. Noise floor read from |Y|²: 8.9×10⁻⁶ (true 9.0×10⁻⁶).</li>
+    </ul>
+    <figure class="fig"><img src="figures/L09_fig1.png" alt="SRF convolution of the O2 line, blurred band, Wiener-deconvolved band and the Tikhonov error curve"><figcaption>Left: the spectral response smooths the O2-A line. Centre: blurred and Wiener-restored 860-nm band. Right: Tikhonov error against λ, with the Wiener error (green) at its minimum without knowing the truth.</figcaption></figure>
+    <div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="hyperspectral_L09_response.py" class="on">Python</button><span class="fn">hyperspectral_L09_response.py</span><button class="copy">copy</button></div><pre data-lang="py"><code>"""
+hyperspectral_L09_response.py  --  Lecture 9 (convolution, deconvolution) applied to a cube.
+
+Two convolutions blur every hyperspectral measurement:
+  * along WAVELENGTH, the spectral response function (SRF) of each band;
+  * in SPACE, the point-spread function (PSF) of the optics and the detector.
+
+  Part 1  spectral: a 1-nm spectrum convolved with a Gaussian SRF (FWHM 10 nm) by np.convolve and
+          by FFT with zero padding; boundary choice (zero vs reflect) at the ends of the range.
+  Part 2  spatial: the 860-nm band blurred by a Gaussian PSF (sigma 1.5 px) plus noise,
+          then deconvolved: plain inverse, best Tikhonov lambda (needs the truth),
+          and Wiener with the noise floor read from the data.
+
+Run:  python hyperspectral_L09_response.py        Figures: figures/L09_fig1.png
+"""
+import os
+import numpy as np
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+from scipy.fft import next_fast_len
+from hsi_io import load, band, FIG
+
+g = lambda x, m, s: np.exp(-0.5 * ((x - m) / s) ** 2)
+rms = lambda a: np.sqrt(np.mean(a ** 2))
+
+# ---------------------------------------------------------------- 1. spectral response
+lam = np.arange(400.0, 2501.0, 1.0)
+d = load("synthetic")
+spec = np.interp(lam, d["wavelengths"], d["endmembers"][0]) * (1 - 0.6 * g(lam, 760, 1.5))
+fwhm = 10.0; s = fwhm / 2.3548
+k = g(np.arange(-30, 31), 0, s); k /= k.sum()                 # centred kernel, M = 61, m+ = m- = 30
+M = k.size; m = (M - 1) // 2
+direct = np.convolve(spec, k, mode="same")                    # zero boundary
+nfft = next_fast_len(spec.size + M - 1)
+fft = np.fft.irfft(np.fft.rfft(spec, nfft) * np.fft.rfft(k, nfft), nfft)[m:m + spec.size]
+padded = np.pad(spec, m, mode="reflect")
+refl = np.convolve(padded, k, mode="valid")
+print("1. SRF convolution (FWHM 10 nm), 2101 samples, kernel M = 61")
+print(f"   FFT vs np.convolve (both zero boundary): max diff {np.abs(fft - direct).max():.1e}")
+print(f"   zero vs reflect boundary: differ by {np.abs(direct - refl)[:m].max():.3f} in the first {m} nm,"
+      f" {np.abs(direct - refl)[m:-m].max():.1e} inside")
+print(f"   O2-A dip: {1 - spec[360] / np.interp(760, [740, 780], spec[[340, 380]]):.2f} at 1 nm,"
+      f" {1 - refl[360] / np.interp(760, [740, 780], refl[[340, 380]]):.2f} after the SRF")
+
+# ---------------------------------------------------------------- 2. spatial PSF and deconvolution
+b = band(d["wavelengths"], 860)
+x = d["cube"][..., b].astype(float)
+H, W = x.shape
+fy, fx = np.fft.fftfreq(H)[:, None], np.fft.fftfreq(W)[None, :]
+sig_psf = 1.5
+Hk = np.exp(-2 * np.pi ** 2 * sig_psf ** 2 * (fx ** 2 + fy ** 2))     # transform of a Gaussian PSF
+rng = np.random.default_rng(1)
+noise = 0.003
+y = np.real(np.fft.ifft2(np.fft.fft2(x) * Hk)) + noise * rng.standard_normal(x.shape)
+Y = np.fft.fft2(y)
+inv = np.real(np.fft.ifft2(Y / Hk))
+lams = 10.0 ** np.arange(-8, 0.01, 0.25)
+errs = [rms(np.real(np.fft.ifft2(np.conj(Hk) * Y / (np.abs(Hk) ** 2 + l))) - x) for l in lams]
+# Wiener: radially averaged |Y|^2, noise floor from the outer frequencies, cutoff where the signal sinks
+P = np.abs(Y) ** 2 / (H * W)
+r = np.sqrt(fx ** 2 + fy ** 2)
+edges = np.linspace(0, r.max(), 40)
+idx = np.digitize(r, edges) - 1
+Prad = np.array([P[idx == i].mean() for i in range(len(edges) - 1)])
+Sn = np.median(P[r &gt; 0.4]) / np.log(2)                 # median of an exponential = ln2 x mean
+rc = edges[np.argmax(Prad &lt; 2 * Sn)]
+Phi = np.clip((np.interp(r, 0.5 * (edges[1:] + edges[:-1]), Prad) - Sn)
+              / np.interp(r, 0.5 * (edges[1:] + edges[:-1]), Prad), 0, 1) * (r &lt; rc)
+wien = np.real(np.fft.ifft2(Phi * Y / Hk))
+print("\n2. 860-nm band, Gaussian PSF sigma 1.5 px, noise 0.003")
+print(f"   rms error: blurred {rms(y - x):.4f}, plain inverse {rms(inv - x):.1e},"
+      f" best Tikhonov {min(errs):.4f} (lambda 1e{np.log10(lams[int(np.argmin(errs))]):.2f}),"
+      f" Wiener from the data {rms(wien - x):.4f}")
+print(f"   noise floor read from |Y|^2: {Sn:.2e} (true {noise ** 2:.2e}); cutoff at {rc:.2f} cycles/px")
+
+fig, ax = plt.subplots(1, 4, figsize=(16, 4))
+ax[0].plot(lam, spec, "k", lw=0.8, label="1 nm"); ax[0].plot(lam, refl, "C3", label="SRF, FWHM 10 nm")
+ax[0].set(xlim=(680, 820), xlabel="wavelength [nm]", title="spectral response"); ax[0].legend(fontsize=8)
+lo, hi = np.percentile(x, (1, 99))
+for a, im, t in zip(ax[1:3], (y, wien), ("blurred + noise", "Wiener from the data")):
+    a.imshow(im, cmap="gray", vmin=lo, vmax=hi); a.set_title(t)
+ax[3].loglog(lams, errs, "o-", ms=3, label="Tikhonov"); ax[3].axhline(rms(wien - x), color="C2", label="Wiener")
+ax[3].axhline(rms(y - x), color="k", ls=":", label="blurred"); ax[3].set(xlabel="lambda", ylabel="rms error"); ax[3].legend(fontsize=8)
+fig.tight_layout(); fig.savefig(os.path.join(FIG, "L09_fig1.png"), dpi=120)
+print("saved L09_fig1.png")</code></pre></div>
+    <div class="task"><b>HSI 9.1 — LIBRARY TO SENSOR</b>Convolve the 1-nm vegetation spectrum with the SRFs of the AVIRIS-like sensor and compare with the synthetic endmember. Where is the difference largest?</div>
+    <div class="task"><b>HSI 9.2 — DECONVOLVE EVERY BAND</b>Apply the Wiener filter band by band. Which bands gain most? Relate it to the noise per band of part 6.</div>
+    <div class="task"><b>HSI 9.3 — WHERE THE PSF HURTS</b>Unmix (part 8) the blurred and the restored cube. Where do the abundance errors change: inside fields, or along the river and building edges?</div>
+  </div>
+</section>
+
+<!-- ================================================================== 5 -->
+<section class="lesson" data-title="Part 6 · Noise spectra of a cube" data-short="Noise" data-badge="PROJECT" data-time="45 min" data-level="Project"
+  data-sub="Every later step needs σ of each band. Estimate it from the data, then look at the noise along the track: white, or a 1/f drift with a knee?">
+  <div class="stage" data-widget="bandnoise"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>The Bayes classifier, the unmixing posterior and the Monte Carlo error bars all use σ<sub>b</sub>. On real data nobody gives it to you.</p></div>
+    <div class="s-key">The scene is smooth from one pixel to the next, the noise is not: differences of neighbours isolate the noise. Along the track, a Welch spectrum with χ² bands shows whether averaging rows will help.</div>
+    <ul class="s-learn"><li>Shift-difference estimators</li><li>Robust scale: the MAD</li><li>SNR per band, bad bands</li><li>Along-track Welch with χ² band</li><li>Whittle fit of the drift</li></ul>
+  </aside>
+  <div class="prose">
+    <a class="hsi-link back" href="../10.%20Spectral%20Estimation/index.html#s6"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M19 12H5M11 6l-6 6 6 6"/></svg><span><small>THE THEORY · BACK TO THE LESSON</small>Lesson 10.6 · Coloured noise and the 1/f knee</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/></svg></a>
+    <div class="formula" data-name="Noise from neighbour differences"><div class="f-head"><span class="t">ESTIMATOR</span>Noise from neighbour differences<span class="hint">hover the symbols ↓</span></div><div class="tex">\h{sighat}{\hat\sigma_b}=\frac{1.4826\ \mathrm{MAD}\big(x_{i,j+1}-2x_{i,j}+x_{i,j-1}\big)}{\sqrt6}</div><div class="f-note">The second difference has variance 6σ² for white noise and cancels linear gradients of the scene. The MAD (median absolute deviation) × 1.4826 is a standard deviation that ignores edges and outliers. The first difference (variance 2σ²) is simpler but leaks texture.</div><div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><button data-lang="f90" data-file="" class="">Fortran</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code>d2 = cube[:, 2:] - 2*cube[:, 1:-1] + cube[:, :-2]
+sig = 1.4826 * np.median(np.abs(d2 - np.median(d2, (0, 1))), (0, 1)) / np.sqrt(6)</code></pre><pre data-lang="f90" hidden><code>d2 = cube(:, 3:nx, :) - 2*cube(:, 2:nx-1, :) + cube(:, 1:nx-2, :)
+! per band: median of |d2 - median(d2)|  (sort, or a selection algorithm)</code></pre></div></div>
+    <h3>Results (hyperspectral_L10_noise.py)</h3>
+    <ul>
+      <li>σ̂/σ: first difference median 1.17 (max 1.51: scene gradients leak in); second difference median 1.07 (0.99–1.12).</li>
+      <li>SNR from 81 (1212 nm) down to 4.5 (1918 nm): 2 bands below 5 — drop or down-weight them.</li>
+      <li>Along track at 859 nm, 128 detectors × 4096 rows with a drift (f<sub>k</sub> = 2 Hz, α = 1.5): Welch L = 512, ν ≈ 3650, band 0.956–1.048, truth inside in 93% of bins.</li>
+      <li>Whittle on the 128 column periodograms: σ² = 1.604×10⁻⁵ (true 1.600×10⁻⁵), f<sub>k</sub> = 2.00 Hz, α = 1.501 (true 1.5). Averaging more than 1/f<sub>k</sub> = 0.5 s (50 rows) no longer beats down the drift.</li>
+    </ul>
+    <figure class="fig"><img src="figures/L10_fig1.png" alt="Noise per band, true and estimated; along-track noise spectrum with Welch band and Whittle fit"><figcaption>Left: σ per band from the second difference follows the truth, including the water-vapour peaks. Right: along-track residual spectrum with its 95% χ² band and the Whittle fit of the knee.</figcaption></figure>
+    <div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="hyperspectral_L10_noise.py" class="on">Python</button><span class="fn">hyperspectral_L10_noise.py</span><button class="copy">copy</button></div><pre data-lang="py"><code>"""
+hyperspectral_L10_noise.py  --  Lecture 10 (spectral estimation) applied to the noise of a cube.
+
+Every later step (Bayes classifier, unmixing, Monte Carlo) needs the noise of each band.
+
+  Part 1  sigma per band from the data alone: the shift-difference estimator
+          sigma ~ std(x[i, j+1] - x[i, j]) / sqrt(2)  (scene texture is smooth, noise is not),
+          compared with the true sigma of the synthetic cube. SNR per band.
+  Part 2  along-track noise spectrum: a push-broom records one row per time step, so each column
+          is a TIME SERIES. Add a slow 1/f drift to every detector, take the residual
+          (data - model) along the track and estimate its spectrum with Welch and a chi^2 band.
+  Part 3  fit sigma^2, f_k, alpha with the Whittle likelihood on the column periodograms.
+
+Run:  python hyperspectral_L10_noise.py          Figures: figures/L10_fig1.png
+"""
+import os
+import numpy as np
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+from scipy.signal import welch
+from scipy.stats import chi2
+from scipy.optimize import minimize
+from hsi_io import load, band, FIG
+
+d = load("synthetic")
+cube, wl, sig_true = d["cube"].astype(float), d["wavelengths"], d["noise_sigma"]
+H, W, B = cube.shape
+model = d["abundances"] @ d["endmembers"]
+
+# ---------------------------------------------------------------- 1. sigma per band from the data
+mad = lambda a: np.median(np.abs(a - np.median(a, axis=(0, 1))), axis=(0, 1)) * 1.4826
+d1 = np.diff(cube, axis=1)                                   # x[j+1] - x[j]: variance 2 sigma^2
+d2 = cube[:, 2:] - 2 * cube[:, 1:-1] + cube[:, :-2]          # second difference: variance 6 sigma^2, kills gradients
+sig1 = mad(d1) / np.sqrt(2)
+sig_hat = mad(d2) / np.sqrt(6)
+print("1. noise per band from shift differences (robust MAD)")
+print(f"   first difference : sigma_hat / sigma_true median {np.median(sig1 / sig_true):.3f}, max {np.max(sig1 / sig_true):.3f}"
+      "  (scene gradients leak in)")
+ratio = sig_hat / sig_true
+print("   second difference:", end="")
+print(f" sigma_hat / sigma_true: median {np.median(ratio):.3f}, range {ratio.min():.3f} .. {ratio.max():.3f}")
+snr = cube.mean((0, 1)) / sig_hat
+print(f"   SNR: best {snr.max():.0f} at {wl[snr.argmax()]:.0f} nm, worst {snr.min():.1f} at {wl[snr.argmin()]:.0f} nm"
+      f"  -&gt; {np.sum(snr &lt; 5)} bands with SNR &lt; 5 (the water-vapour bands: drop or down-weight them)")
+
+# ---------------------------------------------------------------- 2. along-track spectrum with a 1/f drift
+line_rate = 100.0                                  # rows per second
+b = band(wl, 860)
+rng = np.random.default_rng(5)
+sigma2, fk, alpha = sig_true[b] ** 2, 2.0, 1.5     # truth of the drift we add
+n = 1 &lt;&lt; 12                                        # a long acquisition: 4096 rows
+f = np.fft.rfftfreq(n, 1 / line_rate)
+S = np.zeros_like(f); S[1:] = 2 * sigma2 / line_rate * (fk / f[1:]) ** alpha   # one-sided PSD of the drift
+X = np.sqrt(n * line_rate * S / 4) * (rng.standard_normal((W, f.size)) + 1j * rng.standard_normal((W, f.size)))
+drift = np.fft.irfft(X, n, axis=1)                 # one drift per detector (column)
+white = sig_true[b] * rng.standard_normal((W, n))
+resid = drift + white                              # data - model along the track, every column
+fw, Pw = welch(resid, fs=line_rate, window="hann", nperseg=512, axis=1)
+Pm = Pw.mean(0)                                    # average over the 128 detectors too
+K = (n - 512) // 256 + 1
+nu = 2 * 0.95 * K * W
+lo, hi = nu / chi2.ppf(0.975, nu), nu / chi2.ppf(0.025, nu)
+Strue = 2 * sigma2 / line_rate * (1 + (fk / np.maximum(fw, 1e-9)) ** alpha)
+inside = np.mean((Strue[1:] &gt;= Pm[1:] * lo) &amp; (Strue[1:] &lt;= Pm[1:] * hi))
+print(f"\n2. along-track residual at {wl[b]:.0f} nm, 128 detectors x 4096 rows at {line_rate:.0f} lines/s")
+print(f"   Welch L = 512, K = {K} per detector, nu ~ {nu:.0f}: band {lo:.3f} .. {hi:.3f}; truth inside in {100 * inside:.0f}% of bins")
+
+# ---------------------------------------------------------------- 3. Whittle fit of the knee
+fp = np.fft.rfftfreq(n, 1 / line_rate)[1:-1]
+Pp = (2 * np.abs(np.fft.rfft(resid, axis=1)) ** 2 / (n * line_rate))[:, 1:-1]
+
+
+def nll(th):
+    s2, lfk, a = th
+    Sm = 2 * np.exp(s2) / line_rate * (1 + (np.exp(lfk) / fp) ** a)
+    return np.sum(np.log(Sm)) * W + np.sum(Pp / Sm)
+
+
+res = minimize(nll, [np.log(sigma2 * 0.5), np.log(1.0), 1.0], method="Nelder-Mead", options=dict(maxiter=4000, xatol=1e-6, fatol=1e-6))
+s2h, fkh, ah = np.exp(res.x[0]), np.exp(res.x[1]), res.x[2]
+print(f"3. Whittle on {W} column periodograms: sigma^2 {s2h:.3e} (true {sigma2:.3e}), f_k {fkh:.2f} Hz (true {fk}),"
+      f" alpha {ah:.3f} (true {alpha})")
+print(f"   -&gt; averaging more than ~1/f_k = {1 / fkh:.1f} s of rows ({line_rate / fkh:.0f} lines) no longer beats down the drift")
+
+fig, ax = plt.subplots(1, 2, figsize=(12, 4.2))
+ax[0].semilogy(wl, sig_true, "k", label="true sigma"); ax[0].semilogy(wl, sig_hat, "C1--", label="shift-difference estimate")
+ax[0].set(xlabel="wavelength [nm]", ylabel="noise sigma", title="noise per band"); ax[0].legend()
+ax[1].fill_between(fw[1:], Pm[1:] * lo, Pm[1:] * hi, alpha=0.3, label="95% band")
+ax[1].loglog(fw[1:], Pm[1:], label="Welch, mean of 128 detectors"); ax[1].loglog(fw[1:], Strue[1:], "k--", label="truth")
+ax[1].loglog(fp, 2 * s2h / line_rate * (1 + (fkh / fp) ** ah), "C3:", label="Whittle fit")
+ax[1].set(xlabel="frequency along track [Hz]", ylabel="PSD", title=f"along-track noise at {wl[b]:.0f} nm"); ax[1].legend(fontsize=8)
+fig.tight_layout(); fig.savefig(os.path.join(FIG, "L10_fig1.png"), dpi=120)
+print("saved L10_fig1.png")</code></pre></div>
+    <div class="task"><b>HSI 10.1 — BAD BANDS</b>On Indian Pines (corrected: 200 bands), compute σ̂ and the SNR of every band. Which bands would you drop? Compare with the 20 water-absorption bands that were removed from the original 220.</div>
+    <div class="task"><b>HSI 10.2 — DIRECTION MATTERS</b>Compute σ̂ with differences along rows and along columns. If they differ, which direction carries the detector artefacts? (Hint: part 4.)</div>
+    <div class="task"><b>HSI 10.3 — FEED THE NOISE FORWARD</b>Run the unmixing of part 8 with σ̂ instead of the true σ. Does the ±1σ coverage stay at 68%?</div>
+  </div>
+</section>
+
+<!-- ================================================================== 6 -->
+<section class="lesson" data-title="Part 7 · Bayes classifier" data-short="Bayes" data-badge="PROJECT" data-time="50 min" data-level="Project"
+  data-sub="Every pixel is a tiny inference problem: likelihood of each class × prior → posterior probability of each material, and a map of the uncertainty.">
+  <div class="stage" data-widget="hsi"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>Click any pixel above: you see its spectrum, the posterior probability of each class, and the posterior of the material fractions with error bars.</p></div>
+    <div class="s-key">Likelihood = how well a class explains the spectrum; prior = what you expect before looking. Uncertainty concentrates where materials mix.</div>
+    <ul class="s-learn"><li>Gaussian likelihood per class (PCA space)</li><li>Flat vs frequency prior</li><li>Posterior and MAP map</li><li>Entropy map</li><li>Rare classes and the base rate</li></ul>
+  </aside>
+  <div class="prose">
+    <a class="hsi-link back" href="../12.%20Bayesian%20Inference/index.html#s2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M19 12H5M11 6l-6 6 6 6"/></svg><span><small>THE THEORY · BACK TO THE LESSON</small>Lesson 12.2 · Bayes' theorem</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/></svg></a>
+    <div class="formula" data-name="Posterior class probability of a pixel"><div class="f-head"><span class="t">MODEL</span>Posterior class probability of a pixel<span class="hint">hover the symbols ↓</span></div><div class="tex">P(\h{ck}{c}\mid \h{ypix}{\mathbf y}) = \frac{\h{Ngauss}{\mathcal N}(\h{ypix}{\mathbf y};\,\mathbf m_c,\mathbf C_c)\ \h{Pc}{P(c)}}{\sum_{c'}\h{Ngauss}{\mathcal N}(\mathbf y;\,\mathbf m_{c'},\mathbf C_{c'})\,P(c')}</div><div class="f-note">Likelihood: a multivariate Gaussian per class (mean and covariance from 2% training pixels), in 8 PCA components (SVD of the cube). Prior: flat, or the class frequencies. Normalise with log-sum-exp.</div><div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><button data-lang="f90" data-file="" class="">Fortran</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code>lp = loglike + np.log(prior)              # (n_pixels, n_classes)
+lp -= lp.max(1, keepdims=True)
+post = np.exp(lp); post /= post.sum(1, keepdims=True)
+label_map = post.argmax(1)                # MAP class</code></pre><pre data-lang="f90" hidden><code>do i = 1, npix
+  lp(:,i) = loglike(:,i) + log(prior)
+  lp(:,i) = exp(lp(:,i) - maxval(lp(:,i)))
+  lp(:,i) = lp(:,i) / sum(lp(:,i))
+end do</code></pre></div></div>
+    <h3>Results (hyperspectral_L12_bayes.py, synthetic cube)</h3>
+    <table><tr><th>prior</th><th>accuracy</th><th>recall veg / soil / water / roof</th></tr>
+      <tr><td>flat</td><td>95.2%</td><td>94 / 95 / 88 / 100%</td></tr>
+      <tr><td>class frequency</td><td>95.6%</td><td>94 / 96 / 87 / 100%</td></tr></table>
+    <p>The frequency prior raises the overall accuracy and lowers the recall of the rare class (water): it trades rare-class detection for the majority — the base-rate effect of Lesson 12 on a map.</p>
+    <figure class="fig"><img src="figures/L12_fig1_classifier.png" alt="MAP class map, posterior probability and entropy map of the synthetic scene"><figcaption>MAP classes, posterior probability of the chosen class and the entropy of the posterior: the uncertain pixels lie on thin lines where materials mix.</figcaption></figure>
+    <div class="task"><b>HSI 12.1 — LOOK FIRST</b>Open <code>figures/L12_fig0_data.png</code>: describe the red edge of vegetation and the water-vapour bands.</div>
+    <div class="task"><b>HSI 12.2 — PRIORS AND RARE CLASSES</b>Make water 10 times rarer in the training set: what happens to its recall with the frequency prior?</div>
+    <div class="task"><b>HSI 12.3 — WHERE IS THE UNCERTAINTY?</b>Explain the thin lines of high entropy with the abundance maps (mixed pixels).</div>
+    <div class="task"><b>HSI 12.4 — REAL DATA</b><code>python hyperspectral_L12_bayes.py indian_pines</code>. Accuracy drops: give three reasons (16 classes, similar crops, few training pixels, non-Gaussian classes).</div>
+  </div>
+</section>
+
+<!-- ================================================================== 7 -->
+<section class="lesson" data-title="Part 8 · Unmixing: the posterior of the abundances" data-short="Unmixing" data-badge="PROJECT" data-time="45 min" data-level="Project"
+  data-sub="The linear mixing model with Gaussian noise has an exact Gaussian posterior: abundances with error bars, and a coverage test against the truth.">
+  <div class="stage" data-widget="fisherbands"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>A pixel is rarely pure. The linear mixing model asks: what fraction of the pixel is each material? With Gaussian noise every integral is in closed form.</p></div>
+    <div class="s-key">Σ = (AᵀC⁻¹A + P⁻¹)⁻¹ depends only on the endmembers and the noise, not on the data: you can forecast the error bars of a sensor before it flies.</div>
+    <ul class="s-learn"><li>Linear Gaussian model</li><li>Posterior mean and covariance</li><li>Flat vs Gaussian prior</li><li>Coverage of ±1σ</li><li>Fisher forecast: which bands matter</li></ul>
+  </aside>
+  <div class="prose">
+    <a class="hsi-link back" href="../12.%20Bayesian%20Inference/index.html#s4"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M19 12H5M11 6l-6 6 6 6"/></svg><span><small>THE THEORY · BACK TO THE LESSON</small>Lesson 12.4 · Fisher matrix &amp; confidence intervals</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/></svg></a>
+    <div class="formula" data-name="Linear Gaussian model"><div class="f-head"><span class="t">MODEL</span>Linear Gaussian model<span class="hint">hover the symbols ↓</span></div><div class="tex">\h{ypix}{\mathbf y} = \h{Amat}{A}\h{abund}{\boldsymbol\theta}+\mathbf n,\ \ \mathbf n\sim\mathcal N(0,\h{Cn}{C}),\ \ \boldsymbol\theta\sim\mathcal N(\boldsymbol\theta_0,P)\ \Rightarrow\
+      \h{Sig}{\Sigma}^{-1} = A^TC^{-1}A+P^{-1},\ \ \bar{\boldsymbol\theta}=\Sigma\big(A^TC^{-1}\mathbf y+P^{-1}\boldsymbol\theta_0\big)</div><div class="f-note">A: columns = endmember spectra (B × K). P⁻¹ → 0: weighted least squares and Σ = F⁻¹, the inverse Fisher matrix. P⁻¹ ≠ 0: ridge/Tikhonov.</div><div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><button data-lang="f90" data-file="" class="">Fortran</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code>AtCA = A.T @ (A / sig[:, None]**2)
+Sigma = np.linalg.inv(AtCA + P0inv)
+theta_bar = (X / sig**2) @ A @ Sigma + (P0inv @ th0) @ Sigma   # all pixels at once</code></pre><pre data-lang="f90" hidden><code>AtCA  = matmul(transpose(A), A / spread(sig**2, 2, K))
+Sigma = inverse(AtCA + P0inv)            ! LAPACK dgesv / dpotri
+thbar = matmul(Sigma, matmul(transpose(A), y/sig**2) + matmul(P0inv, th0))</code></pre></div></div>
+    <h3>Results (hyperspectral_L12_bayes.py)</h3>
+    <table><tr><th>material</th><th>posterior std</th><th>rms error vs truth</th><th>coverage of ±1σ</th></tr>
+      <tr><td>vegetation</td><td>0.0035</td><td>0.0035</td><td>68.8%</td></tr>
+      <tr><td>soil</td><td>0.0099</td><td>0.0099</td><td>68.4%</td></tr>
+      <tr><td>water</td><td>0.0572</td><td>0.0571</td><td>68.3%</td></tr>
+      <tr><td>roof</td><td>0.0136</td><td>0.0136</td><td>68.4%</td></tr></table>
+    <p>The posterior std equals the actual rms error and ±1σ covers the truth 68% of the time: the Bayesian error bars pass a frequentist test. A Gaussian prior N(¼, 0.3²) changes them only slightly (water 0.0562).</p>
+    <figure class="fig"><img src="figures/L12_fig2_unmixing.png" alt="True and estimated abundance maps with posterior standard deviations"><figcaption>Abundance maps: truth, posterior mean and posterior std for each material.</figcaption></figure>
+    <div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="hyperspectral_L12_bayes.py" class="on">Python</button><span class="fn">hyperspectral_L12_bayes.py</span><button class="copy">copy</button></div><pre data-lang="py"><code>"""
+hyperspectral_L12_bayes.py  --  Lecture 12 (Bayesian inference) applied to a hyperspectral cube.
+
+  Part 0  look at the data: RGB composite, labels, mean spectrum of each class
+  Part 1  Bayes classifier: Gaussian likelihood per class (in PCA space) x prior
+          -&gt; posterior probability of every class in every pixel, MAP class map.
+          Flat prior versus "class frequency" prior: watch the rare class!
+  Part 2  linear mixing model y = A theta + n  (Lecture 12, appendix C: everything exact)
+          -&gt; posterior mean and std of the abundances in every pixel,
+             flat prior vs Gaussian prior, and a COVERAGE check against the truth.
+
+Run:  python hyperspectral_L12_bayes.py                    (synthetic cube)
+      python hyperspectral_L12_bayes.py indian_pines       (Part 0-1 only: no true abundances)
+Figures: figures/L12_fig*.png
+"""
+import sys
+import os
+import numpy as np
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+from hsi_io import load, rgb, FIG
+
+scene = sys.argv[1] if len(sys.argv) &gt; 1 else "synthetic"
+d = load(scene)
+cube, wl, labels, names = d["cube"], d["wavelengths"], d["labels"], d["names"]
+H, W, B = cube.shape
+X = cube.reshape(-1, B)
+y = labels.ravel()
+classes = np.unique(y) if scene == "synthetic" else np.unique(y[y &gt; 0])   # 0 = unlabelled
+rng = np.random.default_rng(12)
+print(f"{scene}: {H}x{W} pixels, {B} bands, classes {list(classes)}")
+
+# ======================================================== Part 0: look first
+fig, ax = plt.subplots(1, 3, figsize=(16, 4.5))
+ax[0].imshow(rgb(cube, wl)); ax[0].set_title("RGB composite")
+ax[1].imshow(labels, cmap="tab20", interpolation="nearest"); ax[1].set_title("ground truth labels")
+for c in classes:
+    s = X[y == c]
+    ax[2].plot(wl, s.mean(0), label=str(names[c]))
+    ax[2].fill_between(wl, s.mean(0) - s.std(0), s.mean(0) + s.std(0), alpha=0.15)
+ax[2].set(xlabel="wavelength [nm]", ylabel="reflectance", title="class mean +- 1 std")
+ax[2].legend(fontsize=7)
+fig.tight_layout(); fig.savefig(os.path.join(FIG, "L12_fig0_data.png"), dpi=110)
+
+# ======================================================== Part 1: Bayes classifier
+# 1a. reduce 100-200 correlated bands to a few components (PCA by SVD: Lecture on linear algebra)
+mu = X.mean(0)
+U, S, Vt = np.linalg.svd(X[rng.choice(len(X), 5000, replace=False)] - mu, full_matrices=False)
+n_pc = 8
+Z = (X - mu) @ Vt[:n_pc].T                          # every pixel -&gt; 8 numbers
+print(f"PCA: first {n_pc} components keep {100*np.sum(S[:n_pc]**2)/np.sum(S**2):.2f}% of the variance")
+
+# 1b. training set: 2% of the labelled pixels, picked at random
+lab = np.flatnonzero(np.isin(y, classes))
+train = rng.choice(lab, size=max(len(lab) // 50, 20 * len(classes)), replace=False)
+test = np.setdiff1d(lab, train)
+
+# 1c. likelihood of each class: multivariate Gaussian N(m_c, C_c) in PCA space
+loglike = np.empty((len(Z), len(classes)))
+for i, c in enumerate(classes):
+    Zc = Z[train][y[train] == c]
+    m = Zc.mean(0)
+    C = np.cov(Zc.T) + 1e-6 * np.eye(n_pc) * np.trace(np.cov(Zc.T))   # small ridge: few samples
+    L = np.linalg.cholesky(C)                                        # C = L L^T
+    r = np.linalg.solve(L, (Z - m).T)                                # whitened residuals
+    loglike[:, i] = -0.5 * np.sum(r**2, 0) - np.sum(np.log(np.diag(L))) - 0.5 * n_pc * np.log(2 * np.pi)
+
+
+def posterior(loglike, log_prior):
+    lp = loglike + log_prior                         # ln L + ln pi
+    lp -= lp.max(1, keepdims=True)                   # log-sum-exp: subtract the max first
+    p = np.exp(lp)
+    return p / p.sum(1, keepdims=True)
+
+
+freq = np.array([np.mean(y[train] == c) for c in classes])
+priors = {"flat prior": np.log(np.ones(len(classes)) / len(classes)),
+          "frequency prior": np.log(freq)}
+results = {}
+for pname, lpri in priors.items():
+    post = posterior(loglike, lpri)
+    pred = classes[post.argmax(1)]                   # MAP class
+    acc = np.mean(pred[test] == y[test])
+    recall = {names[c]: np.mean(pred[test][y[test] == c] == c) for c in classes}
+    results[pname] = (post, pred)
+    print(f"\n{pname}: overall accuracy {100*acc:.1f}%")
+    print("   recall per class: " + ", ".join(f"{k} {100*v:.0f}%" for k, v in recall.items()))
+
+post, pred = results["frequency prior"]
+fig, ax = plt.subplots(1, 3, figsize=(16, 4.5))
+ax[0].imshow(pred.reshape(H, W), cmap="tab20", interpolation="nearest"); ax[0].set_title("MAP class (frequency prior)")
+im = ax[1].imshow(post.max(1).reshape(H, W), cmap="magma", vmin=0, vmax=1)
+ax[1].set_title("max posterior probability (confidence)"); plt.colorbar(im, ax=ax[1])
+ent = -np.sum(post * np.log(post + 1e-300), 1)
+im = ax[2].imshow(ent.reshape(H, W), cmap="viridis"); ax[2].set_title("posterior entropy (uncertainty)")
+plt.colorbar(im, ax=ax[2])
+fig.tight_layout(); fig.savefig(os.path.join(FIG, "L12_fig1_classifier.png"), dpi=110)
+
+# confusion matrix (rows: truth, columns: prediction)
+cm = np.array([[np.sum((y[test] == a) &amp; (pred[test] == b)) for b in classes] for a in classes])
+print("\nconfusion matrix (frequency prior):\n", cm)
+
+# ======================================================== Part 2: linear mixing model
+if scene != "synthetic":
+    print("\nPart 2 needs true abundances: run on the synthetic cube.")
+    sys.exit()
+
+A = d["endmembers"].T                                # (B, K): columns = endmember spectra
+sig = d["noise_sigma"]                               # known noise per band
+K = A.shape[1]
+Cinv = 1 / sig**2                                    # diagonal C^-1
+AtCA = A.T @ (A * Cinv[:, None])                     # A^T C^-1 A   (K x K)
+AtCy = (X * Cinv) @ A                                # rows: (A^T C^-1 y)^T for every pixel
+
+out = {}
+for pname, (P0inv, th0) in {"flat prior": (np.zeros((K, K)), np.zeros(K)),
+                            "Gaussian prior N(1/K, 0.3^2)": (np.eye(K) / 0.3**2, np.full(K, 1 / K))}.items():
+    Sigma = np.linalg.inv(AtCA + P0inv)              # posterior covariance (same for all pixels)
+    mean = (AtCy + P0inv @ th0) @ Sigma              # posterior mean, every pixel at once
+    std = np.sqrt(np.diag(Sigma))
+    truth = d["abundances"].reshape(-1, K)
+    cover = np.mean(np.abs(mean - truth) &lt; std, 0)   # frequentist check of a Bayesian interval
+    rmse = np.sqrt(np.mean((mean - truth) ** 2, 0))
+    out[pname] = mean
+    print(f"\n{pname}:")
+    for k in range(K):
+        print(f"   {names[k]:10s} posterior std {std[k]:.4f}   rmse {rmse[k]:.4f}   coverage of +-1 std {100*cover[k]:.1f}%")
+
+fig, ax = plt.subplots(2, K, figsize=(4 * K, 7))
+mean = out["flat prior"]
+for k in range(K):
+    ax[0, k].imshow(d["abundances"][..., k], vmin=0, vmax=1); ax[0, k].set_title(f"true {names[k]}")
+    ax[1, k].imshow(mean[:, k].reshape(H, W), vmin=0, vmax=1); ax[1, k].set_title(f"posterior mean {names[k]}")
+fig.tight_layout(); fig.savefig(os.path.join(FIG, "L12_fig2_unmixing.png"), dpi=110)
+print("\nsaved L12_fig0_data.png, L12_fig1_classifier.png, L12_fig2_unmixing.png")</code></pre></div>
+    <div class="task"><b>HSI 12.5 — FISHER FORECAST FOR A SENSOR</b>Use the widget: how does σ(water) change with every 4th band, with the visible + NIR only, with 4 broad bands? Which bands carry the information?</div>
+    <div class="task"><b>HSI 12.6 — THE SUM-TO-ONE CONSTRAINT</b>Add the row Σθ = 1 as a very precise extra "measurement". How do the posterior std change? Which material benefits most?</div>
+  </div>
+</section>
+
+<!-- ================================================================== 8 -->
+<section class="lesson" data-title="Part 9 · Monte Carlo on the cube" data-short="Monte Carlo" data-badge="PROJECT" data-time="50 min" data-level="Project"
+  data-sub="Random pixels with honest error bars, hit-or-miss mapping, noise propagation by simulation, and importance sampling with a physical prior.">
+  <div class="stage" data-widget="hsimc"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>Four Monte Carlo ideas, each on a real question about the scene. Above: how many random pixels give the mean spectrum of a class to 1%? How does band noise turn into an NDVI error?</p></div>
+    <div class="s-key">Random subsets give unbiased answers with error bars; simulation propagates noise through any non-linear formula without derivatives.</div>
+    <ul class="s-learn"><li>Sample-mean spectrum of a class</li><li>Hit-or-miss fraction + Wilson interval</li><li>Noise → NDVI by simulation</li><li>Importance sampling with a physical prior</li><li>Effective sample size</li></ul>
+  </aside>
+  <div class="prose">
+    <a class="hsi-link back" href="../13.%20Monte%20Carlo%20Methods/index.html#s2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M19 12H5M11 6l-6 6 6 6"/></svg><span><small>THE THEORY · BACK TO THE LESSON</small>Lesson 13.2 · The sample mean and its error</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/></svg></a>
+    <a class="hsi-link back" href="../13.%20Monte%20Carlo%20Methods/index.html#s6"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M19 12H5M11 6l-6 6 6 6"/></svg><span><small>THE THEORY · BACK TO THE LESSON</small>Lesson 13.6 · Self-normalised importance sampling</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/></svg></a>
+    <ol class="steps">
+      <li><b>Sample mean</b>: the mean spectrum of a class from N random pixels, ±σ/√N per band; rms error ∝ N<sup>−0.49</sup> (Monte Carlo: −0.5).</li>
+      <li><b>Hit-or-miss</b>: fraction of the scene with NDVI &gt; 0.4 (truth 0.382): N = 300 → 0.387, Wilson 95% [0.333, 0.443]; N = 3000 → 0.394, [0.377, 0.412].</li>
+      <li><b>Error propagation by simulation</b>: NDVI of one pixel, 0.8666 ± 0.0141 by Monte Carlo and by the linear formula — the noise is small; make it larger and the linear formula fails.</li>
+      <li><b>Self-normalised importance sampling</b>: abundances with the physical prior (θ<sub>k</sub> ≥ 0, Σθ ≈ 1), Gaussian posterior as proposal. N<sub>eff</sub>/N = 0.64 (×1), 0.26 (×1.5), 0.023 (×3): a wider proposal is not always better in 4 dimensions.</li>
+    </ol>
+    <div class="formula" data-name="NDVI and its linear error"><div class="f-head"><span class="t">MODEL</span>NDVI and its linear error<span class="hint">hover the symbols ↓</span></div><div class="tex">\mathrm{NDVI}=\frac{\h{NIR}{N}-\h{Rb}{R}}{\h{NIR}{N}+\h{Rb}{R}},\qquad \sigma_{\rm NDVI}^2\approx\Big(\frac{2N}{(N+R)^2}\Big)^2\sigma_R^2+\Big(\frac{2R}{(N+R)^2}\Big)^2\sigma_N^2</div><div class="f-note">The Monte Carlo way needs no derivatives: simulate R and N with their noise, compute NDVI for each, take the histogram.</div><div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><button data-lang="f90" data-file="" class="">Fortran</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code>r_s = R + sR * rng.standard_normal(100_000)
+n_s = NIR + sN * rng.standard_normal(100_000)
+ndvi = (n_s - r_s) / (n_s + r_s)
+print(ndvi.mean(), ndvi.std())</code></pre><pre data-lang="f90" hidden><code>call normal_deviates(zr);  call normal_deviates(zn)
+ndvi = ((NIR + sN*zn) - (R + sR*zr)) / ((NIR + sN*zn) + (R + sR*zr))</code></pre></div></div>
+    <figure class="fig"><img src="figures/L13_fig1_sample_mean.png" alt="Error of the sample-mean class spectrum against the number of random pixels"><figcaption>Sample-mean estimate of a class spectrum: the error falls as 1/√N.</figcaption></figure>
+    <figure class="fig"><img src="figures/L13_fig2_ndvi.png" alt="Histogram of simulated NDVI with the linear-propagation Gaussian"><figcaption>Noise → NDVI: the simulated histogram against the Gaussian of linear error propagation.</figcaption></figure>
+    <div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="hyperspectral_L13_mc.py" class="on">Python</button><span class="fn">hyperspectral_L13_mc.py</span><button class="copy">copy</button></div><pre data-lang="py"><code>"""
+hyperspectral_L13_mc.py  --  Lecture 13 (Monte Carlo) applied to a hyperspectral cube.
+
+  Part 1  sample-mean Monte Carlo: the mean spectrum of a class from N random pixels,
+          error bar from the same samples, rms error ~ 1/sqrt(N)
+  Part 2  hit-or-miss: fraction of the scene with NDVI &gt; 0.4, with a Wilson interval
+  Part 3  Monte Carlo error propagation: band noise -&gt; distribution of NDVI in one pixel
+          (compared with linear error propagation)
+  Part 4  self-normalised importance sampling: abundances with a physical prior
+          (a_k &gt;= 0, sum a_k = 1) using the Lecture-12 Gaussian posterior as proposal;
+          effective sample size and largest weight.
+
+Run:  python hyperspectral_L13_mc.py            (synthetic cube; Parts 1-3 also work on real scenes)
+      python hyperspectral_L13_mc.py paviaU
+Figures: figures/L13_fig*.png
+"""
+import sys
+import os
+import numpy as np
+from scipy.stats import binomtest
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+from hsi_io import load, band, FIG
+
+scene = sys.argv[1] if len(sys.argv) &gt; 1 else "synthetic"
+d = load(scene)
+cube, wl, labels, names = d["cube"], d["wavelengths"], d["labels"], d["names"]
+H, W, B = cube.shape
+X = cube.reshape(-1, B).astype(float)
+y = labels.ravel()
+rng = np.random.default_rng(13)
+
+# ======================================================== Part 1: sample mean
+c = np.bincount(y[y &gt; 0] if scene != "synthetic" else y).argmax()   # the most common class
+pix = X[y == c]
+exact = pix.mean(0)                                  # "the truth": all pixels of the class
+Ns = np.unique(np.logspace(1, 3.3, 12).astype(int))
+rms = []
+for n in Ns:
+    errs = [np.sqrt(np.mean((pix[rng.integers(0, len(pix), n)].mean(0) - exact) ** 2)) for _ in range(200)]
+    rms.append(np.mean(errs))
+sample = pix[rng.integers(0, len(pix), 100)]
+est, err = sample.mean(0), sample.std(0, ddof=1) / np.sqrt(100)
+# coverage of the +-1 sigma error bar at ONE band, over 500 repetitions (bands are correlated:
+# checking all bands of a single repetition is not 500 independent trials!)
+j = band(wl, 850)
+hits = 0
+for _ in range(500):
+    s = pix[rng.integers(0, len(pix), 100), j]
+    hits += abs(s.mean() - exact[j]) &lt; s.std(ddof=1) / 10
+print(f"Part 1: class '{names[c]}', N=100 pixels: +-1 sigma covers the truth at 850 nm in {hits/5:.1f}% of 500 runs (68.3%)")
+slope = np.polyfit(np.log(Ns), np.log(rms), 1)[0]
+print(f"        rms error ~ N^{slope:.2f}  (Monte Carlo: -0.5)")
+
+fig, ax = plt.subplots(1, 2, figsize=(13, 4.2))
+ax[0].plot(wl, exact, "k", label="all pixels")
+ax[0].fill_between(wl, est - err, est + err, alpha=0.4, label="100 random pixels, +-1 sigma")
+ax[0].set(xlabel="wavelength [nm]", ylabel="reflectance", title=f"mean spectrum of '{names[c]}'"); ax[0].legend()
+ax[1].loglog(Ns, rms, "o-", label="measured"); ax[1].loglog(Ns, rms[0] * np.sqrt(Ns[0] / Ns), "k--", label="1/sqrt(N)")
+ax[1].set(xlabel="N pixels", ylabel="rms error", title="sample-mean error"); ax[1].legend()
+fig.tight_layout(); fig.savefig(os.path.join(FIG, "L13_fig1_sample_mean.png"), dpi=110)
+
+# ======================================================== Part 2: hit-or-miss
+R, NIR = X[:, band(wl, 660)], X[:, band(wl, 850)]
+ndvi = (NIR - R) / (NIR + R + 1e-12)
+p_true = np.mean(ndvi &gt; 0.4)
+print(f"\nPart 2: true fraction with NDVI &gt; 0.4: {p_true:.4f}")
+for n in (30, 300, 3000):
+    hits = np.count_nonzero(ndvi[rng.integers(0, len(ndvi), n)] &gt; 0.4)
+    p = hits / n
+    ci = binomtest(hits, n).proportion_ci(method="wilson")
+    print(f"   N={n:5d}: p = {p:.3f} +- {np.sqrt(p*(1-p)/n):.3f}   Wilson 95% [{ci.low:.3f}, {ci.high:.3f}]")
+
+# ======================================================== Part 3: error propagation
+sig = d.get("noise_sigma", np.full(B, 0.01))
+k = np.argmax(ndvi)                                   # a strongly vegetated pixel
+r0, n0 = X[k, band(wl, 660)], X[k, band(wl, 850)]
+sr, sn = sig[band(wl, 660)], sig[band(wl, 850)]
+r_s = r0 + sr * rng.standard_normal(100_000)          # 1e5 noisy "re-observations"
+n_s = n0 + sn * rng.standard_normal(100_000)
+nd_s = (n_s - r_s) / (n_s + r_s)
+# linear propagation: dNDVI/dR = -2 NIR/(NIR+R)^2, dNDVI/dNIR = 2 R/(NIR+R)^2
+lin = np.hypot(2 * n0 / (n0 + r0) ** 2 * sr, 2 * r0 / (n0 + r0) ** 2 * sn)
+print(f"\nPart 3: NDVI of pixel {k}: MC {nd_s.mean():.4f} +- {nd_s.std():.4f}   linear +- {lin:.4f}")
+plt.figure(figsize=(6, 4))
+plt.hist(nd_s, 120, density=True, alpha=0.6, label="Monte Carlo")
+t = np.linspace(nd_s.min(), nd_s.max(), 300)
+plt.plot(t, np.exp(-0.5 * ((t - (n0 - r0) / (n0 + r0)) / lin) ** 2) / (lin * np.sqrt(2 * np.pi)), "k", label="linear propagation")
+plt.xlabel("NDVI"); plt.legend(); plt.title("noise -&gt; NDVI"); plt.tight_layout(); plt.savefig(os.path.join(FIG, "L13_fig2_ndvi.png"), dpi=110)
+
+# ======================================================== Part 4: importance sampling
+if scene != "synthetic":
+    print("\nPart 4 needs the endmembers: run on the synthetic cube."); sys.exit()
+A, Kc = d["endmembers"].T, d["endmembers"].shape[0]
+Cinv = 1 / sig**2
+Sigma = np.linalg.inv(A.T @ (A * Cinv[:, None]))      # Gaussian (flat-prior) posterior, Lecture 12
+# a mixed pixel near the river: the interesting case
+k = np.argmin(np.abs(d["abundances"].reshape(-1, Kc)[:, 2] - 0.3))
+yk, truth = X[k], d["abundances"].reshape(-1, Kc)[k]
+m = Sigma @ (A.T @ (yk * Cinv))
+Lc = np.linalg.cholesky(Sigma)
+
+
+def log_q(th):          # unnormalised log-posterior: Gaussian likelihood x physical prior
+    r = yk[None, :] - th @ A.T
+    ok = np.all(th &gt;= 0, 1) &amp; (np.abs(th.sum(1) - 1) &lt; 0.05)   # simplex, with a little slack
+    return np.where(ok, -0.5 * np.sum(r**2 * Cinv, 1), -np.inf)
+
+
+n = 20000
+for scale in (1.0, 1.5, 3.0):
+    th = m + scale * rng.standard_normal((n, Kc)) @ Lc.T            # proposal N(m, scale^2 Sigma)
+    lg = -0.5 * np.sum(np.linalg.solve(Lc, (th - m).T) ** 2, 0) / scale**2
+    lw = log_q(th) - lg                                             # ln w = ln q - ln g
+    w = np.exp(lw - lw[np.isfinite(lw)].max()) if np.isfinite(lw).any() else np.zeros(n)
+    neff = w.sum() ** 2 / np.sum(w**2) if w.sum() &gt; 0 else 0
+    mean = (w[:, None] * th).sum(0) / w.sum()
+    print(f"\nPart 4: proposal x{scale}: Neff/N {neff/n:.3f}, largest weight {100*w.max()/w.sum():.2f}%")
+    print("   truth          " + " ".join(f"{v:.3f}" for v in truth))
+    print("   Gaussian mean  " + " ".join(f"{v:.3f}" for v in m))
+    print("   IS mean (prior)" + " ".join(f"{v:.3f}" for v in mean))
+print("\nsaved L13_fig1_sample_mean.png, L13_fig2_ndvi.png")</code></pre></div>
+    <div class="task"><b>HSI 13.1 — HOW MANY PIXELS?</b>How many random pixels give the class mean to 1% at 850 nm? Predict it from the pixel-to-pixel scatter first, then check.</div>
+    <div class="task"><b>HSI 13.2 — WHEN LINEAR PROPAGATION FAILS</b>Multiply the band noise by 10 for a water pixel. Why does the linear formula fail when N + R is small?</div>
+    <div class="task"><b>HSI 13.3 — STRATIFIED SAMPLING</b>Estimate the scene-mean spectrum with a fixed number of pixels per class. Is the error smaller than with uniform sampling at the same N?</div>
+    <div class="task"><b>HSI 13.4 — A PRIOR THAT MATTERS</b>Find a pixel where the Gaussian posterior gives a negative abundance. Compare the importance-sampling mean with the Gaussian mean; report N<sub>eff</sub> and the largest weight.</div>
+    <div class="task"><b>HSI 13.5 — REAL SCENE</b><code>python hyperspectral_L13_mc.py paviaU</code>: what fraction of the Pavia campus has NDVI &gt; 0.4? Give a 95% Wilson interval with 500 random pixels.</div>
+  </div>
+</section>
+
+      </div>
+      <div class="view v-practice"><h1 style="margin:6px 0 2px">Practice</h1><p class="subtitle">Every exercise of this unit in one place. Answers are checked to about 1%; fractions like 1/3 are accepted.</p></div>
+      <div class="view v-code"><h1 style="margin:6px 0 2px">Code Lab</h1><p class="subtitle">Every Python and Fortran snippet of this unit, plus the hyperspectral project tasks. The full files are in the <code>code</code> folder next to this page.</p></div>
+      <div class="view v-sheet"><h1 style="margin:6px 0 2px">Cheatsheet</h1><p class="subtitle">All the formulas of this unit. Hover any symbol for its name, meaning and code.</p></div>
+    </div>
+  </main>
+  <aside class="right learnonly">
+    <div class="rcard">
+      <div class="rtop"><span id="r-step"></span><span class="badge" id="r-badge"></span></div>
+      <h2 id="r-title"></h2>
+      <div id="r-body"></div>
+      <div class="keyidea" id="r-key"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3c.5 4 2 5.5 6 6-4 .5-5.5 2-6 6-.5-4-2-5.5-6-6 4-.5 5.5-2 6-6zM18.5 15.5c.2 1.6.9 2.3 2.5 2.5-1.6.2-2.3.9-2.5 2.5-.2-1.6-.9-2.3-2.5-2.5 1.6-.2 2.3-.9 2.5-2.5z"/></svg><b>KEY IDEA</b><span id="r-key-t"></span></div>
+      <div class="navbtns"><button class="btn back" id="r-back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M19 12H5M11 6l-6 6 6 6"/></svg> Back</button><button class="btn next" id="r-next"><span id="r-next-t">Next</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></div>
+      <div class="keys"><span class="kbd">←</span><span class="kbd">→</span> step · <span class="kbd">Ctrl K</span> search · hover symbols</div>
+    </div>
+    <div class="rcard"><div class="rtop">YOU'LL LEARN</div><ul class="learn" id="r-learn"></ul></div>
+  </aside>
+</div>
+<script src="../assets/katex/katex.min.js"></script>
+<script src="../assets/katex/auto-render.min.js"></script>
+<script src="../assets/js/course.js"></script>
+<script src="../assets/js/plot.js"></script>
+<script src="../assets/js/symbols-common.js"></script>
+<script src="hsi.js"></script>
+<script src="../assets/js/app.js"></script>
+</body></html>

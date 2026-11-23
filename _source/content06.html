@@ -1,0 +1,265 @@
+<!-- ================================================================== 1 -->
+<section class="lesson" data-title="Sparse matrices and their storage" data-short="Storage" data-badge="CONCEPT" data-time="30 min" data-level="Beginner"
+  data-sub="Most physics matrices are almost all zeros. Store only the non-zeros: CSR for fast rows, CSC for fast columns, COO for easy assembly.">
+  <div class="stage" data-widget="sparsefmt"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>A matrix is sparse when its number of non-zeros, nnz, is much smaller than n². A CMB pointing matrix has one or two non-zeros per row; a 3D Poisson operator seven.</p><p>Above: click cells of the 5×5 matrix to add or remove entries and watch the three formats change.</p></div>
+    <div class="s-key">CSR: values, column indices, and a row pointer of length n + 1. Row i lives in val[ptr[i] : ptr[i+1]].</div>
+    <ul class="s-learn"><li>What makes a matrix sparse</li><li>Where sparse matrices come from</li><li>CSR, CSC, COO</li><li>0-based vs 1-based indices</li><li>Which format for which operation</li></ul>
+  </aside>
+  <div class="prose">
+    <h2><span class="lv basic">BASIC</span>Where they come from</h2>
+    <ul>
+      <li><b>CMB map-making</b>: the pointing matrix links each time sample to one sky pixel: one non-zero per row.</li>
+      <li><b>Poisson and diffusion solvers</b>: ∇²Φ = 4πGρ on a 3D grid couples each cell to six neighbours.</li>
+      <li><b>Finite elements, networks, graphs</b>: each node talks to a few others.</li>
+    </ul>
+    <h2><span class="lv core">CORE</span>Three formats</h2>
+    <p>The example of the notes (5 non-zeros in a 5×5 matrix; the notes' "7 of 25" should read 5):</p>
+    <table><tr><th>format</th><th>arrays (1-based, as in Fortran)</th><th>best for</th></tr>
+      <tr><td>CSR</td><td>val = [3, 22, 17, 8, 5], col = [3, 1, 5, 2, 4], ptr = [1, 2, 4, 4, 5, 6]</td><td>y = Ax, row access</td></tr>
+      <tr><td>CSC</td><td>val = [22, 8, 3, 5, 17], row = [2, 4, 1, 5, 2], ptr = [1, 2, 3, 4, 5, 6]</td><td>column access, factorisations</td></tr>
+      <tr><td>COO</td><td>row = [1, 2, 2, 4, 5], col = [3, 1, 5, 2, 4], val = [3, 22, 17, 8, 5]</td><td>assembly, conversion</td></tr></table>
+    <p>Correction to the notes: CSC lists columns in order, so column 4 (value 5, row 5) comes before column 5 (value 17, row 2): val = [22, 8, 3, 5, 17], row = [2, 4, 1, 5, 2]. Row 3 of the matrix is empty: ptr[3] = ptr[4] = 4.</p>
+    <x-f name="CSR matrix–vector product" tag="ALGORITHM">
+      y_i=\h{sum}{\sum_{p=\mathrm{ptr}_i}^{\mathrm{ptr}_{i+1}-1}}\h{val}{\mathrm{val}_p}\,x_{\mathrm{col}_p}\qquad\text{cost }O(\h{nnz}{\mathrm{nnz}})
+      <py>
+      import scipy.sparse as sp
+      A = sp.csr_matrix(dense)          # A.data, A.indices, A.indptr  (0-based)
+      y = A @ x
+      </py>
+      <f90>
+      do i = 1, n
+         y(i) = 0.0_dp
+         do p = ptr(i), ptr(i+1) - 1
+            y(i) = y(i) + val(p) * x(col(p))
+         end do
+      end do
+      </f90>
+    </x-f>
+    <x-ex id="e6-1a" ans="6" tol="0.01" lvl="Basic">Length of the CSR row pointer for a 5×5 matrix?
+      <hint>n + 1.</hint><sol>6.</sol></x-ex>
+    <x-ex id="e6-1b" ans="2" tol="0.01" lvl="Core">In the example, how many non-zeros does row 2 have? (ptr[3] − ptr[2], 1-based)
+      <hint>4 − 2.</hint><sol>2 (the values 22 and 17).</sol></x-ex>
+  </div>
+</section>
+
+<!-- ================================================================== 2 -->
+<section class="lesson" data-title="Memory, mat-vec and fill-in" data-short="Fill-in" data-badge="MATH" data-time="30 min" data-level="Intermediate"
+  data-sub="Sparse storage makes huge problems fit in memory and Ax cost O(nnz). But a direct factorisation fills the zeros in — how much depends on the ordering.">
+  <div class="stage" data-widget="fillin"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>The 2D Poisson matrix on a k×k grid has n = k² rows and about 5n non-zeros. Its Cholesky factor fills the whole band of width k: nnz(L) ~ n^{3/2}.</p><p>Above: the sparsity pattern of A and of its Cholesky factor L for three orderings of the unknowns.</p></div>
+    <div class="s-key">Iterative methods only need y = Ax: memory O(nnz), no fill-in. Direct sparse solvers reorder (RCM, minimum degree, nested dissection) to limit the fill.</div>
+    <ul class="s-learn"><li>Dense vs CSR memory</li><li>Cost of the sparse mat-vec</li><li>Fill-in of LU and Cholesky</li><li>Reordering: RCM, minimum degree</li><li>Why iterative methods for n ≳ 10⁵</li></ul>
+  </aside>
+  <div class="prose">
+    <h3>The 2D Poisson matrix (sparse_iterative.py)</h3>
+    <table><tr><th>grid k</th><th>n = k²</th><th>nnz</th><th>dense storage</th><th>CSR storage</th><th>y = Ax</th></tr>
+      <tr><td>64</td><td>4 096</td><td>20 224</td><td>0.13 GB</td><td>0.26 MB</td><td>0.03 ms</td></tr>
+      <tr><td>256</td><td>65 536</td><td>326 656</td><td>34 GB</td><td>4.2 MB</td><td>0.3 ms</td></tr>
+      <tr><td>1024</td><td>1 048 576</td><td>5 238 784</td><td>8.8 TB</td><td>67 MB</td><td>11 ms</td></tr></table>
+    <x-f name="Fill-in" tag="DEFINITION">
+      \mathrm{fill}=\h{nnz}{\mathrm{nnz}}(L)-\mathrm{nnz}(\mathrm{tril}\,A),\qquad \text{band of width }w\Rightarrow\ \mathrm{nnz}(L)\le n\,w,\ \text{cost }O(n\,w^2)
+      <note>Elimination combines rows: a zero becomes non-zero wherever two non-zeros of the pivot row and column meet. 2D Poisson, k = 30 (n = 900, nnz(tril A) = 2640): nnz(L) = 26 986 natural ordering, 19 315 reverse Cuthill–McKee, 58 859 random ordering.</note>
+      <py>
+      from scipy.sparse.csgraph import reverse_cuthill_mckee
+      p = reverse_cuthill_mckee(A, symmetric_mode=True)
+      L = np.linalg.cholesky(A[p][:, p].toarray())    # or a sparse Cholesky (CHOLMOD)
+      </py>
+      <f90>! sparse direct solvers: MUMPS, PARDISO, SuperLU (with METIS / AMD orderings)</f90>
+    </x-f>
+    <x-ex id="e6-2a" ans="5" tol="0.2" lvl="Basic">2D Poisson: roughly how many non-zeros per row?
+      <hint>Centre + 4 neighbours.</hint><sol>5 (fewer on the boundary).</sol></x-ex>
+    <x-ex id="e6-2b" ans="8796" tol="10" lvl="Core">Dense storage, in GB (8 bytes per entry), of the 2D Poisson matrix with n = 2²⁰?
+      <hint>8 n² bytes.</hint><sol>8 × 2⁴⁰ B ≈ 8.8×10¹² B = 8796 GB, against 67 MB in CSR.</sol></x-ex>
+  </div>
+</section>
+
+<!-- ================================================================== 3 -->
+<section class="lesson" data-title="Steepest descent: solving by minimising" data-short="Steepest descent" data-badge="ALGORITHM" data-time="30 min" data-level="Intermediate"
+  data-sub="For symmetric positive definite A, solving Ax = b is the same as finding the bottom of a quadratic bowl. Walk downhill.">
+  <div class="stage" data-widget="descent"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>f(x) = ½xᵀAx − bᵀx has gradient Ax − b: its minimum is the solution. The residual r = b − Ax is the downhill direction.</p><p>Above: click to choose the starting point; change κ and compare steepest descent with conjugate gradient.</p></div>
+    <div class="s-key">The exact line-search step is α = rᵀr / rᵀAr. In a long narrow valley (large κ) steepest descent zig-zags: the number of steps grows like κ.</div>
+    <ul class="s-learn"><li>Ax = b as a minimisation</li><li>Gradient and residual</li><li>Optimal step length</li><li>Zig-zag in narrow valleys</li><li>Convergence ∝ κ</li></ul>
+  </aside>
+  <div class="prose">
+    <x-f name="Quadratic form" tag="THEOREM">
+      f(\mathbf x)=\tfrac12\mathbf x^T\h{A}{A}\mathbf x-\mathbf b^T\mathbf x,\qquad \nabla f=A\mathbf x-\mathbf b=-\h{rk}{\mathbf r},\qquad A\ \text{SPD}\Rightarrow\ \min f\ \Leftrightarrow\ A\mathbf x=\mathbf b
+      <note>The level sets of f are ellipses with axes along the eigenvectors of A and lengths ∝ 1/√λ: κ is the squared aspect ratio of the bowl.</note>
+    </x-f>
+    <x-f name="Steepest descent" tag="ALGORITHM">
+      \mathbf r_k=\mathbf b-A\mathbf x_k,\qquad \h{alpha}{\alpha_k}=\frac{\mathbf r_k^T\mathbf r_k}{\mathbf r_k^TA\mathbf r_k},\qquad \mathbf x_{k+1}=\mathbf x_k+\alpha_k\mathbf r_k
+      <note>α<sub>k</sub> solves d f(x<sub>k</sub> + α r<sub>k</sub>)/dα = 0: the lowest point along the line. Consecutive residuals are orthogonal: the path turns by 90° at every step. Error reduction per step ≤ (κ−1)/(κ+1). 2×2 with κ = 10: 13 steps; 2D Poisson k = 64 (κ = 1712): 2253 iterations to 10⁻⁶.</note>
+      <py>
+      r = b - A @ x
+      Ar = A @ r
+      alpha = (r @ r) / (r @ Ar)
+      x += alpha * r;  r -= alpha * Ar
+      </py>
+      <f90>
+      call spmv(A, r, ar)
+      alpha = dot_product(r, r) / dot_product(r, ar)
+      x = x + alpha*r;  r = r - alpha*ar
+      </f90>
+    </x-f>
+    <x-ex id="e6-3a" ans="0.818" tol="0.002" lvl="Core">Worst-case error reduction per steepest-descent step, (κ−1)/(κ+1), for κ = 10?
+      <hint>9/11.</hint><sol>0.818: ln 10⁶ / ln(11/9) ≈ 69 steps to gain six digits — and the count grows like κ.</sol></x-ex>
+  </div>
+</section>
+
+<!-- ================================================================== 4 -->
+<section class="lesson" data-title="The conjugate gradient method" data-short="CG" data-badge="ALGORITHM" data-time="40 min" data-level="Intermediate"
+  data-sub="Choose search directions conjugate with respect to A: minimising along one never spoils the others. n steps at most in exact arithmetic, √κ in practice.">
+  <div class="stage" data-widget="cgconv"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>CG keeps the cheapness of steepest descent (one product Ap per step, a few vectors in memory) but removes the zig-zag by remembering the previous direction.</p><p>Above: residual histories of steepest descent and CG on the 2D Poisson problem.</p></div>
+    <div class="s-key">p<sub>i</sub>ᵀAp<sub>j</sub> = 0 (A-orthogonality). Iterations to a given accuracy grow like √κ, not κ.</div>
+    <ul class="s-learn"><li>Conjugate directions</li><li>The CG recurrences</li><li>Finite termination</li><li>√κ convergence bound</li><li>Loss of orthogonality in floating point</li></ul>
+  </aside>
+  <div class="prose">
+    <x-f name="Conjugate directions" tag="DEFINITION">
+      \h{pk}{\mathbf p_i}^TA\,\mathbf p_j=0\quad(i\ne j),\qquad \langle\mathbf u,\mathbf v\rangle_A=\mathbf u^TA\mathbf v
+      <note>For A = I conjugate means orthogonal. Minimising f along n A-conjugate directions, one after the other, reaches the exact minimum: CG terminates in ≤ n steps in exact arithmetic (2 steps for the 2×2 example). For large n we stop much earlier, at a tolerance.</note>
+    </x-f>
+    <x-f name="Conjugate gradient" tag="ALGORITHM">
+      \begin{aligned}&\mathbf r_0=\mathbf b-A\mathbf x_0,\ \mathbf p_0=\mathbf r_0;\quad \h{alpha}{\alpha_k}=\frac{\mathbf r_k^T\mathbf r_k}{\mathbf p_k^TA\mathbf p_k},\ \ \mathbf x_{k+1}=\mathbf x_k+\alpha_k\mathbf p_k,\ \ \mathbf r_{k+1}=\mathbf r_k-\alpha_kA\mathbf p_k\\ &\h{beta}{\beta_k}=\frac{\mathbf r_{k+1}^T\mathbf r_{k+1}}{\mathbf r_k^T\mathbf r_k},\quad \mathbf p_{k+1}=\mathbf r_{k+1}+\beta_k\mathbf p_k\end{aligned}
+      <note>One mat-vec, two dot products, three vector updates per step; memory: x, r, p, Ap. Error bound: ‖e<sub>k</sub>‖<sub>A</sub> ≤ 2((√κ−1)/(√κ+1))<sup>k</sup>‖e₀‖<sub>A</sub>, so k ≈ ½√κ ln(2/tol). In floating point the directions slowly lose conjugacy; convergence is delayed, not lost.</note>
+      <py>
+      r = b - A @ x; p = r.copy(); rr = r @ r
+      for k in range(maxit):
+          Ap = A @ p; alpha = rr / (p @ Ap)
+          x += alpha * p; r -= alpha * Ap
+          rr_new = r @ r
+          if np.sqrt(rr_new) < tol * nb: break
+          p = r + (rr_new / rr) * p; rr = rr_new
+      </py>
+      <f90>
+      do it = 1, maxit
+         call spmv(a, p, ap)
+         alpha = rz / dot_product(p, ap)
+         x = x + alpha*p;  r = r - alpha*ap
+         if (norm2(r)/nr0 < tol) exit
+         rz_new = dot_product(r, r)
+         p = r + (rz_new/rz)*p;  rz = rz_new
+      end do
+      </f90>
+    </x-f>
+    <h3>Iterations grow like √κ (2D Poisson, f = 1, tol 10⁻⁶)</h3>
+    <table><tr><th>k</th><th>κ</th><th>√κ</th><th>CG iterations (Python)</th><th>CG iterations (Fortran, tol 10⁻⁸)</th></tr>
+      <tr><td>64</td><td>1 712</td><td>41</td><td>101</td><td>197</td></tr>
+      <tr><td>128</td><td>6 744</td><td>82</td><td>204</td><td>396</td></tr>
+      <tr><td>256</td><td>26 768</td><td>164</td><td>411</td><td>797</td></tr>
+      <tr><td>512</td><td>106 658</td><td>327</td><td>—</td><td>1609</td></tr></table>
+    <p>Doubling the grid quadruples κ and doubles the iterations. Each iteration is O(nnz): the total work is O(n√κ) — for dense A it would still be O(n³), but no one uses CG on dense matrices.</p>
+    <x-ex id="e6-4a" ans="300" tol="5" lvl="Core">Bound ½√κ ln(2/tol) for κ = 1712, tol = 10⁻⁶?
+      <hint>0.5 × 41.4 × 14.5.</hint><sol>≈ 300 (measured 101–134: the bound is pessimistic).</sol></x-ex>
+    <x-ex id="e6-4b" ans="2" tol="0.01" lvl="Basic">At most how many CG steps solve a 2×2 SPD system exactly?
+      <hint>n.</hint><sol>2.</sol></x-ex>
+    <div class="oral">Explain why CG converges like √κ while steepest descent converges like κ, and why CG never needs A as a matrix.</div>
+  </div>
+</section>
+
+<!-- ================================================================== 5 -->
+<section class="lesson" data-title="Matrix-free CG: map-making" data-short="Matrix-free" data-badge="APPLICATION" data-time="35 min" data-level="Advanced"
+  data-sub="CG touches A only through products Av. If you can compute Av, you never need to store A — the basis of CMB map-making.">
+  <div class="stage" data-widget="mapmaking"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>A scanning telescope records a time stream d = Pm + offsets + noise. Solving for the map m and the slow offsets is a least-squares problem whose matrix is never built: Pᵀ is "bin the samples into pixels", P is "read the map along the scan".</p></div>
+    <div class="s-key">(AᵀN⁻¹A) m = AᵀN⁻¹ d is solved by CG with A applied on the fly. Its null space (a constant map minus constant offsets) is the monopole, invisible to a differential instrument.</div>
+    <ul class="s-learn"><li>Operators instead of matrices</li><li>Pointing matrix P and its transpose</li><li>Destriping with per-scan offsets</li><li>The kernel: the monopole</li><li>CG on a singular, consistent system</li></ul>
+  </aside>
+  <div class="prose">
+    <x-f name="Map-making normal equations" tag="MODEL">
+      \mathbf d=A\mathbf z+\mathbf n,\quad A=[\,P\ \ F\,],\ \ \mathbf z=\begin{pmatrix}\mathbf m\\ \mathbf a\end{pmatrix};\qquad (A^TN^{-1}A)\,\mathbf z=A^TN^{-1}\mathbf d
+      <note>P: one non-zero per row (the pixel seen at each time). F: one non-zero per row (the scan the sample belongs to), multiplying the offsets a. With white noise N ∝ I. Each CG iteration: one pass reading the map along the scan (A z) and one pass binning back (Aᵀ t): O(n<sub>samples</sub>).</note>
+      <py>
+      def apply_A(z):  return z[:npix][pix] + np.repeat(z[npix:], slen)
+      def apply_AT(t): return np.concatenate([np.bincount(pix, t, npix), t.reshape(nscan, slen).sum(1)])
+      N = scipy.sparse.linalg.LinearOperator((nu, nu), matvec=lambda z: apply_AT(apply_A(z)))
+      z, info = scipy.sparse.linalg.cg(N, apply_AT(d))
+      </py>
+      <f90>
+      ! matvec: t = map(pix(:)) + offs(scan_of(:));  then bin: m_out(pix(i)) += t(i), a_out(scan_of(i)) += t(i)
+      </f90>
+    </x-f>
+    <p>Test (sparse_iterative.py): 16 384 samples, 64 pixels, 1024 scans of 16 samples, offsets with σ = 2, white noise 0.1. CG converges in 28 iterations; map error 0.007 (after removing the mean) against 0.089 for the naive binned map that ignores the offsets. The mean of the map is not recovered (off by 0.06): (AᵀA)(1, …, 1 | −1, …, −1)ᵀ = 0 exactly — the monopole lies in the null space (Lecture 5). CG started from zero never moves along it.</p>
+    <div class="uses">
+      <div class="use"><b>CMB experiments</b>Planck, ACT, SPT: 10¹⁰–10¹² samples, 10⁷–10⁸ pixels, solved with preconditioned CG.</div>
+      <div class="use"><b>Radio interferometry</b>Gridding and degridding of visibilities act as A and Aᵀ.</div>
+      <div class="use"><b>Implicit PDE steps</b>A stencil function replaces the matrix: Av is a loop over the grid.</div>
+    </div>
+    <x-hsi to="s2">Unmixing a whole image with spatial smoothness: a 65 536-unknown sparse system solved by matrix-free PCG</x-hsi>
+    <x-ex id="e6-5a" ans="1" tol="0.01" lvl="Basic">How many non-zeros per row does the pointing matrix P have (one detector, nearest pixel)?
+      <hint>One pixel per sample.</hint><sol>1.</sol></x-ex>
+  </div>
+</section>
+
+<!-- ================================================================== 6 -->
+<section class="lesson" data-title="Preconditioning: PCG" data-short="Preconditioning" data-badge="ALGORITHM" data-time="40 min" data-level="Advanced"
+  data-sub="Solve M⁻¹Ax = M⁻¹b with M ≈ A cheap to invert: a smaller κ means far fewer iterations. Jacobi, block Jacobi, incomplete Cholesky.">
+  <div class="stage" data-widget="pcg"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>κ sets the iteration count. A preconditioner M reshapes the bowl into something rounder, at the cost of solving Mz = r once per iteration.</p><p>Above: a diffusion problem whose coefficient jumps by orders of magnitude, solved with three preconditioners.</p></div>
+    <div class="s-key">Good M: close to A (κ(M⁻¹A) small) and cheap to apply. Jacobi = diag(A): free, fixes bad scaling. IC(0): Cholesky that keeps A's sparsity: strong, but costs a triangular solve per step.</div>
+    <ul class="s-learn"><li>Why precondition</li><li>The PCG algorithm</li><li>Jacobi and block Jacobi</li><li>Incomplete Cholesky IC(0)</li><li>Cost per iteration vs iterations</li></ul>
+  </aside>
+  <div class="prose">
+    <x-f name="Preconditioned conjugate gradient" tag="ALGORITHM">
+      \mathbf z_k=\h{Mpre}{M}^{-1}\mathbf r_k,\quad \alpha_k=\frac{\mathbf r_k^T\mathbf z_k}{\mathbf p_k^TA\mathbf p_k},\quad \beta_k=\frac{\mathbf r_{k+1}^T\mathbf z_{k+1}}{\mathbf r_k^T\mathbf z_k},\quad \mathbf p_{k+1}=\mathbf z_{k+1}+\beta_k\mathbf p_k
+      <note>M must be SPD. Same as CG on M<sup>−½</sup>AM<sup>−½</sup>, whose condition number replaces κ(A). Jacobi: M = diag(A), z = r / diag(A). IC(0): A ≈ L̃L̃ᵀ with L̃ restricted to the pattern of tril(A); z from two sparse triangular solves.</note>
+      <py>
+      Minv = scipy.sparse.linalg.LinearOperator(A.shape, matvec=lambda r: r / A.diagonal())
+      x, info = scipy.sparse.linalg.cg(A, b, M=Minv, rtol=1e-6)
+      </py>
+      <f90>
+      if (present(dinv)) then; z = dinv * r; else; z = r; end if
+      rz_new = dot_product(r, z);  p = z + (rz_new/rz)*p
+      </f90>
+    </x-f>
+    <table><tr><th>feature</th><th>Jacobi</th><th>block Jacobi</th><th>incomplete Cholesky</th></tr>
+      <tr><td>structure</td><td>diagonal</td><td>diagonal blocks</td><td>sparse triangular factor</td></tr>
+      <tr><td>cost to build / apply</td><td>negligible</td><td>small, parallel</td><td>medium, sequential solves</td></tr>
+      <tr><td>effect on κ</td><td>fixes scaling only</td><td>moderate</td><td>strong</td></tr>
+      <tr><td>requires</td><td>a<sub>ii</sub> ≠ 0</td><td>invertible blocks</td><td>A SPD (may break down)</td></tr></table>
+    <h3>Measured</h3>
+    <table><tr><th>problem</th><th>no preconditioner</th><th>Jacobi</th><th>IC(0)</th></tr>
+      <tr><td>diffusion, coefficients 10⁻⁴…10³, n = 2304, κ = 10⁵ (Python)</td><td>479 it, 14 ms</td><td>187 it, 6 ms</td><td>70 it, 66 ms</td></tr>
+      <tr><td>badly scaled Poisson, k = 128 (Fortran)</td><td>34 621 it</td><td>313 it</td><td>—</td></tr></table>
+    <p>IC(0) cuts the iterations most, but in Python each triangular solve is slow: fewer iterations ≠ less time. The notes' example (κ ≈ 10⁴, n = 1000) quotes ≈ 950 → 600 → 80 iterations for none / Jacobi / IC.</p>
+    <x-ex id="e6-6a" ans="0.25" tol="0.001" lvl="Basic">Jacobi preconditioner for the 2D Poisson matrix (diagonal 4): M⁻¹ applied to r multiplies every entry by?
+      <hint>1/a<sub>ii</sub>.</hint><sol>1/4 — a uniform scaling, which does not change κ: Jacobi only helps when the diagonal varies.</sol></x-ex>
+  </div>
+</section>
+
+<!-- ================================================================== 7 -->
+<section class="lesson" data-title="Beyond SPD, and code lab" data-short="Code lab" data-badge="CODE" data-time="45 min" data-level="Intermediate"
+  data-sub="Non-symmetric and rectangular systems need other Krylov methods (GMRES, BiCGSTAB, LSQR). Then: CSR, CG and PCG in Python and Fortran with OpenMP.">
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>CG minimises an energy, which needs SPD. Without symmetry, Krylov methods minimise the residual instead, at higher memory cost.</p></div>
+    <div class="s-key">SPD → CG/PCG; symmetric indefinite → MINRES; non-symmetric → GMRES, BiCGSTAB; rectangular / singular → LSQR, LSMR.</div>
+    <ul class="s-learn"><li>Choosing a Krylov method</li><li>Run sparse_iterative.py</li><li>Compile cg_csr.f90 with OpenMP</li><li>Do the tasks</li></ul>
+  </aside>
+  <div class="prose">
+    <table><tr><th>matrix</th><th>method</th><th>use cases</th><th>cost</th></tr>
+      <tr><td>SPD</td><td>CG, PCG</td><td>Poisson, diffusion, map-making normal equations</td><td>4 vectors</td></tr>
+      <tr><td>symmetric indefinite</td><td>MINRES, SYMMLQ</td><td>saddle-point and constrained problems</td><td>few vectors</td></tr>
+      <tr><td>non-symmetric</td><td>GMRES(m), BiCGSTAB</td><td>advection–diffusion, CFD, radiative transfer</td><td>GMRES stores m vectors</td></tr>
+      <tr><td>rectangular, singular</td><td>LSQR, LSMR</td><td>large least squares, tomography</td><td>few vectors</td></tr></table>
+    <p>Measured: advection–diffusion with ‖A − Aᵀ‖/‖A‖ = 0.37 (n = 1024): GMRES(30) error 1.1×10⁻⁸, BiCGSTAB 8.6×10⁻⁹. LSQR on a sparse 2000 × 300 least-squares problem: 33 iterations, error 3×10⁻¹¹.</p>
+    <x-code><py>
+      # inside "06. Sparse and Iterative Solvers/code"
+      python sparse_iterative.py
+      </py><f90>
+      gfortran -O2 -fopenmp cg_csr.f90 -o cg_csr && OMP_NUM_THREADS=4 ./cg_csr
+    </f90></x-code>
+    <p>Fortran (2D Poisson in CSR, tol 10⁻⁸): k = 512, n = 262 144, 17 MB, 1609 iterations, error 2×10⁻¹⁰. Only the mat-vec is parallelised; in this test the serial vector updates dominate and 4 threads give little — parallelise the dot products and updates too (<code>!$omp parallel do reduction(+:s)</code>) to see a speed-up.</p>
+    <x-code py="sparse_iterative.py" f90="cg_csr.f90"/>
+    <div class="task"><b>TASK 6.1 — CSR BY HAND</b>Write COO → CSR conversion (count entries per row, prefix sum, scatter) in Fortran, with 1-based indices, and test it on the 5×5 example.</div>
+    <div class="task"><b>TASK 6.2 — 3D POISSON</b>Build the 7-point Laplacian on a 64³ grid (n = 262 144) in CSR and solve it with CG. How do the iterations compare with the 2D case of the same n?</div>
+    <div class="task"><b>TASK 6.3 — PRECONDITIONED MAP-MAKING</b>Add a Jacobi preconditioner (the pixel hit counts and scan lengths) to the map-maker and compare the iterations. Then add 1/f noise to the offsets.</div>
+    <div class="task"><b>TASK 6.4 — PARALLEL CG</b>Parallelise the dot products and vector updates of cg_csr.f90 with OpenMP and measure the speed-up for 1, 2, 4, 8 threads at k = 512.</div>
+  </div>
+</section>

@@ -1,0 +1,791 @@
+<!-- ================================================================== 1 -->
+<section class="lesson" data-title="What is probability?" data-short="Probability" data-badge="CONCEPT" data-time="20 min" data-level="Beginner"
+  data-sub="One noisy record, three unknown numbers — and first, what do we even mean by “probable”?">
+  <div class="stage" data-widget="lln"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>The whole module (Lectures 12–14) answers one question: from <b>one</b> noisy detector record, what are the three numbers of its noise model, and how sure are we?</p>
+    <p>Before any formula we need a language for “how sure”. That language is probability — and there are three ways to read it.</p></div>
+    <div class="s-key">Frequentists and Bayesians use the <b>same maths</b> (Kolmogorov's axioms). They disagree on <b>what</b> a probability can be attached to: only repeatable data, or also an unknown parameter.</div>
+    <ul class="s-learn"><li>Epistemic vs aleatory uncertainty</li><li>Classical, frequentist, Bayesian probability</li><li>The law of large numbers, by experiment</li><li>Kolmogorov's three axioms</li><li>The model signal S(f) of the whole module</li></ul>
+  </aside>
+  <div class="prose">
+    <h2><span class="lv basic">BASIC</span>The problem of the module: three numbers from one record</h2>
+    <p>A detector records noise for 64 s at 100 Hz: N = 6400 samples. Its power spectrum is not flat: at low frequency there is extra power (“1/f noise”) that bends up below a <b>knee frequency</b>. The model used in every lecture of this module is</p>
+    <x-f name="The knee noise model" tag="MODEL">
+      \h{Sf}{S(f)} = \h{s2}{\sigma^2}\left[1+\left(\frac{\h{fk}{f_k}}{\h{f}{f}}\right)^{\h{alpha}{\alpha}}\right]
+      <note>Three parameters θ = (σ², f<sub>k</sub>, α). The simulation's truth is (10⁻³, 1 Hz, 1). Above the knee the noise is white (flat, level σ²); below it, power grows like f<sup>−α</sup>.</note>
+      <py>
+      def S(f, sigma2, fk, alpha):
+          return sigma2 * (1.0 + (fk / f) ** alpha)
+      </py>
+      <f90>
+      pure elemental real(dp) function S(f, sigma2, fk, alpha)
+        real(dp), intent(in) :: f, sigma2, fk, alpha
+        S = sigma2 * (1.0_dp + (fk/f)**alpha)
+      end function S
+      </f90>
+    </x-f>
+    <p>Fitting one record (Maximum Likelihood, lesson 3) gives \(\hat f_k = 0.93\) Hz and \(\hat\alpha = 0.82\). The truth is 1 and 1. <b>How far from the truth can we be, with one record? What does “\(f_k = 0.93 \pm 0.2\) Hz” actually mean?</b> Answering that honestly is the goal of Lecture 12.</p>
+    <div class="uses">
+      <div class="use"><b>CMB satellites (Planck LFI)</b>Radiometers have exactly this 1/f + white noise; the knee frequency sets how the sky must be scanned.</div>
+      <div class="use"><b>Gravitational waves (LIGO, LISA)</b>Noise spectra are estimated from data with the Whittle likelihood before any signal search.</div>
+      <div class="use"><b>Hyperspectral sensors</b>Each band has a noise level; detector electronics show 1/f drifts along the scan.</div>
+    </div>
+
+    <h2><span class="lv basic">BASIC</span>Two kinds of uncertainty</h2>
+    <ul>
+      <li><b>Epistemic</b> — from <i>our</i> limited knowledge or finite instrument precision. The system may be deterministic (a tossed coin), but we don't know its initial conditions. <i>Reducible</i> by collecting more information. → Our ignorance of (σ², f<sub>k</sub>, α).</li>
+      <li><b>Aleatory</b> (intrinsic) — in the phenomenon itself (a quantum measurement), or variability we <i>choose</i> to model as random. → The detector noise: another record, another periodogram.</li>
+    </ul>
+
+    <h2><span class="lv basic">BASIC</span>Three definitions of probability</h2>
+    <x-f name="Classical probability (Laplace)" tag="DEFINITION">
+      \h{P}{P(E)} = \frac{\h{Nfav}{N_{\rm fav}}}{\h{Ntot}{N_{\rm tot}}}
+      <note>Favourable cases over all cases, <b>if all cases are equally likely</b>. Limits: needs a finite list of outcomes; circular (“equally likely” already uses probability); ambiguous for continuous variables — uniform in f<sub>k</sub> or in log f<sub>k</sub>? (we meet this again with priors).</note>
+      <py>
+      # P(sum of two dice = 7): count favourable cases
+      cases = [(a, b) for a in range(1, 7) for b in range(1, 7)]
+      P7 = sum(a + b == 7 for a, b in cases) / len(cases)   # 6/36
+      </py>
+      <f90>
+      nfav = 0
+      do a = 1, 6
+        do b = 1, 6
+          if (a + b == 7) nfav = nfav + 1
+        end do
+      end do
+      P7 = real(nfav, dp) / 36.0_dp
+      </f90>
+    </x-f>
+    <x-f name="Frequentist probability (von Mises)" tag="DEFINITION">
+      \h{P}{P(E)} = \h{lim}{\lim_{N\to\infty}} \frac{\h{nE}{n_E}}{\h{N}{N}}
+      <note>The long-run relative frequency in repeated trials: an objective property of the set-up. It cannot be applied to a single event (“the Big Bang”) nor to a parameter: f<sub>k</sub> has <i>one</i> value, it does not fluctuate. The stage above shows n<sub>E</sub>/N settling down.</note>
+      <py>
+      rng = np.random.default_rng(1)
+      flips = rng.random(100_000) < 0.3          # event E with p = 0.3
+      freq = np.cumsum(flips) / np.arange(1, flips.size + 1)
+      </py>
+      <f90>
+      call random_number(u)                      ! u(1:n)
+      nE = count(u < 0.3_dp)
+      freq = real(nE, dp) / n
+      </f90>
+    </x-f>
+    <p><b>Bayesian probability</b>: the degree of belief (plausibility) in a proposition, <i>given the information available</i>. It applies to single events and to parameters: “\(P(0.8 \lt f_k \lt 1.2\ {\rm Hz} \mid {\rm data})\)” makes sense. It is not arbitrary: Cox (1946) showed that any consistent calculus of plausibility obeying common-sense requirements <i>is</i> probability theory. “Subjective” means <i>conditional on the information</i>, not “as you please”.</p>
+    <table><tr><th>Aspect</th><th>Frequentist</th><th>Bayesian</th></tr>
+      <tr><td>Interpretation</td><td>limiting frequency in repeated experiments</td><td>degree of belief, conditional on information</td></tr>
+      <tr><td>Parameters θ</td><td>fixed unknown constants</td><td>described by a probability distribution</td></tr>
+      <tr><td>Data x</td><td>random: one draw among possible repetitions</td><td>fixed: the ones observed</td></tr>
+      <tr><td>Applies to</td><td>repeatable phenomena</td><td>any uncertain proposition</td></tr></table>
+
+    <h2><span class="lv core">CORE</span>The law of large numbers</h2>
+    <p>The frequency n<sub>E</sub>/N does not equal p after N trials; it <i>wanders</i> around p with a typical distance that shrinks like 1/√N. Precisely, n<sub>E</sub> is binomial, so</p>
+    <x-f name="Spread of a relative frequency" tag="RESULT">
+      \h{sdfreq}{\sigma\!\left(\tfrac{n_E}{N}\right)} = \sqrt{\frac{\h{p}{p}\,(1-\h{p}{p})}{\h{N}{N}}}
+      \qquad\Longrightarrow\qquad P\!\left(\left|\tfrac{n_E}{N}-p\right|\gt\epsilon\right)\to 0
+      <note>The law of large numbers is a <b>theorem</b> of the axioms (convergence in probability), not the definition. The 1/√N law is the seed of everything in Lecture 13: every Monte Carlo error bar is this formula in disguise.</note>
+      <py>se = np.sqrt(p * (1 - p) / N)</py>
+      <f90>se = sqrt(p*(1.0_dp - p)/N)</f90>
+    </x-f>
+    <x-ex id="e12-1a" ans="0.1667" tol="0.002" lvl="Basic">Two fair dice: what is the classical probability that the sum is 7? (decimal or fraction)
+      <hint>Count the ordered pairs (a,b) with a+b = 7, out of 36.</hint>
+      <sol>(1,6),(2,5),(3,4),(4,3),(5,2),(6,1): 6 favourable cases, so P = 6/36 = 1/6 ≈ 0.1667.</sol></x-ex>
+    <x-ex id="e12-1b" ans="0.0458" tol="0.001" lvl="Basic">An event has p = 0.3. After N = 100 trials, what is the standard deviation of the relative frequency n<sub>E</sub>/N?
+      <hint>\(\sqrt{p(1-p)/N}\)</hint>
+      <sol>\(\sqrt{0.3\cdot 0.7/100} = \sqrt{0.0021} = 0.0458\). So seeing 0.25 or 0.35 after 100 trials is completely normal (about 1σ).</sol></x-ex>
+    <x-ex id="e12-1c" ans="10000" tol="1" lvl="Core">With p = 0.5, how many trials N do you need so that σ(n<sub>E</sub>/N) = 0.005?
+      <hint>Solve \(0.005 = \sqrt{0.25/N}\).</hint>
+      <sol>\(N = 0.25/0.005^2 = 0.25/2.5\times10^{-5} = 10\,000\). Halving the error costs four times more trials — the 1/√N law.</sol></x-ex>
+
+    <h2><span class="lv core">CORE</span>Kolmogorov's axioms: the shared calculus</h2>
+    <p>Whatever the interpretation, a probability on a sample space \(\h{Omega}{\Omega}\) with a σ-algebra of events \(\mathcal F\) must satisfy:</p>
+    <x-f name="Kolmogorov axioms (1933)" tag="AXIOMS">
+      \text{(1)}\;\; \h{P}{P}(E)\ge 0 \qquad \text{(2)}\;\; \h{P}{P}(\h{Omega}{\Omega}) = 1 \qquad
+      \text{(3)}\;\; \h{P}{P}\Big(\bigcup_{i=1}^{\infty} \h{Ei}{E_i}\Big)=\h{sum}{\sum_{i=1}^{\infty}} \h{P}{P}(\h{Ei}{E_i})\ \ \text{(disjoint } E_i)
+      <note>Non-negativity, normalisation, <b>countable</b> additivity. Two-set additivity is not enough for continuous variables: densities, integrals and limits (the law of large numbers) need the countable version.</note>
+      <py>
+      p = np.array([0.2, 0.5, 0.3])         # a discrete distribution
+      assert np.all(p >= 0) and np.isclose(p.sum(), 1.0)
+      P_union = p[[0, 2]].sum()             # disjoint events: probabilities add
+      </py>
+      <f90>
+      if (any(p < 0.0_dp) .or. abs(sum(p) - 1.0_dp) > 1e-12_dp) stop 'not a probability'
+      </f90>
+    </x-f>
+    <div class="oral">“Is a 68% confidence interval the same as a 68% credible interval?” — Start from this lesson: the first is a statement about a <i>procedure</i> repeated on random data; the second about the <i>parameter</i> given the data. Same axioms, different objects. (Full answer in lessons 4 and 6.)</div>
+  </div>
+</section>
+
+<!-- ================================================================== 2 -->
+<section class="lesson" data-title="Bayes' theorem" data-short="Bayes" data-badge="MATH" data-time="25 min" data-level="Beginner"
+  data-sub="From the probability of the effect given the cause, to the probability of the cause given the effect.">
+  <div class="stage" data-widget="urns"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>Pick an urn at random, draw a ball: it is blue. Which urn was it? Bayes' theorem turns “how likely is a blue ball <i>from</i> urn 1” into “how likely is urn 1 <i>given</i> a blue ball”.</p><p>Play with the urns above: every draw updates the bars — yesterday's posterior is today's prior.</p></div>
+    <div class="s-key">Posterior ∝ likelihood × prior. The evidence p(x) only normalises — but it becomes the star when comparing models.</div>
+    <ul class="s-learn"><li>Conditional probability & product rule</li><li>Law of total probability</li><li>Bayes' theorem, derived in 2 lines</li><li>Names: posterior, likelihood, prior, evidence</li><li>Sequential updating = batch updating</li><li>The base-rate trap (alarms, false positives)</li></ul>
+  </aside>
+  <div class="prose">
+    <h2><span class="lv basic">BASIC</span>Conditional probability</h2>
+    <p>We often want the probability of A <i>knowing</i> that B happened (with P(B) &gt; 0). We restrict the world to B and ask which fraction of it is also A:</p>
+    <x-f name="Conditional probability" tag="DEFINITION">
+      \h{PAB}{P(A\mid B)} = \frac{\h{cap}{P(A\cap B)}}{\h{PB}{P(B)}}
+      <note>Example: one die, A = “6”, B = “even”. P(A∩B) = 1/6, P(B) = 1/2, so P(6 | even) = 1/3.</note>
+      <py>p_A_given_B = p_AB / p_B</py>
+      <f90>p_A_given_B = p_AB / p_B</f90>
+    </x-f>
+    <p>Multiplying out gives the <b>product rule</b>, written two ways because ∩ is symmetric:</p>
+    <x-f name="Product rule" tag="RULE">
+      \h{cap}{P(A\cap B)} = \h{PAB}{P(A\mid B)}\,\h{PB}{P(B)} = \h{PBA}{P(B\mid A)}\,\h{PA}{P(A)}
+    </x-f>
+    <p>If A₁ … A<sub>n</sub> split Ω into disjoint pieces (a <b>partition</b>: exactly one is true), then B happens through exactly one of them:</p>
+    <x-f name="Law of total probability" tag="RULE">
+      \h{PB}{P(B)} = \h{sum}{\sum_i} \h{PBAi}{P(B\mid A_i)}\,\h{PAi}{P(A_i)}
+      <py>p_B = np.sum(p_B_given_A * p_A)      # arrays over the partition</py>
+      <f90>p_B = sum(p_B_given_A * p_A)</f90>
+    </x-f>
+    <p>A and B are <b>independent</b> if \(P(A\cap B) = P(A)P(B)\), i.e. \(P(A\mid B)=P(A)\): knowing B teaches nothing about A.</p>
+
+    <h2><span class="lv basic">BASIC</span>Bayes' theorem in two lines</h2>
+    <ol class="steps">
+      <li>Write the product rule both ways: \(P(A\mid B)P(B) = P(B\mid A)P(A)\).</li>
+      <li>Divide by \(P(B)\) and expand \(P(B)\) with the total probability. Done.</li>
+    </ol>
+    <x-f name="Bayes' theorem" tag="THEOREM">
+      \h{PAB}{P(A\mid B)} = \frac{\h{PBA}{P(B\mid A)}\;\h{PA}{P(A)}}{\h{PB}{P(B)}},\qquad \h{PB}{P(B)}=\h{sum}{\sum_i}\h{PBAi}{P(B\mid A_i)}\h{PAi}{P(A_i)}
+      <note>The engine of inference: it <b>inverts the conditioning</b>, from “effect given cause” (easy to model) to “cause given observed effect” (what we want).</note>
+      <py>
+      def bayes(like, prior):
+          """like[i] = P(B | A_i), prior[i] = P(A_i)  ->  P(A_i | B)"""
+          joint = like * prior
+          return joint / joint.sum()          # divide by the evidence P(B)
+      </py>
+      <f90>
+      post = like * prior
+      post = post / sum(post)                ! divide by the evidence P(B)
+      </f90>
+    </x-f>
+    <p>For a model with parameters θ and data x (plus background information I, usually left implicit) every piece gets a name:</p>
+    <x-f name="Bayes' theorem for parameters" tag="THEOREM">
+      \underbrace{\h{post}{p(\theta\mid x)}}_{\text{posterior}} = \frac{\overbrace{\h{like}{p(x\mid\theta)}}^{\text{likelihood}}\ \overbrace{\h{prior}{p(\theta)}}^{\text{prior}}}{\underbrace{\h{evid}{p(x)}}_{\text{evidence}}},\qquad
+      \h{evid}{p(x)} = \h{integral}{\int} \h{like}{p(x\mid\theta)}\,\h{prior}{p(\theta)}\dd\theta
+      <note>The evidence normalises the posterior: a constant for one model (ignore it for parameter estimation), the key quantity to compare models (lesson 7, Expert).</note>
+      <py>
+      # on a grid of theta values:
+      post = like(theta_grid) * prior(theta_grid)
+      post /= np.trapz(post, theta_grid)     # = dividing by the evidence
+      </py>
+      <f90>
+      post = like * prior
+      post = post / (sum(post) * dtheta)      ! Riemann-sum evidence
+      </f90>
+    </x-f>
+    <div class="plain">Before data you have a belief (prior). The data say how well each possible value explains what you saw (likelihood). Multiply, renormalise: that's your new belief (posterior).</div>
+
+    <h2><span class="lv basic">BASIC</span>Worked example: the two urns (from the lecture)</h2>
+    <p>Urn A₁: 3 blue, 7 red. Urn A₂: 6 blue, 4 red. One is chosen at random: P(A₁) = P(A₂) = ½. We draw a ball: <b>blue</b>.</p>
+    <ol class="steps">
+      <li>Likelihoods: P(B | A₁) = 0.3, P(B | A₂) = 0.6.</li>
+      <li>Evidence: P(B) = 0.3·½ + 0.6·½ = 0.45.</li>
+      <li>Posterior: P(A₁ | B) = 0.3·½ / 0.45 = <b>1/3</b>, P(A₂ | B) = <b>2/3</b>.</li>
+      <li>Put the ball back, draw again: blue. Yesterday's posterior is today's prior: P(A₁ | BB) = 0.3·⅓ / (0.3·⅓ + 0.6·⅔) = <b>0.2</b>.</li>
+      <li>Same in one go with the likelihood of two draws: 0.3²·½ / (0.3²·½ + 0.6²·½) = <b>0.2</b>. The order in which data arrive does not matter.</li>
+    </ol>
+    <x-ex id="e12-2a" ans="0.6364" tol="0.002" lvl="Basic">Same urns, equal priors. You draw one ball and it is <b>red</b>. What is P(A₁ | red)?
+      <hint>P(red | A₁) = 0.7, P(red | A₂) = 0.4.</hint>
+      <sol>Evidence 0.7·½ + 0.4·½ = 0.55. P(A₁ | R) = 0.35/0.55 = 7/11 ≈ 0.636.</sol></x-ex>
+    <x-ex id="e12-2b" ans="0.4667" tol="0.002" lvl="Core">Equal priors. Two draws with replacement: blue then red. What is P(A₁ | BR)?
+      <hint>Likelihood of the pair: P(B|A)·P(R|A). The equal priors cancel.</hint>
+      <sol>A₁: 0.3·0.7 = 0.21; A₂: 0.6·0.4 = 0.24. P(A₁|BR) = 0.21/(0.21+0.24) = 0.467. One blue and one red almost cancel out — but not exactly, because the two urns are not symmetric.</sol></x-ex>
+
+    <h2><span class="lv core">CORE</span>The base-rate trap: why priors matter</h2>
+    <p>A transient-detection pipeline (supernovae, GW alerts, a satellite fault monitor) raises an alarm. It catches 99% of real events (sensitivity) and has a 5% false-alarm rate. Real events are rare: 1% of candidates. Given an alarm, what is the probability it's real? Most people say “99%”. Bayes says:</p>
+    <x-f name="Posterior probability of a real event" tag="APPLICATION">
+      \h{PRA}{P(\text{real}\mid\text{alarm})} = \frac{\h{sens}{P(\text{alarm}\mid\text{real})}\;\h{prev}{P(\text{real})}}{\h{sens}{P(\text{alarm}\mid\text{real})}\h{prev}{P(\text{real})} + \h{fa}{P(\text{alarm}\mid\text{noise})}\,[1-\h{prev}{P(\text{real})}]}
+      <note>With 0.99, 0.01, 0.05: 0.0099 / (0.0099 + 0.0495) = <b>0.167</b>. Five out of six alarms are false, because noise candidates are 99 times more numerous.</note>
+      <py>post = sens * prev / (sens * prev + fa * (1 - prev))</py>
+      <f90>post = sens*prev / (sens*prev + fa*(1.0_dp - prev))</f90>
+    </x-f>
+    <div class="stage" data-widget="alarm"></div>
+    <x-ex id="e12-2c" ans="0.1667" tol="0.002" lvl="Basic">Compute P(real | alarm) for prevalence 1%, sensitivity 99%, false-alarm rate 5%.
+      <hint>Numerator 0.99·0.01; denominator adds 0.05·0.99.</hint>
+      <sol>0.0099/(0.0099+0.0495) = 0.0099/0.0594 = 0.1667.</sol></x-ex>
+    <x-ex id="e12-2d" ans="0.7984" tol="0.003" lvl="Core">Two independent alarms on the same candidate (both fire). Use the posterior of the first (0.1667) as the prior of the second. New P(real)?
+      <hint>Repeat the formula with prev = 1/6.</hint>
+      <sol>0.99·(1/6) / (0.99/6 + 0.05·5/6) = 0.165/(0.165+0.04167) = 0.798. Sequential updating: a second, independent test is very informative.</sol></x-ex>
+    <div class="uses">
+      <div class="use"><b>Exoplanet vetting (Kepler/TESS)</b>“False-positive probability” of a transit candidate: eclipsing binaries are common, so the prior matters (tools like <code>vespa</code>, <code>TRICERATOPS</code>).</div>
+      <div class="use"><b>Spacecraft fault detection</b>A sensor anomaly flag: with rare real faults, most flags are false — Bayesian reasoning sets alarm thresholds.</div>
+      <div class="use"><b>Pixel classification</b>Remote sensing: P(class | spectrum) ∝ P(spectrum | class) P(class). Rare classes need care (see the hyperspectral project).</div>
+    </div>
+    <div class="oral">Derive Bayes' theorem from the product rule and explain each term, using the urn example. Then: why is the evidence irrelevant for parameter estimation but essential for model comparison?</div>
+    <x-hsi to="s7">Bayes on a data cube: classify every pixel of a hyperspectral image with P(class | spectrum)</x-hsi>
+  </div>
+</section>
+
+<!-- ================================================================== 3 -->
+<section class="lesson" data-title="Likelihood & maximum likelihood" data-short="Likelihood" data-badge="MATH" data-time="35 min" data-level="Intermediate"
+  data-sub="The common ground of both schools: the probability of the data, read as a function of the parameters.">
+  <div class="stage" data-widget="like"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>Probability goes model → data (deduction). Inference goes data → model (induction). Both start from p(x | θ).</p><p>Above: drag μ and watch −ln L. Its minimum is the sample mean, and its curvature tells you the error bar (next lesson).</p></div>
+    <div class="s-key">L(θ) is <b>not</b> a probability density for θ: it does not integrate to 1 over θ and has no Jacobian. That's why the MLE is invariant under re-parametrisation.</div>
+    <ul class="s-learn"><li>The likelihood function L(θ) = p(x|θ)</li><li>Maximum likelihood estimate</li><li>Gaussian likelihood → χ² (least squares)</li><li>When least squares is wrong</li><li>The Whittle likelihood of a spectrum</li><li>Fitting the knee by hand</li></ul>
+  </aside>
+  <div class="prose">
+    <h2><span class="lv basic">BASIC</span>Inference is probability run backwards</h2>
+    <ul><li><b>Probability (deduction)</b>: given a model and its parameters, predict the data — our noise generator.</li>
+      <li><b>Inference (induction)</b>: given the data, estimate the parameters of the model that generated them — our problem.</li></ul>
+    <x-f name="Likelihood function" tag="DEFINITION">
+      \h{L}{\mathcal L(\theta)} = \h{like}{p(x\mid\theta)}\quad\text{read as a function of }\h{theta}{\theta}\text{ at fixed data }\h{x}{x}
+      <note>For independent data the joint probability factorises: \(\mathcal L(\theta) = \prod_i p(x_i\mid\theta)\). Always work with ln 𝓛 (a sum) — a product of 3000 numbers smaller than 1 underflows.</note>
+      <py>
+      def log_like(theta, x):
+          return np.sum(log_p_single(x, theta))   # sum of logs, never prod
+      </py>
+      <f90>
+      lnL = sum(log_p_single(x, theta))           ! elemental function on the array
+      </f90>
+    </x-f>
+    <x-f name="Maximum likelihood estimator (MLE)" tag="PRINCIPLE">
+      \h{thetahat}{\hat\theta_{\rm ML}} = \h{argmax}{\arg\max_\theta}\ \h{L}{\mathcal L(\theta)} = \h{argmin}{\arg\min_\theta}\ \big[-\h{lnL}{\ln\mathcal L(\theta)}\big]
+      <note>The value of θ that makes the observed data most probable. In practice we <b>minimise −ln 𝓛</b> (optimisers minimise).</note>
+      <py>
+      from scipy.optimize import minimize
+      res = minimize(lambda t: -log_like(t, x), x0=theta_start, method="Nelder-Mead")
+      theta_hat = res.x
+      </py>
+      <f90>
+      ! no optimiser in the standard: scan a grid, or call MINPACK / NLopt
+      theta_hat = grid(maxloc(lnL, dim=1))
+      </f90>
+    </x-f>
+    <div class="warn">𝓛 is <b>not</b> a density in θ: it does not integrate to 1 over θ and can be multiplied by any constant. Because it is a function of the <i>value</i> of θ (no Jacobian), the MLE is <b>invariant</b>: if φ = g(θ) then \(\hat\varphi_{\rm ML} = g(\hat\theta_{\rm ML})\). Fitting f<sub>k</sub> or log₁₀ f<sub>k</sub> on the record gives f̂<sub>k</sub> = 0.9251 Hz both times. A posterior (a density) has a Jacobian: its maximum moves (lesson 5).</div>
+    <x-ex id="e12-3a" ans="0.7" tol="0.001" lvl="Basic">A coin gives 7 heads in 10 tosses. The likelihood is \(\mathcal L(p) \propto p^7(1-p)^3\). What is the MLE p̂?
+      <hint>Differentiate ln 𝓛 = 7 ln p + 3 ln(1−p) and set it to 0.</hint>
+      <sol>7/p − 3/(1−p) = 0 ⇒ 7(1−p) = 3p ⇒ p̂ = 7/10 = 0.7. The MLE of a binomial probability is the observed frequency.</sol></x-ex>
+
+    <h2><span class="lv core">CORE</span>Gaussian data: the likelihood becomes χ²</h2>
+    <p>If the data x<sub>i</sub> are independent Gaussians with <b>known</b> errors σ<sub>i</sub> and model means μ<sub>i</sub>(θ):</p>
+    <x-f name="Gaussian likelihood" tag="LIKELIHOOD">
+      \h{L}{\mathcal L(\theta)} = \h{prod}{\prod_{i=1}^{N}}\frac{1}{\sqrt{2\pi}\,\h{sigmai}{\sigma_i}}\exp\!\left[-\frac{(\h{xi}{x_i}-\h{mui}{\mu_i(\theta)})^2}{2\h{sigmai}{\sigma_i}^2}\right]
+    </x-f>
+    <p>Take the logarithm, term by term — the product becomes a sum, the exponential disappears:</p>
+    <x-f name="Log-likelihood and χ²" tag="RESULT">
+      \h{lnL}{\ln\mathcal L(\theta)} = -\frac12\h{sum}{\sum_{i=1}^{N}}\frac{(\h{xi}{x_i}-\h{mui}{\mu_i(\theta)})^2}{\h{sigmai}{\sigma_i}^2} - \h{sum}{\sum_i}\ln\!\big(\sqrt{2\pi}\,\h{sigmai}{\sigma_i}\big) = -\frac12\,\h{chi2}{\chi^2(\theta)} + \text{const}
+      <note><b>Maximising the likelihood = minimising χ²</b> (least squares) — <i>only if the σ<sub>i</sub> are known and do not depend on θ</i>. If the noise level is itself a parameter (our σ²!), the term Σ ln σ<sub>i</sub> stays and plain least squares is wrong.</note>
+      <py>
+      chi2 = np.sum(((x - model(theta)) / sigma_i) ** 2)
+      lnL = -0.5 * chi2 - np.sum(np.log(np.sqrt(2 * np.pi) * sigma_i))
+      </py>
+      <f90>
+      chi2 = sum(((x - model) / sigma_i)**2)
+      lnL  = -0.5_dp*chi2 - sum(log(sqrt(2.0_dp*pi)*sigma_i))
+      </f90>
+    </x-f>
+    <p><b>Special case — the mean of N measurements with the same σ.</b> −ln 𝓛 = Σ(x<sub>i</sub> − μ)²/(2σ²) + const. Setting the derivative to zero: Σ(x<sub>i</sub> − μ) = 0 ⇒ <b>μ̂ = x̄</b>, the sample mean. The stage above shows exactly this parabola.</p>
+    <x-ex id="e12-3b" ans="5.0667" tol="0.001" lvl="Basic">Three measurements 4.8, 5.1, 5.3 with the same σ = 0.2. What is the MLE of their common mean μ?
+      <hint>Equal σ: the MLE is the plain average.</hint>
+      <sol>(4.8+5.1+5.3)/3 = 15.2/3 = 5.0667.</sol></x-ex>
+    <x-ex id="e12-3c" ans="3.1667" tol="0.005" lvl="Core">Same data. What is χ² at the MLE?
+      <hint>Residuals −0.2667, 0.0333, 0.2333, each divided by 0.2, squared, summed.</hint>
+      <sol>(−1.333)² + (0.1667)² + (1.1667)² = 1.778 + 0.0278 + 1.361 = 3.167. With N − 1 = 2 degrees of freedom, χ²/dof ≈ 1.6: acceptable.</sol></x-ex>
+    <x-ex id="e12-3d" ans="4.85" tol="0.002" lvl="Core">Weighted mean: measurements 4.8 ± 0.1 and 5.3 ± 0.3. MLE of μ? (\(\hat\mu = \sum w_i x_i / \sum w_i\), \(w_i = 1/\sigma_i^2\))
+      <hint>w = 100 and 11.11.</hint>
+      <sol>(100·4.8 + 11.11·5.3)/111.11 = 538.89/111.11 = 4.85. Its error is 1/√Σw = 0.095: the precise measurement dominates.</sol></x-ex>
+
+    <h2><span class="lv core">CORE</span>The likelihood of a spectrum: Whittle</h2>
+    <p>Our noise samples are <b>correlated</b> (that's what a non-white spectrum means), so the time-domain likelihood is not a product of independent Gaussians. Go to the frequency domain: for a stationary Gaussian process, the periodogram bins P<sub>j</sub> (DC and Nyquist excluded) are asymptotically <b>independent</b> and <b>exponential</b> with mean S(f<sub>j</sub>), i.e. P<sub>j</sub> = S(f<sub>j</sub>) χ²₂/2.</p>
+    <x-f name="Distribution of one periodogram bin" tag="LIKELIHOOD">
+      p(\h{Pj}{P_j}\mid\h{theta}{\theta}) = \frac{1}{\h{Sj}{S_j}}\,e^{-\h{Pj}{P_j}/\h{Sj}{S_j}},\qquad \h{Sj}{S_j}=\h{Sf}{S(f_j;\theta)}
+      <note>Why exponential? The DFT coefficient X<sub>j</sub> is a complex Gaussian: real and imaginary parts independent with equal variance. |X<sub>j</sub>|² is then a sum of two squared Gaussians, χ²₂, which is an exponential. Mean and standard deviation of P<sub>j</sub> are both S<sub>j</sub>: a periodogram is <b>100% noisy</b> per bin.</note>
+      <py>P = -S * np.log(1.0 - rng.random(S.size))   # simulate a periodogram (inversion, L13)</py>
+      <f90>call random_number(r);  P = -S*log(1.0_dp - r)</f90>
+    </x-f>
+    <x-f name="Whittle likelihood" tag="LIKELIHOOD">
+      -\h{lnL}{\ln\mathcal L(\theta)} = \h{sum}{\sum_j}\left[\ln \h{Sj}{S_j} + \frac{\h{Pj}{P_j}}{\h{Sj}{S_j}}\right]
+      <note>Fast: O(N) per evaluation (after one FFT). Each bin alone would be fitted best by S<sub>j</sub> = P<sub>j</sub> (set ∂/∂S<sub>j</sub> = 0: 1/S − P/S² = 0). The model ties the 3199 bins together with 3 parameters. Approximations: leakage for steep spectra, correlated lowest bins, χ²₁ at DC/Nyquist.</note>
+      <py>
+      def neg_log_like(theta, f, P):
+          log10_s2, log10_fk, alpha = theta
+          S = 10**log10_s2 * (1 + (10**log10_fk / f) ** alpha)
+          return np.sum(np.log(S) + P / S)
+      </py>
+      <f90>
+      S = s2 * (1.0_dp + (fk/f)**alpha)
+      nll = sum(log(S) + P/S)
+      </f90>
+    </x-f>
+    <div class="stage" data-widget="knee"></div>
+    <x-ex id="e12-3e" ans="2" tol="0.001" lvl="Basic">One bin has P = 2 and the model gives S = 1. What is its contribution ln S + P/S to −ln 𝓛?
+      <hint>ln 1 = 0.</hint>
+      <sol>0 + 2/1 = 2.</sol></x-ex>
+    <x-ex id="e12-3f" ans="2" tol="0.001" lvl="Core">Still one bin with P = 2: which value of S minimises ln S + P/S?
+      <hint>Derivative 1/S − P/S² = 0.</hint>
+      <sol>S = P = 2. Alone, each bin would “fit” its own noisy value — that's why we need a model with few parameters.</sol></x-ex>
+    <div class="uses">
+      <div class="use"><b>Light-curve & RV fitting</b>χ² fits of exoplanet orbits and stellar pulsations are Gaussian MLEs.</div>
+      <div class="use"><b>Orbit determination</b>Weighted least squares of range/Doppler data = Gaussian MLE (your SMS course: batch filter).</div>
+      <div class="use"><b>Noise PSD estimation</b>Whittle is used for LISA, pulsar timing red noise, CMB detector noise, seismology.</div>
+    </div>
+    <div class="oral">Show that maximising a Gaussian likelihood is least squares. When is least squares <i>not</i> the MLE? Then write the Whittle likelihood and say why we work with the periodogram instead of the time series.</div>
+    <x-hsi to="s8">Least squares = Gaussian likelihood: the linear mixing model of a hyperspectral pixel</x-hsi>
+  </div>
+</section>
+
+<!-- ================================================================== 4 -->
+<section class="lesson" data-title="Fisher matrix & confidence intervals" data-short="Fisher & CI" data-badge="MATH" data-time="35 min" data-level="Intermediate"
+  data-sub="How sure? The curvature of the likelihood, the Cramér–Rao bound, bias, and what a confidence interval really promises.">
+  <div class="stage" data-widget="coverage"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>A frequentist cannot put a probability on θ. So the uncertainty is attached to the <b>procedure</b>: repeat the experiment many times — how often does the interval catch the truth?</p><p>Above: each bar is one experiment's interval. Green = caught the truth, red = missed. Try small N with estimated σ.</p></div>
+    <div class="s-key">Coverage is a property of the procedure, checked by simulation when the truth is known. For one given record, the interval either contains the truth or it doesn't.</div>
+    <ul class="s-learn"><li>Fisher information = curvature of −ln L</li><li>σ_μ = σ/√N from the Fisher matrix</li><li>Cramér–Rao bound; (F⁻¹)ᵢᵢ vs 1/Fᵢᵢ</li><li>The MLE is biased (N−1)/N</li><li>Consistency, efficiency, invariance</li><li>Confidence intervals & coverage by simulation</li></ul>
+  </aside>
+  <div class="prose">
+    <h2><span class="lv basic">BASIC</span>Sharp peak = precise parameter</h2>
+    <p>Near its minimum, −ln 𝓛 looks like a parabola. A <b>narrow</b> parabola means a small change of θ makes the data much less probable: θ is well constrained. The curvature (second derivative) measures this.</p>
+    <x-f name="Fisher information matrix" tag="DEFINITION">
+      \h{F}{F_{ab}} = \h{E}{\mathbb E}\!\left[-\frac{\partial^2 \h{lnL}{\ln\mathcal L}}{\partial\h{theta}{\theta_a}\,\partial\h{theta}{\theta_b}}\right],\qquad\text{Whittle: }\ \h{F}{F_{ab}}=\h{sum}{\sum_j}\partial_a\ln \h{Sj}{S_j}\;\partial_b\ln \h{Sj}{S_j}
+      <note>The expectation is over data sets. For Whittle it needs <b>only the model</b>, not the data → forecasts before observing.</note>
+      <py>
+      # Whittle Fisher matrix by finite differences of ln S
+      def fisher(theta, f, h=1e-5):
+          d = len(theta); G = np.empty((d, f.size))
+          for a in range(d):
+              e = np.zeros(d); e[a] = h
+              G[a] = (np.log(S(theta + e, f)) - np.log(S(theta - e, f))) / (2*h)
+          return G @ G.T
+      </py>
+      <f90>
+      do a = 1, 3
+        do b = 1, 3
+          F(a,b) = sum(dlnS(:,a) * dlnS(:,b))
+        end do
+      end do
+      </f90>
+    </x-f>
+    <h3>Derivation for the simplest case: the mean of N Gaussians</h3>
+    <ol class="steps">
+      <li>\(-\ln\mathcal L(\mu) = \sum_i (x_i-\mu)^2/(2\sigma^2) + {\rm const}\).</li>
+      <li>Second derivative: \(\partial^2(-\ln\mathcal L)/\partial\mu^2 = N/\sigma^2\) (no data left: expectation is trivial).</li>
+      <li>So \(F = N/\sigma^2\) and the error is \(\sigma_\mu = 1/\sqrt F = \sigma/\sqrt N\). The famous “standard error of the mean” is a Fisher error.</li>
+    </ol>
+    <x-ex id="e12-4a" ans="0.2" tol="0.001" lvl="Basic">N = 100 measurements with σ = 2. What is the Fisher error σ<sub>μ</sub> on their mean?
+      <hint>σ/√N.</hint><sol>2/10 = 0.2.</sol></x-ex>
+
+    <h2><span class="lv core">CORE</span>The Cramér–Rao bound</h2>
+    <x-f name="Cramér–Rao bound" tag="THEOREM">
+      \mathrm{Cov}(\h{thetahat}{\hat\theta}) - \h{F}{F}^{-1}\ \succeq 0\qquad\Longrightarrow\qquad \sigma(\h{thetahat}{\hat\theta_i})\ \ge\ \sqrt{(\h{F}{F}^{-1})_{ii}}
+      <note>No <b>unbiased</b> estimator can be more precise than the data allow: 1/F is a lower bound on its variance. An estimator that reaches it is <b>efficient</b>; the MLE does, asymptotically.</note>
+      <py>
+      C = np.linalg.inv(F)
+      sigma_marg = np.sqrt(np.diag(C))           # correct: other parameters free
+      sigma_cond = 1 / np.sqrt(np.diag(F))       # optimistic: others held fixed
+      corr = C / np.outer(sigma_marg, sigma_marg)
+      </py>
+      <f90>
+      ! invert the small symmetric matrix with LAPACK: dpotrf + dpotri
+      call dpotrf('U', 3, F, 3, info);  call dpotri('U', 3, F, 3, info)
+      </f90>
+    </x-f>
+    <div class="warn">Use \(\sqrt{(F^{-1})_{ii}}\), not \(1/\sqrt{F_{ii}}\). The second holds the other parameters <b>fixed</b> at their true values. On the knee record for log₁₀ f<sub>k</sub>: 0.055 (wrong) instead of 0.077 (right). Correlations make the honest error bigger.</div>
+    <x-ex id="e12-4b" ans="0.5774" tol="0.002" lvl="Core">Fisher matrix \(F = \begin{pmatrix}4&amp;2\\2&amp;4\end{pmatrix}\). What is the marginal error \(\sqrt{(F^{-1})_{11}}\)?
+      <hint>\(F^{-1} = \frac{1}{\det F}\begin{pmatrix}4&amp;-2\\-2&amp;4\end{pmatrix}\), det = 12.</hint>
+      <sol>(F⁻¹)₁₁ = 4/12 = 1/3, σ₁ = 0.577. The conditional error 1/√F₁₁ = 0.5 is 13% too small. Correlation coefficient: −2/4 = −0.5.</sol></x-ex>
+    <p>On our record: σ² ± 4.0%; f<sub>k</sub> = 0.93 Hz ×/÷ 1.25; α = 0.82 ± 0.11. Correlations: σ²–f<sub>k</sub> −0.74, σ²–α +0.79, f<sub>k</sub>–α −0.47.</p>
+
+    <h2><span class="lv core">CORE</span>Is the MLE unbiased? No.</h2>
+    <x-f name="MLE of a Gaussian variance" tag="EXAMPLE">
+      \h{s2ml}{\hat\sigma^2_{\rm ML}} = \frac1{\h{N}{N}}\h{sum}{\sum_i}(x_i-\bar x)^2,\qquad \h{E}{\mathbb E}\big[\h{s2ml}{\hat\sigma^2_{\rm ML}}\big]=\frac{N-1}{N}\,\h{s2}{\sigma^2}
+      <note>Why? x̄ is fitted to the same data, so residuals around x̄ are systematically smaller than around the true μ: one “degree of freedom” is used up. Dividing by N − 1 (Bessel) removes the bias. Simulated in the lecture: 2×10⁵ sets of N = 5, σ² = 4: mean 3.205 (theory 3.200); with N − 1: 4.006.</note>
+      <py>
+      s2_ml = x.var(ddof=0)     # 1/N      (MLE, biased)
+      s2_un = x.var(ddof=1)     # 1/(N-1)  (unbiased)
+      </py>
+      <f90>
+      s2_ml = sum((x - sum(x)/n)**2) / n
+      s2_un = sum((x - sum(x)/n)**2) / (n - 1)
+      </f90>
+    </x-f>
+    <div class="stage" data-widget="bias"></div>
+    <x-ex id="e12-4c" ans="3.2" tol="0.005" lvl="Basic">σ² = 4, N = 5. What is the expected value of the ML variance estimator?
+      <hint>(N−1)/N · σ².</hint><sol>4/5 · 4 = 3.2.</sol></x-ex>
+    <p>What the MLE <i>does</i> have (under regularity conditions): <b>consistency</b> (θ̂ → θ as N → ∞; bias O(1/N)); <b>asymptotic normality and efficiency</b> (covariance → F⁻¹); <b>invariance</b> — at the price of unbiasedness: if f̂<sub>k</sub> were unbiased, log f̂<sub>k</sub> could not be. Over 500 records: mean of f̂<sub>k</sub> 1.006, median 0.990.</p>
+
+    <h2><span class="lv core">CORE</span>Confidence intervals and coverage</h2>
+    <x-f name="Confidence interval at 100(1−γ)%" tag="DEFINITION">
+      P\big(\h{thetatrue}{\theta_{\rm true}} \in [\h{ax}{a(x)},\h{bx}{b(x)}]\big) = 1-\h{gamma}{\gamma}
+      <note>The probability refers to the <b>end points</b> (random, through the data), not to θ. Property = <b>coverage</b>. Exact constructions: Neyman (1937). θ̂ ± 1σ<sub>Fisher</sub> has 68.3% coverage only asymptotically.</note>
+      <py>
+      covered = 0
+      for r in range(n_records):                 # simulate many experiments
+          x = simulate(theta_true, rng)
+          th, err = fit_with_errors(x)
+          covered += abs(th - theta_true) < err
+      print(covered / n_records)                 # should be ~0.683
+      </py>
+      <f90>
+      do r = 1, nrec
+        call simulate(x);  call fit(x, th, err)
+        if (abs(th - th_true) < err) ncov = ncov + 1
+      end do
+      </f90>
+    </x-f>
+    <table><tr><th>500 records of 64 s</th><th>σ²</th><th>f<sub>k</sub></th><th>α</th></tr>
+      <tr><td>mean of the MLE</td><td>0.998×10⁻³</td><td>1.006</td><td>0.994</td></tr>
+      <tr><td>scatter (std)</td><td>3.1%</td><td>0.18</td><td>0.117</td></tr>
+      <tr><td>coverage of θ̂ ± 1σ<sub>F</sub></td><td>68.8%</td><td>69.6%</td><td><b>63.0%</b></td></tr></table>
+    <p>α <b>under-covers</b>: σ<sub>F</sub> is itself estimated at θ̂, and with only 64 bins below the knee the likelihood of α is not yet Gaussian. The true α = 1 is 1.7σ away on our record: unlucky record, or wrong error bar? One record can't tell — only simulations can. The stage at the top reproduces the same phenomenon with the mean of N Gaussians when σ must be estimated from tiny samples (the Student-t effect).</p>
+    <x-ex id="e12-4d" ans="95" tol="1.5" lvl="Core">Run the coverage stage with N = 25, known σ, 95% level, for 2000 experiments. What coverage (in %) do you expect?
+      <hint>With known σ the interval x̄ ± 1.96σ/√N is exact.</hint><sol>95%. Now switch to “σ estimated” with N = 3: coverage drops to about 80%, because s is noisy (use a Student t with N−1 dof to fix it).</sol></x-ex>
+    <div class="uses">
+      <div class="use"><b>Survey forecasts (Euclid, LSST)</b>Fisher matrices decide survey depth and area before the telescope is built.</div>
+      <div class="use"><b>Mission design</b>“How long must we integrate to measure f<sub>k</sub> to 10%?” — Fisher needs only the model.</div>
+      <div class="use"><b>Kalman filters</b>The covariance P propagated in navigation filters is an inverse Fisher matrix of the measurements so far.</div>
+    </div>
+    <div class="oral">“Your result is α = 0.82 ± 0.11. What does ±0.11 mean in frequentist terms? How would you check it?” → coverage by simulation, nominal 68.3%, measured 63% for α — and why.</div>
+    <x-hsi to="s8">Fisher forecast for a sensor: which spectral bands constrain the material fractions?</x-hsi>
+  </div>
+</section>
+
+<!-- ================================================================== 5 -->
+<section class="lesson" data-title="Posterior & priors" data-short="Priors" data-badge="MATH" data-time="35 min" data-level="Intermediate"
+  data-sub="The Bayesian answer is a distribution. The prior says what we knew before — and “flat” is never neutral.">
+  <div class="stage" data-widget="conj"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>Above: a previous experiment measured α = 1.00 ± 0.10 (prior); our record says 0.82 ± 0.12 (likelihood). The posterior is a precision-weighted compromise — narrower than both.</p><p>Change the widths: the more precise source pulls harder.</p></div>
+    <div class="s-key">A flat prior is flat in <b>one</b> variable only. Flat in f<sub>k</sub> is strongly non-flat in log f<sub>k</sub>. With little data the prior decides; with a lot of data, the data decide.</div>
+    <ul class="s-learn"><li>Posterior ∝ likelihood × prior</li><li>Gaussian × Gaussian: precisions add (derived)</li><li>Beta–binomial: prior strength in “pseudo-counts”</li><li>Why flat ≠ uninformative (Jacobian)</li><li>MLE vs MAP</li><li>Large-N limit (Bernstein–von Mises)</li></ul>
+  </aside>
+  <div class="prose">
+    <h2><span class="lv basic">BASIC</span>The posterior: the answer is a distribution</h2>
+    <x-f name="Posterior" tag="BAYES">
+      \h{post}{p(\theta\mid x)} = \frac{\h{like}{p(x\mid\theta)}\,\h{prior}{p(\theta)}}{\h{evid}{p(x)}}\ \h{propto}{\propto}\ \h{L}{\mathcal L(\theta)}\,\h{pi}{\pi(\theta)}
+      <note>Everything else — a best value, an interval, a correlation — is a <b>summary</b> of p(θ | x), and the summaries are integrals over it (lesson 6).</note>
+      <py>log_post = log_like(theta) + log_prior(theta)   # work in logs</py>
+      <f90>lp = lnL + ln_prior</f90>
+    </x-f>
+
+    <h2><span class="lv core">CORE</span>Gaussian likelihood × Gaussian prior</h2>
+    <p>Derivation (complete the square). Prior \(\mathcal N(\mu_0,\sigma_0^2)\), likelihood \(\mathcal N(\mu_L,\sigma_L^2)\) in θ:</p>
+    <ol class="steps">
+      <li>\(\ln p = -\frac{(\theta-\mu_L)^2}{2\sigma_L^2}-\frac{(\theta-\mu_0)^2}{2\sigma_0^2}+c\).</li>
+      <li>Collect θ²: coefficient \(-\frac12\left(\frac1{\sigma_L^2}+\frac1{\sigma_0^2}\right)\). Collect θ: \(\frac{\mu_L}{\sigma_L^2}+\frac{\mu_0}{\sigma_0^2}\).</li>
+      <li>A quadratic \(-\frac{(\theta-\mu)^2}{2s^2}\) has θ² coefficient \(-1/(2s^2)\) and θ coefficient \(\mu/s^2\). Match them:</li>
+    </ol>
+    <x-f name="Conjugate Gaussian update" tag="RESULT">
+      \frac{1}{\h{spost}{\sigma_{\rm post}^2}} = \frac{1}{\h{sL}{\sigma_L^2}} + \frac{1}{\h{s0}{\sigma_0^2}},\qquad
+      \h{mpost}{\mu_{\rm post}} = \h{spost}{\sigma_{\rm post}^2}\left(\frac{\h{mL}{\mu_L}}{\h{sL}{\sigma_L^2}}+\frac{\h{m0}{\mu_0}}{\h{s0}{\sigma_0^2}}\right)
+      <note><b>Precisions (inverse variances) add</b>; the mean is precision-weighted. Lecture numbers: 0.82 ± 0.12 and 1.00 ± 0.10 → 0.926 ± 0.077.</note>
+      <py>
+      w_L, w_0 = 1/s_L**2, 1/s_0**2
+      s_post = 1/np.sqrt(w_L + w_0)
+      mu_post = s_post**2 * (w_L*mu_L + w_0*mu_0)
+      </py>
+      <f90>
+      s_post  = 1.0_dp/sqrt(1.0_dp/s_L**2 + 1.0_dp/s_0**2)
+      mu_post = s_post**2 * (mu_L/s_L**2 + mu_0/s_0**2)
+      </f90>
+    </x-f>
+    <x-ex id="e12-5a" ans="12" tol="0.01" lvl="Basic">Likelihood 10 ± 2, prior 14 ± 2. Posterior mean?
+      <hint>Equal precisions: simple average.</hint><sol>(10 + 14)/2 = 12, with σ<sub>post</sub> = 2/√2 = 1.414.</sol></x-ex>
+    <x-ex id="e12-5b" ans="0.9262" tol="0.002" lvl="Core">Reproduce the lecture: likelihood 0.82 ± 0.12, prior 1.00 ± 0.10. Posterior mean of α?
+      <hint>w<sub>L</sub> = 69.44, w₀ = 100.</hint><sol>σ²<sub>post</sub> = 1/169.44 = 0.005902; μ = 0.005902·(0.82·69.44 + 100) = 0.926. σ<sub>post</sub> = 0.0768.</sol></x-ex>
+
+    <h2><span class="lv core">CORE</span>A coin, and the strength of a prior</h2>
+    <p>For a probability p with h heads and t tails, the likelihood is p<sup>h</sup>(1−p)<sup>t</sup>. A <b>Beta(a, b)</b> prior ∝ p<sup>a−1</sup>(1−p)<sup>b−1</sup> has the same shape, so the posterior is Beta(a + h, b + t): the prior acts like <b>a − 1 heads and b − 1 tails seen before</b>.</p>
+    <x-f name="Beta–binomial update" tag="RESULT">
+      \h{post}{p(p\mid h,t)} = \mathrm{Beta}(\h{a}{a}+\h{h}{h},\ \h{b}{b}+\h{t}{t}),\qquad \text{mean}=\frac{a+h}{a+b+h+t},\quad \text{MAP}=\frac{a+h-1}{a+b+h+t-2}
+      <py>
+      from scipy.stats import beta
+      post = beta(a + h, b + t)
+      print(post.mean(), post.interval(0.68))
+      </py>
+      <f90>
+      mean = (a + h) / (a + b + h + t)
+      map  = (a + h - 1.0_dp) / (a + b + h + t - 2.0_dp)
+      </f90>
+    </x-f>
+    <div class="stage" data-widget="beta"></div>
+    <x-ex id="e12-5c" ans="0.6667" tol="0.002" lvl="Basic">Flat prior Beta(1,1), data 3 heads, 1 tail. Posterior mean of p?
+      <hint>(a+h)/(a+b+h+t).</hint><sol>Beta(4,2): mean 4/6 = 0.667. MAP = 3/4 = 0.75 = the MLE (flat prior).</sol></x-ex>
+
+    <h2><span class="lv expert">EXPERT</span>A flat prior is not uninformative</h2>
+    <p>Densities transform with the Jacobian. If θ has density p<sub>θ</sub> and φ = g(θ), then</p>
+    <x-f name="Change of variables for a density" tag="RULE">
+      \h{pphi}{p_\varphi(\varphi)} = \h{ptheta}{p_\theta(\theta)}\left|\h{jac}{\frac{\mathrm d\theta}{\mathrm d\varphi}}\right|
+      <note>Flat in f<sub>k</sub> on [0.01, 50] Hz, written in v = log₁₀ f<sub>k</sub>: \(p(v) \propto |{\rm d}f_k/{\rm d}v| = f_k\ln 10 \propto 10^v\). It puts ~100% of the weight in the top two decades: “flat” in f<sub>k</sub> is a strong belief that f<sub>k</sub> is large.</note>
+      <py>
+      # posterior on a grid of v = log10 fk, prior flat in fk:
+      post_v = like_v * 10**v            # Jacobian dfk/dv ∝ 10**v
+      </py>
+      <f90>post_v = like_v * 10.0_dp**v</f90>
+    </x-f>
+    <div class="stage" data-widget="jacobian"></div>
+    <table><tr><th>record T</th><th>MLE f̂<sub>k</sub></th><th>flat in log f<sub>k</sub>: median [68%]</th><th>flat in f<sub>k</sub>: median [68%]</th></tr>
+      <tr><td>8 s</td><td>0.91</td><td>0.49 [0.19, 1.88]</td><td><b>4.02</b> [0.70, 11.3]</td></tr>
+      <tr><td>64 s</td><td>0.93</td><td>0.92 [0.73, 1.19]</td><td>0.98 [0.77, 1.29]</td></tr>
+      <tr><td>512 s</td><td>1.02</td><td>1.01 [0.95, 1.09]</td><td>1.01 [0.95, 1.09]</td></tr></table>
+    <p>With 8 s (frequency resolution 0.125 Hz) the data barely see the knee: the prior decides (0.49 vs 4.0 Hz). With 512 s the data decide. <b>Invariant</b> choices exist: the Jeffreys prior \(\pi\propto\sqrt{\det F}\).</p>
+    <x-ex id="e12-5d" ans="1" tol="0.005" lvl="Expert">x is uniform on [0,1]. What is the density of y = x² at y = 0.25?
+      <hint>x = √y, dx/dy = 1/(2√y).</hint><sol>p(y) = 1·1/(2√0.25) = 1/(2·0.5) = 1. (At y = 0.01 it would be 5: uniform in x is not uniform in x².)</sol></x-ex>
+
+    <h2><span class="lv core">CORE</span>MLE versus MAP</h2>
+    <x-f name="Maximum a posteriori" tag="ESTIMATOR">
+      \h{thetamap}{\hat\theta_{\rm MAP}} = \h{argmax}{\arg\max_\theta}\ \big[\h{L}{\mathcal L(\theta)}\,\h{pi}{\pi(\theta)}\big]
+      <note>Includes the prior; penalises values that fit but are a-priori improbable. <b>Not invariant</b>: a density changes with the Jacobian, so its maximum moves. Same record, marginal of f<sub>k</sub>: MAP 0.87 Hz (flat in log f<sub>k</sub>) vs 0.92 Hz (flat in f<sub>k</sub>). Quantiles (the median) are invariant under monotonic maps; MAP and mean are not.</note>
+      <py>theta_map = minimize(lambda t: -(log_like(t) + log_prior(t)), x0).x</py>
+      <f90>imap = maxloc(lnL + ln_prior, dim=1)</f90>
+    </x-f>
+    <p><b>When do they coincide?</b> (1) Flat prior in the chosen parametrisation: \(\arg\max[\mathcal L\cdot k] = \hat\theta_{\rm ML}\) — the same number, not the same meaning. (2) <b>Large N</b>: ln 𝓛 is a sum of N terms, its curvature grows like N, the posterior width shrinks like 1/√N while the prior stays fixed; within that width a smooth prior is nearly constant. The posterior → Gaussian with covariance F⁻¹ (<b>Bernstein–von Mises</b>). Conditions: prior non-zero at the truth, identifiable model, fixed number of parameters.</p>
+    <div class="uses">
+      <div class="use"><b>Cosmology</b>BBN prior on Ω<sub>b</sub>h², SH0ES prior on H₀: external information enters as Gaussian priors.</div>
+      <div class="use"><b>Regularisation</b>Ridge/Tikhonov regression and the Wiener filter are Gaussian priors on the solution.</div>
+      <div class="use"><b>Rare-class mapping</b>Class-frequency priors in remote sensing can erase rare classes — test the prior.</div>
+    </div>
+    <div class="oral">“Why is a uniform prior not uninformative?” — Jacobian argument, f<sub>k</sub> vs log f<sub>k</sub>, the 8 s / 512 s table, and the Jeffreys prior as the invariant alternative.</div>
+    <x-hsi to="s7">Priors in practice: class-frequency priors and rare materials in a scene</x-hsi>
+  </div>
+</section>
+
+<!-- ================================================================== 6 -->
+<section class="lesson" data-title="Summarising the posterior" data-short="Summaries" data-badge="MATH" data-time="35 min" data-level="Advanced"
+  data-sub="Credible intervals, MAP / median / mean, marginalisation, degeneracies and the Laplace approximation.">
+  <div class="stage" data-widget="summ"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>The marginal posterior of f<sub>k</sub> is skewed: a tail towards high frequencies. So MAP &lt; median &lt; mean, and the 68% interval is not unique.</p><p>Toggle the axis to log₁₀ f<sub>k</sub>: median and equal-tailed interval stay put; MAP and HPD move.</p></div>
+    <div class="s-key">A skewed posterior has no single “best value”. Report what you used: “f<sub>k</sub> = 0.92 <sup>+0.27</sup><sub>−0.19</sub> Hz (median, 68% equal-tailed)”.</div>
+    <ul class="s-learn"><li>Credible region definition</li><li>Equal-tailed vs HPD intervals</li><li>Mean, median, MAP and their loss functions</li><li>Marginalising nuisance parameters</li><li>Correlations & degeneracy; profile vs marginal</li><li>Laplace approximation: recipe and limits</li></ul>
+  </aside>
+  <div class="prose">
+    <h2><span class="lv core">CORE</span>Credible intervals</h2>
+    <x-f name="Credible region at 100(1−γ)%" tag="DEFINITION">
+      \h{integral}{\int_{\h{R}{R}}}\h{post}{p(\theta\mid x)}\dd\theta = 1-\h{gamma}{\gamma}
+      <note>Here we <i>can</i> say “there is a 68% probability that f<sub>k</sub> is between a and b, given the data, the model and the prior”. The definition fixes the probability, not the position: <b>equal-tailed</b> (γ/2 in each tail, invariant under monotonic maps) or <b>HPD</b> (shortest; every point inside is more probable than any outside; not invariant).</note>
+      <py>
+      cdf = np.cumsum(p) / p.sum()
+      lo, med, hi = np.interp([0.16, 0.5, 0.84], cdf, theta)    # equal-tailed 68%
+      order = np.argsort(p)[::-1]                               # HPD: highest first
+      keep = order[: np.searchsorted(np.cumsum(p[order]) / p.sum(), 0.68) + 1]
+      hpd = theta[keep].min(), theta[keep].max()
+      </py>
+      <f90>
+      cum = 0
+      do i = 1, n
+        cum = cum + p(i)/sum(p)
+        if (cum >= 0.16_dp .and. lo < 0) lo = theta(i)
+        if (cum >= 0.84_dp) then; hi = theta(i); exit; end if
+      end do
+      </f90>
+    </x-f>
+    <x-ex id="e12-6a" ans="1.02" tol="0.005" lvl="Basic">Gaussian posterior μ = 2, σ = 0.5. Lower end of the 95% equal-tailed interval?
+      <hint>μ − 1.96σ.</hint><sol>2 − 0.98 = 1.02 (upper 2.98). For a Gaussian, equal-tailed = HPD.</sol></x-ex>
+
+    <h2><span class="lv core">CORE</span>One posterior, several “best values”</h2>
+    <p>Decision theory: the best single number depends on what an error costs you.</p>
+    <ul><li><b>mean</b> minimises the expected squared error 𝔼[(θ−t)²];</li><li><b>median</b> minimises the expected absolute error 𝔼|θ−t|;</li><li><b>MAP</b> is the most probable value — of one density: it moves with the parametrisation.</li></ul>
+    <p>Lecture record (prior flat in log f<sub>k</sub>): MAP 0.87, median 0.92, mean 0.97 Hz; equal-tailed [0.73, 1.18], HPD [0.68, 1.11] Hz. In log₁₀ f<sub>k</sub> the posterior is nearly symmetric: −0.03 ± 0.11.</p>
+    <x-ex id="e12-6b" ans="1.7" tol="0.01" lvl="Core">A posterior on a grid θ = {1, 2, 3} has probabilities {0.5, 0.3, 0.2}. What is the posterior mean?
+      <hint>Σ θ p.</hint><sol>0.5 + 0.6 + 0.6 = 1.7. The MAP is 1: a skewed posterior already gives two different “best values”.</sol></x-ex>
+
+    <h2><span class="lv core">CORE</span>Marginalisation</h2>
+    <x-f name="Marginal posterior" tag="DEFINITION">
+      \h{post}{p(\theta_1\mid x)} = \h{integral}{\int} \h{post}{p(\theta_1,\theta_2,\dots\mid x)}\dd\theta_2\cdots
+      <note>Integrate out the <b>nuisance</b> parameters. Picture the posterior as a cloud of points: marginalising is projecting the cloud on a wall (2-D marginal), then on an axis (1-D marginal). On a grid: integrals are sums.</note>
+      <py>
+      post = np.exp(lp - lp.max()); post /= post.sum()      # shape (n_s2, n_fk, n_alpha)
+      m_fk    = post.sum(axis=(0, 2))                       # 1-D marginal of fk
+      m_fk_al = post.sum(axis=0)                            # 2-D marginal (fk, alpha)
+      </py>
+      <f90>
+      m_fk = sum(sum(post, dim=3), dim=1)     ! SUM with DIM, like numpy axis=
+      </f90>
+    </x-f>
+    <div class="stage" data-widget="marg"></div>
+    <p><b>Degeneracy.</b> Elongated diagonal contours = correlated parameters: the data constrain a <i>combination</i> better than each one. f<sub>k</sub> and α: correlation −0.56 (posterior), −0.54 (500 MLEs), −0.47 (Fisher): a lower knee with a steeper slope gives nearly the same power where the data are. <b>Fixing a nuisance parameter at its best value underestimates the error</b> — for a 2-D Gaussian the slice has width \(\sigma_1\sqrt{1-\rho^2}\) instead of σ₁.</p>
+    <x-ex id="e12-6c" ans="0.6" tol="0.002" lvl="Core">σ₁ = 1 and correlation ρ = 0.8. Width of the conditional (slice) at fixed θ₂?
+      <hint>σ₁√(1−ρ²).</hint><sol>√(1 − 0.64) = 0.6: 40% too optimistic if you fix θ₂.</sol></x-ex>
+    <div class="plain"><b>Profile vs marginal.</b> The frequentist alternative is the profile likelihood \(\mathcal L_p(\theta_1)=\max_{\theta_2}\mathcal L(\theta_1,\theta_2)\): maximise instead of integrate. They agree for Gaussian posteriors and differ when the volume of the nuisance space changes with θ₁.</div>
+
+    <h2><span class="lv expert">EXPERT</span>The Laplace approximation</h2>
+    <p>Taylor-expand the log-posterior to second order around its maximum θ̂ (the gradient vanishes there):</p>
+    <x-f name="Laplace approximation" tag="APPROXIMATION">
+      \ln \h{post}{p(\theta\mid x)} \approx \ln p(\h{thetahat}{\hat\theta}\mid x) - \tfrac12(\theta-\h{thetahat}{\hat\theta})^{\!T}\h{H}{H}(\theta-\h{thetahat}{\hat\theta})\ \Rightarrow\ \h{post}{p(\theta\mid x)}\approx\h{Ngauss}{\mathcal N}(\h{thetahat}{\hat\theta},\h{C}{C}=\h{H}{H}^{-1})
+      <note>H = −∇² ln p at the mode, prior included (<b>observed</b> information). Its average over data sets is the Fisher matrix: equal for large N, not on one record (α: 0.121 from H, 0.110 from F).</note>
+      <py>
+      res = minimize(neg_log_post, x0)                       # 1. mode
+      H = hessian(neg_log_post, res.x)                       # 2. O(d^2) evaluations
+      C = np.linalg.inv(H)                                   # 3. invert
+      err = np.sqrt(np.diag(C)); corr = C / np.outer(err, err)   # 4. read
+      </py>
+      <f90>
+      ! 2. central differences:  H(i,j) = [f(++) - f(+-) - f(-+) + f(--)] / (4 h^2)
+      ! 3. LAPACK: call dpotrf('U',d,H,d,info); call dpotri('U',d,H,d,info)
+      </f90>
+    </x-f>
+    <x-ex id="e12-6d" ans="0.5" tol="0.002" lvl="Core">ln p(θ) = −(θ − 3)²/(2·0.25) + const. What is the Laplace σ?
+      <hint>H = −d²ln p/dθ² = 1/0.25.</hint><sol>H = 4, σ = 1/√4 = 0.5 (exact here: the posterior is Gaussian).</sol></x-ex>
+    <table><tr><th></th><th>64 s: log₁₀ f<sub>k</sub></th><th>64 s: α</th><th>512 s: log₁₀ f<sub>k</sub></th><th>512 s: α</th></tr>
+      <tr><td>Laplace (H)</td><td>−0.034 ± 0.101</td><td>0.82 ± 0.121</td><td>0.011 ± 0.027</td><td>0.972 ± 0.037</td></tr>
+      <tr><td>grid</td><td>−0.028 ± 0.111</td><td>0.82 ± 0.126</td><td>0.010 ± 0.027</td><td>0.973 ± 0.037</td></tr></table>
+    <p>64 s: widths 4–9% too small (heavier tails); 512 s: within 1%. <b>Fails</b> for skewed or multi-modal posteriors and peaks against a prior boundary; build it where the posterior is most symmetric (log f<sub>k</sub>). <b>Uses</b>: quick error bars (<code>curve_fit</code> pcov, MINUIT HESSE), forecasts, and the starting proposal for importance sampling (Lecture 13).</p>
+    <div class="uses">
+      <div class="use"><b>Corner plots</b>Every exoplanet and GW paper shows one (<code>corner</code>, <code>getdist</code>).</div>
+      <div class="use"><b>LIGO masses</b>Skewed posteriors reported as median and 90% credible intervals.</div>
+      <div class="use"><b>Planck tables</b>Means and 68% limits of marginals over ~20 nuisance parameters.</div>
+    </div>
+    <div class="oral">Draw a skewed posterior and place MAP, median, mean, equal-tailed and HPD intervals. Which ones survive the change f<sub>k</sub> → log f<sub>k</sub>, and why?</div>
+    <x-hsi to="s8">Marginal posteriors and credible intervals of abundances, with a coverage check</x-hsi>
+  </div>
+</section>
+
+<!-- ================================================================== 7 -->
+<section class="lesson" data-title="The grid and its cost" data-short="Grid cost" data-badge="MATH" data-time="30 min" data-level="Intermediate"
+  data-sub="The posterior on a grid in practice, the log-sum-exp trick, K^d — and (expert) the evidence and Occam's razor.">
+  <div class="stage" data-widget="grid2d"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>Above: the posterior of (μ, σ) of 12 Gaussian data on a K × K grid. Orange cells hold 99% of the mass; everything else computes (almost) zeros.</p><p>In 3-D the lecture's 10⁶-point grid had 0.25% useful points. In 10-D, a grid is hopeless.</p></div>
+    <div class="s-key">What we really need are integrals over the posterior. If we had samples from p(θ | x), every integral would be an average — Lecture 13.</div>
+    <ul class="s-learn"><li>The 4-step grid recipe</li><li>Why subtract the max before exp</li><li>Marginals & intervals as sums</li><li>The K^d cost and wasted points</li><li>Evidence, Bayes factor, Occam factor (expert)</li><li>BIC and AIC (expert)</li></ul>
+  </aside>
+  <div class="prose">
+    <h2><span class="lv basic">BASIC</span>The posterior on a grid, step by step</h2>
+    <ol class="steps">
+      <li><b>Choose the points</b> inside the prior range: 51 for log₁₀ σ² (±0.25 dex), 161 for log₁₀ f<sub>k</sub> (0.01–50 Hz), 121 for α (0–3): ≈ 10⁶ points θ<sub>k</sub>. (dex = one unit of log₁₀.)</li>
+      <li><b>At each point</b>: ln p<sub>k</sub> = ln 𝓛(θ<sub>k</sub>) + ln π(θ<sub>k</sub>); with flat priors ln π is a constant inside the box.</li>
+      <li><b>From ln p to p</b>: here ln 𝓛 ≈ −1.85×10⁴ and in double precision e<sup>x</sup> = 0 for x ≲ −745. Subtract the maximum first.</li>
+      <li><b>Everything else is a sum</b>: marginals, means, cumulative sums for intervals.</li>
+    </ol>
+    <x-f name="Safe normalisation (log-sum-exp)" tag="ALGORITHM">
+      \h{pk}{p_k} = \frac{\exp\!\big(\h{lpk}{\ln p_k}-\max_j \ln p_j\big)}{\h{sum}{\sum_i}\exp\!\big(\ln p_i-\max_j \ln p_j\big)}
+      <note>Mathematically identical (the factor e<sup>−max</sup> cancels), numerically the peak becomes 1 and nothing overflows or underflows where it matters.</note>
+      <py>
+      post = np.exp(lp - lp.max())
+      post /= post.sum()
+      # or: from scipy.special import logsumexp;  post = np.exp(lp - logsumexp(lp))
+      </py>
+      <f90>
+      lp = exp(lp - maxval(lp))
+      lp = lp / sum(lp)
+      </f90>
+    </x-f>
+    <x-ex id="e12-7a" ans="0" tol="0.0000001" lvl="Basic">In double precision, what does exp(−1000) return? (type the number)
+      <hint>The smallest positive double is about 5×10⁻³²⁴ = e^(−744.4).</hint><sol>0 (underflow). That's why we subtract the maximum first.</sol></x-ex>
+    <h3>Making it fast (appendix B)</h3>
+    <p>σ² is a common factor: S = σ² g(f; f<sub>k</sub>, α), so</p>
+    <x-f name="Factoring σ² out of the Whittle sum" tag="TRICK">
+      -\h{lnL}{\ln\mathcal L} = \h{N}{N}\ln\h{s2}{\sigma^2} + \underbrace{\h{sum}{\sum_j}\ln g_j}_{A(f_k,\alpha)} + \frac{1}{\h{s2}{\sigma^2}}\underbrace{\h{sum}{\sum_j}\frac{P_j}{g_j}}_{B(f_k,\alpha)}
+      <note>The two sums over 3199 bins depend only on (f<sub>k</sub>, α): done once per pair; each of the 51 σ² values then costs one operation. Also: (f<sub>k</sub>/f)<sup>α</sup> = e<sup>α(ln f<sub>k</sub> − ln f)</sup> with ln f<sub>j</sub> precomputed. NumPy 0.4 s, Fortran 0.8 s for 10⁶ points: the cost is in exp and log, not in the language.</note>
+      <py>
+      for k, alpha in enumerate(a):
+          g = 1 + np.exp(alpha * (v[:, None]*np.log(10) - lnf[None, :]))
+          A = np.log(g).sum(1);  B = (P / g).sum(1)
+          lp[:, :, k] = -(N*np.log(s2)[:, None] + A + B / s2[:, None])
+      </py>
+      <f90>
+      do l = 1, n
+        g    = 1.0_dp + exp(a(k)*(v(j)*ln10 - lf(l)))
+        Asum = Asum + log(g);  Bsum = Bsum + P(l)/g
+      end do
+      do i = 1, nu
+        lp(i,j,k) = -(n*log(s2(i)) + Asum + Bsum/s2(i))
+      end do
+      </f90>
+    </x-f>
+
+    <h2><span class="lv core">CORE</span>The cost grows as K<sup>d</sup></h2>
+    <x-f name="Cost of a grid" tag="SCALING">
+      \text{evaluations} = \h{K}{K}^{\h{d}{d}},\qquad \text{time} = \h{K}{K}^{\h{d}{d}}\times \h{teval}{t_{\rm eval}}
+      <note>One Whittle likelihood on 3199 bins: 30 µs. K = 50: d = 3 → 4 s; d = 5 → 3 hours; d = 7 → 9 months; d = 10 → 9×10⁴ years. More cores divide by a constant, not by K<sup>d</sup>. And the useful fraction shrinks with d: the posterior occupies a vanishing fraction of the box.</note>
+      <py>print(K**d * 30e-6, "seconds")</py>
+      <f90>print *, real(K,dp)**d * 30.0e-6_dp, ' seconds'</f90>
+    </x-f>
+    <div class="stage" data-widget="cost"></div>
+    <x-ex id="e12-7b" ans="312500000" tol="1000" lvl="Basic">How many evaluations for K = 50 points per axis in d = 5 dimensions?
+      <hint>50⁵.</hint><sol>3.125×10⁸. At 30 µs each: 9375 s ≈ 2.6 hours.</sol></x-ex>
+    <x-f name="Every answer is an integral" tag="BRIDGE TO L13">
+      \h{E}{\mathbb E}[g(\theta)\mid x] = \h{integral}{\int} g(\theta)\,\h{post}{p(\theta\mid x)}\dd\theta \ \approx\ \frac1n\h{sum}{\sum_{k=1}^n} g(\theta^{(k)}),\quad \theta^{(k)}\sim p(\theta\mid x)
+      <note>g = θ₁ (mean), θ₁² (variance), 𝟙[θ₁ ≤ c] (cumulative → intervals). With samples, the marginal of θ₁ is just the histogram of the first coordinate. How accurate is such an average, and does its error depend on d? → Lecture 13.</note>
+    </x-f>
+
+    <h2><span class="lv expert">EXPERT</span>Model comparison: the evidence (appendix E)</h2>
+    <p>Is the knee real? Is α = 1 enough? Bayes' theorem one level up, for models M₀, M₁:</p>
+    <x-f name="Bayes factor" tag="MODEL COMPARISON">
+      \frac{P(M_1\mid x)}{P(M_0\mid x)} = \underbrace{\frac{\h{Z}{p(x\mid M_1)}}{\h{Z}{p(x\mid M_0)}}}_{\h{B10}{B_{10}}}\ \frac{P(M_1)}{P(M_0)},\qquad \h{Z}{Z}=\h{integral}{\int}\h{L}{\mathcal L(\theta)}\,\h{pi}{\pi(\theta\mid M)}\dd\theta
+      <note>Z = the average of the likelihood over the prior: the probability the model gave to the data <i>before</i> seeing them. A model with more freedom spreads its predictions thin. Forecasts “20 °C” vs “0–40 °C”: if it's 20 °C both were right, the first deserves more credit.</note>
+      <py>
+      # flat prior box, on the grid: Z = mean of L over the grid points
+      lnZ = lnL.max() + np.log(np.mean(np.exp(lnL - lnL.max())))
+      </py>
+      <f90>lnZ = maxval(lnL) + log(sum(exp(lnL - maxval(lnL)))/size(lnL))</f90>
+    </x-f>
+    <x-f name="Occam factor (Laplace)" tag="APPROXIMATION">
+      \h{Z}{Z}\approx \h{Lmax}{\mathcal L_{\max}}\times\frac{\sqrt{2\pi}\,\h{spost}{\sigma_{\rm post}}}{\h{Delta}{\Delta}},\qquad \ln \h{B10}{B_{10}}\approx\ln\frac{\mathcal L_{\max,1}}{\mathcal L_{\max,0}}+\ln\frac{\sqrt{2\pi}\,\sigma_{\rm post}}{\Delta}
+      <note>Better fit vs the fraction of the prior that survives the data. Knee, α free vs α = 1: likelihood ratio +1.15, Occam −2.25 → ln B ≈ −1.10 (grid: −1.13). The evidence prefers α = 1, the truth, although α free fits better. Knee vs white noise: ln B = +91.9.</note>
+    </x-f>
+    <x-ex id="e12-7c" ans="-2.25" tol="0.02" lvl="Expert">Occam factor ln(√(2π)·σ<sub>post</sub>/Δ) for σ<sub>post</sub> = 0.126 and a prior of width Δ = 3?
+      <hint>√(2π) = 2.5066.</hint><sol>ln(2.5066·0.126/3) = ln(0.1053) = −2.251.</sol></x-ex>
+    <p><b>Pitfalls</b>: Z depends on the prior width (α in [0,6] → ln B = −1.83 instead of −1.13), improper priors give Z = 0. It's not a test: both models can be wrong — check with a posterior predictive check. <b>Cheap criteria</b>: BIC = −2 ln 𝓛<sub>max</sub> + k ln N, AIC = −2 ln 𝓛<sub>max</sub> + 2k; here ΔBIC = +5.8, ΔAIC = −0.3: they can disagree with the evidence and with each other. In many dimensions Z comes from <b>nested sampling</b> (dynesty, MultiNest).</p>
+    <div class="uses">
+      <div class="use"><b>How many planets?</b>Evidence ratios decide between 2- and 3-planet RV models.</div>
+      <div class="use"><b>Is there a signal?</b>GW and line searches compare signal+noise vs noise-only with Bayes factors.</div>
+      <div class="use"><b>Spectral unmixing</b>How many endmembers in a hyperspectral pixel? Evidence or BIC per pixel.</div>
+    </div>
+    <div class="oral">“Why not just use a grid?” — K<sup>d</sup>, numbers for d = 3, 5, 7, 10, and the 0.25% useful points. Then: “what do we actually need?” — integrals ⇒ samples ⇒ Monte Carlo.</div>
+  </div>
+</section>
+
+<!-- ================================================================== 8 -->
+<section class="lesson" data-title="Code lab: the knee, end to end" data-short="Code lab" data-badge="CODE" data-time="45 min" data-level="Intermediate"
+  data-sub="Simulate, fit, grid the posterior, compare priors, check coverage — in Python and in Fortran from scratch.">
+  <div class="stage" data-widget="kneegrid"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>The stage runs the same grid computation as <code>knee_grid.f90</code> in your browser (smaller grid). Below: every program of the lecture, tested, in Python and Fortran.</p><p>The files are in the <code>code</code> folder next to this page.</p></div>
+    <div class="s-key">Work in ln p, in the parametrisation where the posterior is most Gaussian (log₁₀ σ², log₁₀ f<sub>k</sub>, α), and always test on simulated data with a known truth.</div>
+    <ul class="s-learn"><li>Run knee_inference.py and read its output</li><li>Compile & run knee_grid.f90</li><li>Plot the Fortran marginals with Python</li><li>Do the 5 code tasks</li></ul>
+  </aside>
+  <div class="prose">
+    <h2><span class="lv code">CODE</span>How to run</h2>
+    <x-code>
+      <py>
+      # in a terminal, inside "12. Bayesian Inference/code"
+      pip install numpy scipy matplotlib
+      python bayes_basics.py          # urns, alarm, Gaussian update, MLE bias
+      python knee_inference.py        # MLE, Laplace, grid posterior, priors, coverage (~5 s)
+      </py>
+      <f90>
+      ! Windows: install gfortran via MSYS2 (pacman -S mingw-w64-ucrt-x86_64-gcc-fortran)
+      !          or use WSL (sudo apt install gfortran)
+      gfortran -O2 bayes_basics.f90 -o bayes_basics && ./bayes_basics
+      gfortran -O2 knee_grid.f90   -o knee_grid   && ./knee_grid
+      </f90>
+    </x-code>
+    <p>Tested output (seed 12, this machine): MLE log₁₀ σ² = −3.018 ± 0.016, log₁₀ f<sub>k</sub> = +0.103 ± 0.084, α = 0.896 ± 0.100; grid of 993 531 points in 0.5 s; coverage over 300 records 69.7%, 73.7%, 68.7%. Your record differs from the lecture's (different seed): that's the point — one record is one draw.</p>
+
+    <h2><span class="lv code">CODE</span>The model and the likelihood — <code>knee.py</code></h2>
+    <x-code py="knee.py"/>
+    <h2><span class="lv code">CODE</span>Everything in Lecture 12 — <code>knee_inference.py</code> / <code>knee_grid.f90</code></h2>
+    <x-code py="knee_inference.py" f90="knee_grid.f90"/>
+    <h2><span class="lv code">CODE</span>Small examples — <code>bayes_basics</code></h2>
+    <x-code py="bayes_basics.py" f90="bayes_basics.f90"/>
+    <h3>Plot the Fortran output in Python</h3>
+    <x-code><py>
+      import numpy as np, matplotlib.pyplot as plt
+      v, mv = np.loadtxt("marginal_log10fk.txt", unpack=True)
+      a, ma = np.loadtxt("marginal_alpha.txt", unpack=True)
+      fig, ax = plt.subplots(1, 2, figsize=(10, 4))
+      ax[0].plot(10**v, mv); ax[0].set(xscale="log", xlabel="fk [Hz]")
+      ax[1].plot(a, ma);     ax[1].set(xlabel="alpha")
+      plt.show()
+    </py></x-code>
+
+    <h2><span class="lv code">CODE</span>Your tasks</h2>
+    <div class="task"><b>TASK 12.1 — PRIOR SENSITIVITY</b>In <code>knee_inference.py</code> set <code>frequencies(T=8.0)</code> and rerun. Compare the median f<sub>k</sub> with the two priors. Repeat with T = 512. Make a 3-row table like the lecture's.</div>
+    <div class="task"><b>TASK 12.2 — FISHER vs HESSIAN</b>Write <code>fisher(theta, f)</code> with \(F_{ab}=\sum_j\partial_a\ln S_j\,\partial_b\ln S_j\) (finite differences of ln S). Compare √diag(F⁻¹) with the Hessian errors printed by the script.</div>
+    <div class="task"><b>TASK 12.3 — FORECAST</b>Using only F at the truth, how long (T) must you observe to measure α to ±0.03? (F grows ∝ T: σ ∝ 1/√T.)</div>
+    <div class="task"><b>TASK 12.4 — FORTRAN HPD</b>Extend <code>knee_grid.f90</code> to print the 68% equal-tailed interval and the HPD interval of log₁₀ f<sub>k</sub>.</div>
+    <div class="task"><b>TASK 12.5 — EVIDENCE</b>Compute ln Z on the grid for α free and for α = 1 (take the α-slice nearest 1 and a 2-D box), then ln B. Compare with the Occam-factor estimate.</div>
+  </div>
+</section>
+

@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>10. Spectral Estimation · Comp Astro</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='14' fill='%23cfe3b2' stroke='%231d1b18' stroke-width='3'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="../assets/katex/katex.min.css">
+<link rel="stylesheet" href="../assets/css/style.css">
+<script>try{document.documentElement.dataset.theme=JSON.parse(localStorage.getItem("cma.theme"))||"light"}catch(e){}</script>
+</head>
+<body data-unit="10" data-root="../">
+<header class="topbar">
+  <button class="iconbtn burger" data-act="burger" aria-label="menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+  <a class="brand" href="../index.html"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="15.5" fill="none" stroke="currentColor" stroke-width="2.5"/>
+<ellipse cx="20" cy="20" rx="19" ry="6.5" fill="none" stroke="currentColor" stroke-width="2.2" transform="rotate(-24 20 20)"/>
+<circle cx="20" cy="20" r="6" fill="#cfe3b2" stroke="currentColor" stroke-width="2.2"/><circle cx="35" cy="11.5" r="2.6" fill="#e6824c" stroke="currentColor" stroke-width="1.5"/></svg><span>Comp <mark>Astro</mark></span></a>
+  <nav class="tabs"><a class="tab on" data-view="learn" href="../index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 5.5C5 4 8.5 4 12 6c3.5-2 7-2 10-.5V19c-3-1.5-6.5-1.5-10 .5-3.5-2-7-2-10-.5z"/><path d="M12 6v13.5"/></svg><span>Learn</span></a><a class="tab" data-view="practice" href="../index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg><span>Practice</span></a><a class="tab" data-view="code" href="../index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2.5" y="4" width="19" height="16" rx="2"/><path d="M2.5 8.5h19M7 13l-2 2 2 2M11 17h5"/></svg><span>Code Lab</span></a><a class="tab" data-view="sheet" href="../index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 17.5h7M17.5 14v7"/></svg><span>Cheatsheet</span></a></nav>
+  <div class="search" data-act="search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><span>Search lessons &amp; formulas…</span><kbd>Ctrl K</kbd></div>
+  <button class="iconbtn" data-act="theme" aria-label="dark mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg></button>
+  <div class="credit"><div class="av">∑</div><div>open study guide<b>numerical methods</b></div></div>
+</header>
+<div class="layout">
+  <aside class="sidebar"><nav class="tree"></nav><div class="progress"></div></aside>
+  <main class="main">
+    <div class="stepper learnonly"><div class="stepper-h">IN THIS LESSON <small id="stepper-n"></small></div><div class="dots"></div></div>
+    <div class="card">
+      <div class="crumbs"><span>10. Spectral Estimation</span><span class="sep">/</span><span id="crumb-sub"></span></div>
+      <div class="learnonly">
+        <div class="titlebar"><h1 id="title"></h1>
+          <div class="badges"><span class="badge y" id="b-time"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> </span><span class="badge g" id="b-level"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="15" width="3.2" height="6" rx="1"/><rect x="8.5" y="11" width="3.2" height="10" rx="1"/><rect x="14" y="7" width="3.2" height="14" rx="1"/><rect x="19.5" y="3" width="2.5" height="18" rx="1" opacity=".35"/></svg> </span><span class="badge p" id="b-steps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 6h12M9 12h12M9 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg> </span></div>
+        </div>
+        <p class="subtitle" id="subtitle"></p>
+        <!-- ================================================================== 1 -->
+<section class="lesson" data-title="The problem: a noise spectrum from one record" data-short="PSD problem" data-badge="MATH" data-time="25 min" data-level="Beginner"
+  data-sub="Matched filters and deconvolution need the noise power spectrum. We only have one finite, noisy record: |FFT|² is the obvious try — and it fails.">
+  <div class="stage" data-widget="psdproblem"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>The power spectrum describes the <b>process</b> that generates the data, not the single record we measured: observing again would give a different |FFT|². We must estimate the process from one realisation.</p></div>
+    <div class="s-key">Take 16 times more data and the cloud of points gets denser, not narrower: the scatter of |X|²/N around the true PSD stays equal to the PSD itself.</div>
+    <ul class="s-learn"><li>Why we need S<sub>n</sub>(f)</li><li>Wide-sense stationarity</li><li>Wiener–Khinchin theorem</li><li>Biased autocorrelation estimate</li><li>Non-parametric vs parametric estimation</li></ul>
+  </aside>
+  <div class="prose">
+    <h2><span class="lv basic">BASIC</span>The model signal</h2>
+    <p>Throughout this lesson: a periodic signal (fundamental 7 Hz and harmonics at 14, 21, 28 Hz) sampled at 100 Hz, buried in noise with PSD S<sub>n</sub>(f) = 10⁻³(1 + 1 Hz/f): white above 1 Hz, rising below. Its |FFT|² scatters wildly around S<sub>n</sub>: in the line-free band 32–45 Hz the ratio P/S<sub>n</sub> has mean 1.08 and standard deviation 1.05 for T = 64 s — and still 0.99 for T = 1024 s.</p>
+    <h2><span class="lv core">CORE</span>What we want to estimate</h2>
+    <div class="formula" data-name="Wiener–Khinchin theorem"><div class="f-head"><span class="t">DEFINITION</span>Wiener–Khinchin theorem<span class="hint">hover the symbols ↓</span></div><div class="tex">\h{Pxx}{P_{xx}(f)}=\h{sum}{\sum_{k=-\infty}^{+\infty}}\h{Rxx}{R_{xx}(k)}\,e^{-j2\pi fk},\qquad R_{xx}(k)=E\big[x[n]\,x^*[n-k]\big],\qquad f\in[-\tfrac12,\tfrac12]</div><div class="f-note">For a wide-sense stationary (WSS) process — mean and autocorrelation independent of time — the PSD is the DTFT of the autocorrelation. f is in cycles/sample: multiply by f<sub>s</sub> for Hz.</div><div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><button data-lang="f90" data-file="" class="">Fortran</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code>R = np.correlate(x, x, 'full') / N         # biased estimate, lags -(N-1)..N-1
+P = np.abs(np.fft.fft(R)) / 1              # its transform = the periodogram</code></pre><pre data-lang="f90" hidden><code>do k = 0, N-1
+   R(k) = sum(x(k+1:N)*x(1:N-k))/N         ! biased: divide by N, not N-k
+end do</code></pre></div></div>
+    <div class="formula" data-name="Biased autocorrelation estimate"><div class="f-head"><span class="t">ESTIMATOR</span>Biased autocorrelation estimate<span class="hint">hover the symbols ↓</span></div><div class="tex">\hat R_{xx}(k)=\frac1N\h{sum}{\sum_{n=k}^{N-1}}x[n]\,x^*[n-k],\qquad 0\le k\le N-1</div><div class="f-note">Dividing by N (not N − k) makes it biased but guarantees a non-negative spectrum. <b>Non-parametric</b> estimation (this lesson, mostly): no model of the process, only Fourier transforms. <b>Parametric</b>: assume S(f; θ) and fit θ (section 6).</div></div>
+    <div class="ex" id="e10-1a" data-ans="0.5" data-tol="0.001"><div class="ex-h">EXERCISE <span class="lvl">Basic</span></div><div class="ex-q">f<sub>s</sub> = 100 Hz. A tone at 50 Hz in cycles per sample?</div><div class="ex-in"><input placeholder="your answer"> <button class="btn go check">Check</button><span class="ex-res"></span></div><details><summary>Hint</summary>f / f<sub>s</sub>.</details><details><summary>Full solution</summary>0.5: the Nyquist frequency.</details></div>
+  </div>
+</section>
+
+<!-- ================================================================== 2 -->
+<section class="lesson" data-title="The periodogram: biased and inconsistent" data-short="Periodogram" data-badge="MATH" data-time="35 min" data-level="Intermediate"
+  data-sub="Its mean is the true PSD smeared by the Fejér kernel; each bin is an exponential (χ²₂) variable whose scatter equals its mean, whatever N.">
+  <div class="stage" data-widget="chi2"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>One Fourier bin is one complex coefficient: two Gaussian numbers. Their squared sum is χ² with 2 degrees of freedom — an exponential distribution, as wide as it is high.</p></div>
+    <div class="s-key">More data buy resolution, not stability: doubling N doubles the number of bins, each still estimated from 2 degrees of freedom.</div>
+    <ul class="s-learn"><li>Definition and Parseval check</li><li>Bias: Fejér kernel, width 1/N</li><li>Variance: Isserlis' theorem</li><li>χ²₂/2 distribution of one bin</li><li>Inconsistency; scipy normalisation</li></ul>
+  </aside>
+  <div class="prose">
+    <div class="formula" data-name="Periodogram"><div class="f-head"><span class="t">ESTIMATOR</span>Periodogram<span class="hint">hover the symbols ↓</span></div><div class="tex">\h{Pper}{\hat P_{\rm PER}(f)}=\frac1N\Big|\h{sum}{\sum_{n=0}^{N-1}}x[n]\,e^{-j2\pi fn}\Big|^2=\frac1N|X(f)|^2=\sum_{k=-(N-1)}^{N-1}\hat R_{xx}(k)\,e^{-j2\pi fk}</div><div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><button data-lang="f90" data-file="" class="">Fortran</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code>f, P = scipy.signal.periodogram(x, fs, window='boxcar', scaling='density')
+print(np.trapezoid(P, f), x.var())        # Parseval: equal</code></pre><pre data-lang="f90" hidden><code>call fftw_execute_dft_r2c(plan, x, Xk)
+P = 2*abs(Xk)**2/(N*fs);  P(1) = P(1)/2;  P(N/2+1) = P(N/2+1)/2   ! one-sided, units^2/Hz</code></pre></div></div>
+    <p><b>Normalisation</b>: scipy returns the one-sided PSD in units²/Hz, 2|X|²/(N f<sub>s</sub>) for 0 &lt; f &lt; f<sub>s</sub>/2. The formulas here are two-sided with f<sub>s</sub> = 1: a factor 2/f<sub>s</sub> apart. Always check Parseval: ∫P df = variance of the data.</p>
+    <h2><span class="lv core">CORE</span>Bias</h2>
+    <div class="formula" data-name="Expected periodogram"><div class="f-head"><span class="t">RESULT</span>Expected periodogram<span class="hint">hover the symbols ↓</span></div><div class="tex">E[\hat P_{\rm PER}(f)]=\int_{-1/2}^{1/2}P_{xx}(\nu)\,\h{WB}{W_B(f-\nu)}\,d\nu,\qquad W_B(f)=\frac1N\Big(\frac{\sin\pi fN}{\sin\pi f}\Big)^2</div><div class="f-note">E[R̂(k)] = (1 − |k|/N)R(k): a triangular (Bartlett) weight — not a choice, only N − |k| products exist at lag k. Its transform is the Fejér kernel ≥ 0, width ~1/N (resolution 1/T in Hz), sidelobes −13 dB. As N → ∞ it tends to δ(f): asymptotically unbiased.</div></div>
+    <h2><span class="lv core">CORE</span>Variance and distribution</h2>
+    <div class="formula" data-name="Covariance of periodogram bins (Gaussian process)"><div class="f-head"><span class="t">RESULT</span>Covariance of periodogram bins (Gaussian process)<span class="hint">hover the symbols ↓</span></div><div class="tex">\mathrm{Cov}\big[\hat P(f_1),\hat P(f_2)\big]\approx P_{xx}(f_1)P_{xx}(f_2)\big[F_N^2(f_1+f_2)+F_N^2(f_1-f_2)\big],\quad F_N(f)=\frac{\sin\pi Nf}{N\sin\pi f}</div><div class="f-note">Fourth moments of a Gaussian reduce to products of second moments (Isserlis 1918). f₁ = f₂: Var = P²<sub>xx</sub> (2P² at 0 and ½). f₁ − f₂ = m/N: covariance ≈ 0 — Fourier bins are uncorrelated.</div></div>
+    <div class="formula" data-name="Distribution of one bin"><div class="f-head"><span class="t">RESULT</span>Distribution of one bin<span class="hint">hover the symbols ↓</span></div><div class="tex">\hat P_{\rm PER}(f_k)\sim P_{xx}(f_k)\,\frac{\chi^2_2}{2},\qquad \lim_{N\to\infty}\mathrm{Var}[\hat P_{\rm PER}(f)]=P_{xx}^2(f)\neq0</div><div class="f-note">Standard deviation = mean: an exponential distribution. P(P̂ &gt; t·P<sub>xx</sub>) = e<sup>−t</sup>: a 4.6× fluctuation happens in 1% of bins, so in a spectrum of 10⁴ bins you see a hundred of them. The estimator is <b>inconsistent</b>.</div><div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><button data-lang="f90" data-file="" class="">Fortran</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code>p_exceed = np.exp(-t)      # periodogram bin above t times the true PSD</code></pre><pre data-lang="f90" hidden><code>p_exceed = exp(-t)</code></pre></div></div>
+    <div class="ex" id="e10-2a" data-ans="4.605" data-tol="0.01"><div class="ex-h">EXERCISE <span class="lvl">Core</span></div><div class="ex-q">Threshold t (in units of the true PSD) exceeded by noise in 1% of periodogram bins?</div><div class="ex-in"><input placeholder="your answer"> <button class="btn go check">Check</button><span class="ex-res"></span></div><details><summary>Hint</summary>e<sup>−t</sup> = 0.01.</details><details><summary>Full solution</summary>t = ln 100 = 4.6.</details></div>
+    <div class="ex" id="e10-2b" data-ans="1" data-tol="0.01"><div class="ex-h">EXERCISE <span class="lvl">Basic</span></div><div class="ex-q">Standard deviation of P̂/P<sub>xx</sub> for one periodogram bin (0 &lt; f &lt; ½)?</div><div class="ex-in"><input placeholder="your answer"> <button class="btn go check">Check</button><span class="ex-res"></span></div><details><summary>Hint</summary>Exponential distribution with mean 1.</details><details><summary>Full solution</summary>1 — for any N.</details></div>
+  </div>
+</section>
+
+<!-- ================================================================== 3 -->
+<section class="lesson" data-title="Bartlett and Welch averaging" data-short="Welch" data-badge="ALGORITHM" data-time="40 min" data-level="Intermediate"
+  data-sub="Cut the record into K segments, taper each, average the periodograms: variance 1/K, resolution 1/L, and a χ²ν confidence band.">
+  <div class="stage" data-widget="welchK"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>We cannot repeat the universe, but we can cut our record into pieces and pretend each piece is a new realisation. Averaging K periodograms shrinks the scatter by √K.</p></div>
+    <div class="s-key">L sets the resolution (bins of f<sub>s</sub>/L), K sets the variance (∝ 1/K). With 50% overlap and Hann, K ≈ 2N/L nearly independent segments.</div>
+    <ul class="s-learn"><li>Bartlett: disjoint segments</li><li>Welch: overlap + taper, normalisation U</li><li>Variance with overlap</li><li>χ²ν confidence intervals</li><li>Choosing L; Blackman–Tukey</li></ul>
+  </aside>
+  <div class="prose">
+    <h2><span class="lv core">CORE</span>Bartlett</h2>
+    <p>Split the N samples into K disjoint segments of length L (N = KL), compute each periodogram, average. Bias: Fejér kernel of width ~1/L. Variance ≈ P²<sub>xx</sub>/K. Letting L → ∞ and K → ∞ together: consistent.</p>
+    <h2><span class="lv core">CORE</span>Welch</h2>
+    <div class="formula" data-name="Welch estimator"><div class="f-head"><span class="t">ESTIMATOR</span>Welch estimator<span class="hint">hover the symbols ↓</span></div><div class="tex">\h{Pw}{\hat P_W(f)}=\frac1{\h{K}{K}\,\h{L}{L}\,\h{U}{U}}\h{sum}{\sum_{i=0}^{K-1}}\Big|\sum_{n=0}^{L-1}\h{wn}{w[n]}\,x[n+iD]\,e^{-j2\pi fn}\Big|^2,\qquad U=\frac1L\sum_{n=0}^{L-1}w^2[n],\quad K=\Big\lfloor\frac{N-L}{D}\Big\rfloor+1</div><div class="f-note">Segments shifted by D (typically L/2); each multiplied by a taper. U is the mean power of the taper: without it a Hann-tapered estimate (U = 3/8) is 2.7 times too low. Overlap and taper are independent choices: the taper fights leakage, the overlap recovers the down-weighted edge samples and buys variance.</div><div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><button data-lang="f90" data-file="" class="">Fortran</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code>f, P = scipy.signal.welch(x, fs, window='hann', nperseg=L, noverlap=L//2, detrend='constant')</code></pre><pre data-lang="f90" hidden><code>K = (N - L)/D + 1
+do i = 1, K
+   s = (i-1)*D + 1
+   seg = w*(x(s:s+L-1) - sum(x(s:s+L-1))/L)
+   call fftw_execute_dft_r2c(plan, seg, Xk)
+   P = P + abs(Xk)**2
+end do
+P = 2*P/(K*L*U*fs)          ! one-sided density (halve the f = 0 and Nyquist bins)</code></pre></div></div>
+    <div class="formula" data-name="Confidence interval"><div class="f-head"><span class="t">RESULT</span>Confidence interval<span class="hint">hover the symbols ↓</span></div><div class="tex">\hat P_W(f)\sim P_{xx}(f)\,\frac{\chi^2_\nu}{\nu},\quad \nu=2K_{\rm eff}\qquad\Longrightarrow\qquad \frac{\nu\hat P}{\chi^2_{\nu,1-\alpha/2}}\le P_{xx}(f)\le\frac{\nu\hat P}{\chi^2_{\nu,\alpha/2}}</div><div class="f-note">Overlapping segments are correlated: K<sub>eff</sub> ≤ K (Hann, 50%: K<sub>eff</sub> ≈ 0.95 K). On a log axis the band has constant width. Model signal, Hann, L = 512 (bins 0.2 Hz), K = 24, ν = 45.6: scatter 0.21 (1/√K = 0.20), band 0.69–1.58 × estimate, true S<sub>n</sub> inside in 95% of 214 line-free bins.</div><div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><button data-lang="f90" data-file="" class="">Fortran</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code>lo, hi = nu / scipy.stats.chi2.ppf([0.975, 0.025], nu)     # multiply the estimate by these</code></pre><pre data-lang="f90" hidden><code>! chi2 quantiles: tabulate them, or use a Wilson-Hilferty approximation</code></pre></div></div>
+    <h3>Choosing L</h3>
+    <ul>
+      <li><b>Smooth spectrum</b>: MSE ≈ A/L⁴ (bias²) + BL/N (variance) ⇒ L<sub>opt</sub> ∝ N<sup>1/5</sup>: most extra data go into averaging.</li>
+      <li><b>Lines to resolve</b>: fix L so the required resolution spans 1–2 bins, spend all extra data on K.</li>
+      <li><b>Check</b>: double L; if the estimate moves outside the χ²ν band, the bias is not negligible yet.</li>
+    </ul>
+    <p><b>Blackman–Tukey</b> (1958) smooths instead: weight R̂(k) with a lag window of length M ≪ N. Equivalent to smoothing the periodogram; positive only if the window's transform is ≥ 0 (triangular yes, Hann no). Today essentially replaced by Welch.</p>
+    <div class="ex" id="e10-3a" data-ans="0.2" data-tol="0.005"><div class="ex-h">EXERCISE <span class="lvl">Basic</span></div><div class="ex-q">f<sub>s</sub> = 100 Hz, L = 512. Bin width in Hz?</div><div class="ex-in"><input placeholder="your answer"> <button class="btn go check">Check</button><span class="ex-res"></span></div><details><summary>Hint</summary>f<sub>s</sub>/L.</details><details><summary>Full solution</summary>0.195 ≈ 0.2 Hz.</details></div>
+    <div class="ex" id="e10-3b" data-ans="24" data-tol="0.5"><div class="ex-h">EXERCISE <span class="lvl">Core</span></div><div class="ex-q">N = 6400, L = 512, D = 256. Number of Welch segments K?</div><div class="ex-in"><input placeholder="your answer"> <button class="btn go check">Check</button><span class="ex-res"></span></div><details><summary>Hint</summary>⌊(N − L)/D⌋ + 1.</details><details><summary>Full solution</summary>(6400 − 512)/256 = 23 shifts, so K = 24 segments.</details></div>
+    <div class="ex" id="e10-3c" data-ans="0.204" data-tol="0.005"><div class="ex-h">EXERCISE <span class="lvl">Core</span></div><div class="ex-q">Expected relative scatter for K = 24 independent segments?</div><div class="ex-in"><input placeholder="your answer"> <button class="btn go check">Check</button><span class="ex-res"></span></div><details><summary>Hint</summary>1/√K.</details><details><summary>Full solution</summary>0.204 (measured 0.21).</details></div>
+    <a class="hsi-link" href="../Hyperspectral%20Project/index.html#s6"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg><span><small>RELATED · HYPERSPECTRAL PROJECT</small>Per-band noise spectra of a hyperspectral cube with Welch and χ² bands</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+  </div>
+</section>
+
+<!-- ================================================================== 4 -->
+<section class="lesson" data-title="Windows: resolution against leakage" data-short="Windows" data-badge="MATH" data-time="35 min" data-level="Advanced"
+  data-sub="Main-lobe width, ENBW, first sidelobe and sidelobe decay: no window wins every column. Pick it for the signal you have.">
+  <div class="stage" data-widget="windows10"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>Every segment is multiplied by some window — the rectangular one if you do nothing. Its transform is the kernel placed around every line.</p></div>
+    <div class="s-key">Smoother is faster: a window with p − 1 continuous derivatives has sidelobes decaying as 6(p + 1) dB/octave. Leakage is bias, not variance: averaging does not remove it.</div>
+    <ul class="s-learn"><li>Four numbers describing a window</li><li>Rectangular, triangular, Hann, Hamming, Tukey, Planck</li><li>Smoothness ⇔ sidelobe decay</li><li>Symmetric vs periodic forms</li><li>Practical rules</li></ul>
+  </aside>
+  <div class="prose">
+    <h2><span class="lv core">CORE</span>Four numbers</h2>
+    <ul>
+      <li><b>−3 dB main-lobe width</b> (bins of 1/L): resolution of two close lines.</li>
+      <li><b>ENBW</b> = L Σw²/(Σw)² bins: width of the rectangle with the same white-noise power. ENBW &gt; 1: edge samples down-weighted, statistics lost.</li>
+      <li><b>Highest sidelobe</b> (dB): leakage from a nearby strong line.</li>
+      <li><b>Sidelobe decay</b> (dB/octave): leakage from a distant strong feature.</li>
+    </ul>
+    <div class="formula" data-name="Window formulas (symmetric, n = 0 … L−1)"><div class="f-head"><span class="t">DEFINITIONS</span>Window formulas (symmetric, n = 0 … L−1)<span class="hint">hover the symbols ↓</span></div><div class="tex">w_{\rm Hann}=\tfrac12-\tfrac12\cos\frac{2\pi n}{L-1},\quad w_{\rm Hamming}=0.54-0.46\cos\frac{2\pi n}{L-1},\quad w_{\rm Planck}=\frac1{1+e^{Z(n)}},\ Z=\frac mn-\frac m{m-n}</div><div class="f-note">For spectral estimation use the <b>periodic</b> form (L instead of L − 1; scipy <code>sym=False</code>, the default of welch). Tukey(α): cosine edges over a fraction α, flat centre (α = 0 rectangular, α = 1 Hann). Planck taper (gravitational-wave analysis): edges with all derivatives zero, C<sup>∞</sup>.</div><div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><button data-lang="f90" data-file="" class="">Fortran</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code>w = scipy.signal.get_window('hann', L)      # periodic by default</code></pre><pre data-lang="f90" hidden><code>w = [(0.5_dp - 0.5_dp*cos(2*pi*n/L), n = 0, L-1)]   ! periodic Hann</code></pre></div></div>
+    <table><tr><th>window</th><th>−3 dB (bins)</th><th>ENBW</th><th>1st sidelobe</th><th>decay</th><th>strength / weakness</th></tr>
+      <tr><td>rectangular</td><td>0.89</td><td>1.00</td><td>−13 dB</td><td>6 dB/oct</td><td>narrowest lobe / worst leakage</td></tr>
+      <tr><td>triangular</td><td>1.28</td><td>1.33</td><td>−27</td><td>12</td><td>W ≥ 0 / modest gain</td></tr>
+      <tr><td>Hann</td><td>1.44</td><td>1.50</td><td>−31</td><td>18</td><td>good default / wider lobe</td></tr>
+      <tr><td>Hamming</td><td>1.30</td><td>1.36</td><td>−43</td><td>6</td><td>lowest 1st sidelobe / pedestal: slow decay</td></tr>
+      <tr><td>Tukey α = 0.5</td><td>1.15</td><td>1.22</td><td>−15</td><td>18</td><td>flat top, low ENBW / high near sidelobes</td></tr>
+      <tr><td>Planck ε = 0.1</td><td>1.00</td><td>1.09</td><td>−13</td><td>&gt; any power</td><td>C<sup>∞</sup> / gain only far from the lobe</td></tr></table>
+    <h3>Rules</h3>
+    <ul>
+      <li>Broadband smooth spectrum: Hann (safe default); Tukey or Planck keep more data at full weight.</li>
+      <li>Close lines of similar amplitude: narrow main lobe (rectangular, Tukey with small α).</li>
+      <li>Weak line near a strong one: low first sidelobe (Hann, Hamming). Code lab: two lines 20 dB apart at 0.20 and 0.22 — weak line / valley contrast 1.7 rectangular, 27.4 Hann.</li>
+      <li>Weak features far from a dominant one (steep red noise): fast decay (Hann, Planck) and prewhiten. Never Hamming.</li>
+      <li>Whatever the window, resolution ~ ENBW/L: to separate lines, increase L.</li>
+    </ul>
+    <div class="ex" id="e10-4a" data-ans="18" data-tol="0.01"><div class="ex-h">EXERCISE <span class="lvl">Core</span></div><div class="ex-q">Hann is continuous with a continuous first derivative; its second derivative jumps (p = 2). Sidelobe decay in dB/octave?</div><div class="ex-in"><input placeholder="your answer"> <button class="btn go check">Check</button><span class="ex-res"></span></div><details><summary>Hint</summary>6(p + 1).</details><details><summary>Full solution</summary>18 dB/octave, i.e. |W| ∝ f⁻³.</details></div>
+  </div>
+</section>
+
+<!-- ================================================================== 5 -->
+<section class="lesson" data-title="The Wiener filter from estimated spectra" data-short="Wiener" data-badge="MATH" data-time="30 min" data-level="Advanced"
+  data-sub="The optimal λ at each frequency, from Welch spectra of the data: it matches the best constant λ that needed the truth.">
+  <div class="stage" data-widget="wiener10"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>Lecture 9 left a question open: Tikhonov needs a λ, and the best one was found by comparing with the truth. Welch gives us the spectra, hence λ(f) = S<sub>n</sub>/S<sub>x</sub>.</p></div>
+    <div class="s-key">For lines in noise Φ &gt; ½ only in the few bins around each harmonic: the optimal filter for a periodic signal is a comb.</div>
+    <ul class="s-learn"><li>Wiener as λ(f)</li><li>Recipe from Welch</li><li>Cutoff where the signal enters the noise band</li><li>Several bands, coloured noise</li><li>Lines: a comb filter</li></ul>
+  </aside>
+  <div class="prose">
+    <div class="formula" data-name="Wiener filter"><div class="f-head"><span class="t">ESTIMATOR</span>Wiener filter<span class="hint">hover the symbols ↓</span></div><div class="tex">W=\frac{H^*}{|H|^2+S_n/S_x}=\frac1H\cdot\frac{|H|^2S_x}{|H|^2S_x+S_n},\qquad \h{Phi}{\Phi}=\frac{\hat P_W-\hat S_n}{\hat P_W}\ \text{(clipped to [0,1])}</div><div class="f-note">Measured on the model signal (Gaussian blur 30 ms, white noise rms 0.01): floor read at 40–45 Hz: 1.93×10⁻⁶ (true 2.00×10⁻⁶); |H|²S<sub>x</sub> = Welch − floor up to where the estimate enters the 95% band of the floor (15.2 Hz), zero above. RMS error: blurred 0.626, best constant λ 0.326 (needs the truth), Wiener from the data 0.314 (true spectra 0.313).</div><div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><button data-lang="f90" data-file="" class="">Fortran</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code>f, P = scipy.signal.welch(y, fs, 'hann', nperseg=L)
+Sn = np.median(P[(f &gt; 40) &amp; (f &lt; 45)]) * nu / scipy.stats.chi2.ppf(0.5, nu)
+Phi = np.clip((P - Sn) / P, 0, 1);  Phi[f &gt; f_cut] = 0</code></pre><pre data-lang="f90" hidden><code>phi = max(0.0_dp, min(1.0_dp, (p - sn)/p))
+where (f &gt; fcut) phi = 0.0_dp</code></pre></div></div>
+    <p><b>Lines in noise, no blur</b>: for the four harmonics in their own noise, Φ &gt; ½ only in the 3 Welch bins around 7, 14, 21, 28 Hz — 12 of 128 bins, 9% of the band. The Wiener filter of a periodic signal is a comb (Lab 1).</p>
+    <div class="ex" id="e10-5a" data-ans="0.9" data-tol="0.005"><div class="ex-h">EXERCISE <span class="lvl">Basic</span></div><div class="ex-q">A Welch bin with P̂ = 10 Ŝ<sub>n</sub>. Φ?</div><div class="ex-in"><input placeholder="your answer"> <button class="btn go check">Check</button><span class="ex-res"></span></div><details><summary>Hint</summary>(P − S)/P.</details><details><summary>Full solution</summary>0.9.</details></div>
+  </div>
+</section>
+
+<!-- ================================================================== 6 -->
+<section class="lesson" data-title="Coloured noise and the 1/f knee" data-short="Knee" data-badge="MATH" data-time="40 min" data-level="Advanced"
+  data-sub="White at high f, a power law below a knee: generate it (Timmer–König), measure its slope, fit it (least squares vs Whittle).">
+  <div class="stage" data-widget="knee"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>Real detectors are white only above a knee frequency. Below it, a longer integration brings in more slow drift: averaging stops helping.</p></div>
+    <div class="s-key">S(f) = σ²[1 + (f<sub>k</sub>/f)<sup>α</sup>]. Fit it with the Whittle likelihood on the raw periodogram: every bin, exact χ²₂ distribution, no bias.</div>
+    <ul class="s-learn"><li>The knee model</li><li>Colours: white, pink, red</li><li>Where the colours come from</li><li>Timmer–König generation</li><li>Whittle likelihood vs log least squares</li></ul>
+  </aside>
+  <div class="prose">
+    <div class="formula" data-name="White noise with a 1/f knee"><div class="f-head"><span class="t">MODEL</span>White noise with a 1/f knee<span class="hint">hover the symbols ↓</span></div><div class="tex">\h{Sf}{S(f)}=\h{sigma2}{\sigma^2}\Big[1+\Big(\frac{\h{fk}{f_k}}{f}\Big)^{\h{alpha}{\alpha}}\Big]</div><div class="f-note">σ²: white level (sensitivity). f<sub>k</sub>: knee, where both terms are equal. α: colour below the knee — 0 white, 1 pink/flicker (equal power per octave), 2 red/brown (random walk). Names: "1/f noise, knee frequency" (CMB, radiometers), "flicker noise, corner frequency" (electronics).</div><div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><button data-lang="f90" data-file="" class="">Fortran</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code>S = lambda f: sigma2 * (1 + (fk / f)**alpha)</code></pre><pre data-lang="f90" hidden><code>S = sigma2*(1.0_dp + (fk/f)**alpha)</code></pre></div></div>
+    <table><tr><th>source</th><th>colour</th><th>where</th></tr>
+      <tr><td>photon counting, Johnson noise</td><td>white</td><td>the floor of every detector</td></tr>
+      <tr><td>amplifiers, bolometers</td><td>1/f below a knee</td><td>CMB and radio time-ordered data: the knee sets the scan strategy</td></tr>
+      <tr><td>accretion (AGN, X-ray binaries)</td><td>red, α ≈ 1–2</td><td>light curves; QPOs sit on it</td></tr>
+      <tr><td>stellar granulation</td><td>red with a knee</td><td>exoplanet photometry, asteroseismology</td></tr>
+      <tr><td>clocks, pulsar spin noise</td><td>red</td><td>pulsar timing</td></tr></table>
+    <p><b>Why 1/f is everywhere</b>: a sum of relaxation processes e<sup>−t/τ</sup> (Lorentzian spectra) with τ spread uniformly in log τ gives S ∝ 1/f. <b>Averaging</b>: the scatter of a block mean falls as 1/√T for white noise (1 → 0.25 → 0.061 for T = 1, 16, 256 s), barely for pink (0.82, 0.61), not at all for red (1.00, 0.98). Beyond 1/f<sub>k</sub>, modulate, chop or scan faster than the knee.</p>
+    <div class="formula" data-name="Timmer–König generation"><div class="f-head"><span class="t">ALGORITHM</span>Timmer–König generation<span class="hint">hover the symbols ↓</span></div><div class="tex">X_k=\sqrt{\tfrac{N f_s S(f_k)}{4}}\,(g_1+j\,g_2),\quad g_{1,2}\sim\mathcal N(0,1),\qquad x=\mathrm{IFFT}(X)</div><div class="f-note">Check: generate with known α, measure the log–log slope of Welch at 0.1–10 Hz: 0.001 ± 0.012, 1.001 ± 0.015, 2.002 ± 0.014 for α = 0, 1, 2 (50 records of 655 s).</div><div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><button data-lang="f90" data-file="" class="">Fortran</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code>f = np.fft.rfftfreq(n, 1/fs); s = np.zeros_like(f); s[1:] = S(f[1:])
+X = np.sqrt(n*fs*s/4) * (rng.standard_normal(f.size) + 1j*rng.standard_normal(f.size))
+x = np.fft.irfft(X, n)</code></pre><pre data-lang="f90" hidden><code>do k = 2, n/2+1
+   call gauss(g1, g2)
+   Xk(k) = sqrt(n*fs*S(f(k))/4)*cmplx(g1, g2, dp)
+end do
+call fftw_execute_dft_c2r(pb, Xk, x);  x = x/n</code></pre></div></div>
+    <div class="formula" data-name="Whittle likelihood"><div class="f-head"><span class="t">ESTIMATOR</span>Whittle likelihood<span class="hint">hover the symbols ↓</span></div><div class="tex">-\ln\mathcal L(\theta)=\h{sum}{\sum_j}\Big[\ln S(f_j;\theta)+\frac{\hat P_j}{S(f_j;\theta)}\Big]</div><div class="f-note">Each periodogram bin is S·χ²₂/2: this is its exact log-likelihood. Least squares on log Welch is easy but log of χ²ν/ν is biased low by ≈ 1/ν. Code lab, 60 records of 64 s (truth σ² = 10⁻³, f<sub>k</sub> = 1 Hz, α = 1): least squares σ² = 0.942 ± 0.050, f<sub>k</sub> = 1.08 ± 0.37, α = 0.97 ± 0.16; Whittle σ² = 0.998 ± 0.042, f<sub>k</sub> = 1.01 ± 0.20, α = 1.00 ± 0.13. Mask the lines first: a few bins with P/S ≫ 1 dominate the sum.</div><div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><button data-lang="f90" data-file="" class="">Fortran</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code>nll = lambda th: np.sum(np.log(S(f, *th)) + P / S(f, *th))
+res = scipy.optimize.minimize(nll, th0, method='Nelder-Mead')</code></pre><pre data-lang="f90" hidden><code>nll = sum(log(S(f, th)) + P/S(f, th))      ! minimise with your favourite optimiser</code></pre></div></div>
+    <div class="ex" id="e10-6a" data-ans="2" data-tol="0.01"><div class="ex-h">EXERCISE <span class="lvl">Basic</span></div><div class="ex-q">At f = f<sub>k</sub>, S/σ² equals?</div><div class="ex-in"><input placeholder="your answer"> <button class="btn go check">Check</button><span class="ex-res"></span></div><details><summary>Hint</summary>1 + 1.</details><details><summary>Full solution</summary>2: the white and 1/f terms are equal.</details></div>
+    <div class="ex" id="e10-6b" data-ans="0.25" data-tol="0.005"><div class="ex-h">EXERCISE <span class="lvl">Core</span></div><div class="ex-q">White noise: by how much does the scatter of a block mean shrink when T goes from 1 s to 16 s?</div><div class="ex-in"><input placeholder="your answer"> <button class="btn go check">Check</button><span class="ex-res"></span></div><details><summary>Hint</summary>1/√T.</details><details><summary>Full solution</summary>1/4 = 0.25 (measured 0.25).</details></div>
+  </div>
+</section>
+
+<!-- ================================================================== 7 -->
+<section class="lesson" data-title="Steep spectra: leakage and prewhitening" data-short="Prewhitening" data-badge="MATH" data-time="25 min" data-level="Advanced"
+  data-sub="When the spectrum falls faster than the window's sidelobes, low-frequency power leaks everywhere. Taper, detrend, prewhiten.">
+  <div class="stage" data-widget="steep"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>Red spectra are the norm in astrophysics. For them the decay rate of the sidelobes — not the first sidelobe — decides the window.</p></div>
+    <div class="s-key">Prewhitening: filter with a simple A(z) (first difference, or a fitted AR model) to flatten the spectrum, estimate, then divide by |A(f)|².</div>
+    <ul class="s-learn"><li>Sidelobe decay vs spectral slope</li><li>Rectangular vs Hann on f⁻⁴</li><li>Detrending per segment</li><li>Prewhitening and recolouring</li></ul>
+  </aside>
+  <div class="prose">
+    <p>The rectangular window's sidelobes fall as f⁻² in power: a spectrum ∝ f⁻⁴ falls faster, so the leakage from the strong low frequencies fills the high-frequency bins. Code lab (f⁻⁴ over a white floor, Welch L = 512): at 40 Hz the rectangular estimate is 3×10⁷ times too high, Hann within 11%. Hann's sidelobes fall as f⁻⁶.</p>
+    <div class="formula" data-name="Prewhitening"><div class="f-head"><span class="t">ALGORITHM</span>Prewhitening<span class="hint">hover the symbols ↓</span></div><div class="tex">x'[n]=x[n]-a\,x[n-1]\ \ \Rightarrow\ \ |A(f)|^2=1+a^2-2a\cos2\pi f,\qquad \hat P_x(f)=\frac{\hat P_{x'}(f)}{|A(f)|^2}</div><div class="f-note">a = 1: first difference (multiplies the spectrum by ≈ (2πf)² at low f, flattening a red slope). Also detrend each segment (<code>detrend='linear'</code>). Code lab, lowest bins (0.4 Hz): Hann alone 125× too high, prewhitened 1.47.</div><div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><button data-lang="f90" data-file="" class="">Fortran</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code>xd = np.diff(x)                                   # a = 1
+f, Pd = scipy.signal.welch(xd, fs, 'hann', nperseg=L)
+P = Pd / (2 - 2*np.cos(2*np.pi*f/fs))             # recolour (skip f = 0)</code></pre><pre data-lang="f90" hidden><code>xd = x(2:N) - x(1:N-1)
+! Welch on xd ...
+P(2:) = Pd(2:)/(2.0_dp - 2.0_dp*cos(2*pi*f(2:)/fs))</code></pre></div></div>
+    <div class="ex" id="e10-7a" data-ans="4" data-tol="0.001"><div class="ex-h">EXERCISE <span class="lvl">Basic</span></div><div class="ex-q">|A(f)|² for a first difference at the Nyquist frequency (f/f<sub>s</sub> = ½)?</div><div class="ex-in"><input placeholder="your answer"> <button class="btn go check">Check</button><span class="ex-res"></span></div><details><summary>Hint</summary>2 − 2 cos π.</details><details><summary>Full solution</summary>4.</details></div>
+  </div>
+</section>
+
+<!-- ================================================================== 8 -->
+<section class="lesson" data-title="Time and frequency: the spectrogram" data-short="STFT" data-badge="MATH" data-time="30 min" data-level="Intermediate"
+  data-sub="Welch averages the segments; if the signal changes, keep them: one spectrum per time step. The window length decides what you see.">
+  <div class="stage" data-widget="stft10"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>Welch tells which frequencies are present over the whole record. When they occur is in the phases, which |X|² discards. Keep the segment periodograms instead of averaging them.</p></div>
+    <div class="s-key">A chirp of rate ṙ is sharpest with a window of about 1/√ṙ; shorter smears frequency, longer smears time. Gabor: Δt·Δf ≥ 1/(4π).</div>
+    <ul class="s-learn"><li>Spectrogram = Welch without the average</li><li>χ²₂ scatter in every pixel</li><li>Optimal window for a chirp</li><li>Narrowband vs wideband</li><li>Whitening before looking</li></ul>
+  </aside>
+  <div class="prose">
+    <p>The STFT was defined in the FFT lesson: X[m, k] = Σ x[n + mH] w[n] e<sup>−j2πkn/L</sup>. Here the point of view is estimation: each frame is a periodogram (χ²₂ scatter in every pixel) and Welch is the time average of the spectrogram.</p>
+    <div class="formula" data-name="Best window for a linear chirp"><div class="f-head"><span class="t">RULE</span>Best window for a linear chirp<span class="hint">hover the symbols ↓</span></div><div class="tex">\text{frequency blur}\approx1.44\,\frac{f_s}{L},\qquad\text{sweep blur}\approx\dot r\,\frac{L}{f_s}\qquad\Longrightarrow\qquad T_{\rm opt}=\frac{L}{f_s}\sim\frac1{\sqrt{\dot r}}</div><div class="f-note">Chirp 50 → 400 Hz in 4 s (ṙ = 87.5 Hz/s): ridge width 93 Hz with 16 ms, 8 Hz with 250 ms, 16 Hz with 500 ms. 1/√ṙ = 0.11 s; with Hann the effective length is shorter than L, so the optimum moves to 0.18–0.25 s.</div></div>
+    <ul>
+      <li><b>Voice</b>: a long window (40 ms) shows the pitch harmonics; a short one (4 ms) shows the formants and one vertical stripe per glottal pulse. Same signal, the window decides.</li>
+      <li><b>Gravitational-wave chirp</b>: whiten first (divide the spectrum by √S<sub>n</sub>), then the chirp appears. The spectrogram is a diagnostic; detection is a matched filter.</li>
+      <li><b>Dispersed radio pulse</b>: dynamic spectrum; incoherent dedispersion shifts channels by Δt = 4.149×10³ s · DM(ν<sub>low</sub>⁻² − ν<sub>high</sub>⁻²) and sums.</li>
+    </ul>
+    <div class="ex" id="e10-8a" data-ans="0.107" data-tol="0.003"><div class="ex-h">EXERCISE <span class="lvl">Core</span></div><div class="ex-q">1/√ṙ for ṙ = 87.5 Hz/s, in seconds?</div><div class="ex-in"><input placeholder="your answer"> <button class="btn go check">Check</button><span class="ex-res"></span></div><details><summary>Hint</summary>1/√87.5.</details><details><summary>Full solution</summary>0.107 s.</details></div>
+  </div>
+</section>
+
+<!-- ================================================================== 9 -->
+<section class="lesson" data-title="Code lab: spectral estimation" data-short="Code lab" data-badge="CODE" data-time="50 min" data-level="Intermediate"
+  data-sub="Periodogram scatter, Welch with χ² bands, windows, colours, knee fits, prewhitening — and Welch in Fortran with OpenMP.">
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>A spectrum without an error bar is not a measurement. Average for the continuum, keep full resolution for lines, look at the noise before trusting a peak.</p></div>
+    <div class="s-key">Welch parallelises like overlap-save: segments are independent; in MPI each process needs a halo of L − D samples.</div>
+    <ul class="s-learn"><li>Run spectral_estimation.py</li><li>Compile welch_omp.f90</li><li>Do the exercise</li></ul>
+  </aside>
+  <div class="prose">
+    <div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><button data-lang="f90" data-file="" class="">Fortran</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code># inside "10. Spectral Estimation/code"
+python spectral_estimation.py</code></pre><pre data-lang="f90" hidden><code>gfortran -O2 -fopenmp welch_omp.f90 -I/usr/include -lfftw3 -o welch_omp
+OMP_NUM_THREADS=4 ./welch_omp</code></pre></div>
+    <table><tr><th>experiment</th><th>printed result</th></tr>
+      <tr><td>1. periodogram scatter, T = 64 / 256 / 1024 s</td><td>std 1.05 / 1.00 / 0.99</td></tr>
+      <tr><td>2. Welch, K = 24, ν = 45.6</td><td>scatter 0.21, band 0.69–1.58, coverage 95%</td></tr>
+      <tr><td>3. weak line 20 dB below, Δf = 0.02</td><td>contrast 1.7 rectangular, 27.4 Hann</td></tr>
+      <tr><td>4. slopes α = 0, 1, 2</td><td>0.001 ± 0.012, 1.001 ± 0.015, 2.002 ± 0.014</td></tr>
+      <tr><td>5. knee fit: LSQ vs Whittle</td><td>α 0.97 ± 0.16 vs 1.00 ± 0.13</td></tr>
+      <tr><td>6. f⁻⁴ spectrum at 40 Hz / 0.4 Hz</td><td>rect 3×10⁷, Hann 1.11; Hann 125, prewhitened 1.47</td></tr>
+      <tr><td>Fortran Welch, K = 8191</td><td>mean ratio 0.9989, scatter 0.013 (1/√K = 0.011); 4 threads: 129 → 64 ms, difference 7×10⁻¹⁵</td></tr></table>
+    <div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="spectral_estimation.py" class="on">Python</button><button data-lang="f90" data-file="welch_omp.f90" class="">Fortran</button><span class="fn">spectral_estimation.py</span><button class="copy">copy</button></div><pre data-lang="py"><code>"""
+spectral_estimation.py  --  Lecture 10: a power spectrum from one finite record, with error bars.
+  Model signal: 100 Hz sampling, harmonics at 7, 14, 21, 28 Hz in white + 1/f noise (knee 1 Hz).
+  1. the periodogram is inconsistent: scatter of P/S does not shrink with T
+  2. Welch: scatter ~ 1/sqrt(K), chi^2_nu band and its coverage
+  3. a weak line next to a strong one: rectangular vs Hann
+  4. coloured noise (Timmer &amp; Koenig): generate alpha = 0, 1, 2 and measure the slope back
+  5. the knee: least squares on log Welch vs Whittle on the periodogram (bias and scatter)
+  6. a steep spectrum: leakage of the rectangular window, Hann, and prewhitening
+Run:  python spectral_estimation.py      (about 20 s)  -&gt; prints numbers, saves spectral_estimation.png
+"""
+import numpy as np
+from scipy import signal as sp
+from scipy.stats import chi2
+from scipy.optimize import minimize
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+
+rng = np.random.default_rng(10)
+fs = 100.0
+
+
+def coloured_noise(n, S, rng):
+    """Timmer &amp; Koenig (1995): complex Gaussian Fourier coefficients with E|X|^2 ~ S(f), inverse FFT.
+    S is a one-sided PSD in units^2/Hz."""
+    f = np.fft.rfftfreq(n, 1 / fs)
+    s = np.zeros_like(f); s[1:] = S(f[1:])
+    X = np.sqrt(n * fs * s / 4) * (rng.standard_normal(f.size) + 1j * rng.standard_normal(f.size))
+    X[-1] = X[-1].real * np.sqrt(2)                   # Nyquist bin real (n even)
+    return np.fft.irfft(X, n)
+
+
+Sknee = lambda f, s2=1e-3, fk=1.0, a=1.0: 2 * s2 * (1 + (fk / f) ** a)   # one-sided (factor 2)
+
+
+def model_signal(T, rng):
+    n = int(T * fs); t = np.arange(n) / fs
+    x = coloured_noise(n, Sknee, rng)
+    for k, A in zip((1, 2, 3, 4), (0.05, 0.03, 0.02, 0.01)):
+        x += A * np.sin(2 * np.pi * 7 * k * t)
+    return x
+
+
+# ---------------------------------------------------------------- 1. periodogram
+print("1. periodogram: scatter of P/S_n in 32-45 Hz (lines absent there)")
+for T in (64, 256, 1024):
+    x = model_signal(T, rng)
+    f, P = sp.periodogram(x, fs)
+    band = (f &gt; 32) &amp; (f &lt; 45)
+    r = P[band] / Sknee(f[band])
+    print(f"   T = {T:5d} s: mean {r.mean():.2f}, std {r.std():.2f}  ({band.sum()} bins)")
+
+# ---------------------------------------------------------------- 2. Welch + chi2 band
+x = model_signal(64, rng)
+L = 512
+f, W = sp.welch(x, fs, window="hann", nperseg=L, noverlap=L // 2)
+K = (len(x) - L) // (L // 2) + 1
+nu = 2 * K * 0.95                                     # Hann 50%: K_eff ~ 0.95 K
+lo, hi = nu * W / chi2.ppf(0.975, nu), nu * W / chi2.ppf(0.025, nu)
+band = (f &gt; 32) &amp; (f &lt; 45)
+lines = np.any(np.abs(f[:, None] - np.array([7, 14, 21, 28])) &lt; 1, axis=1)
+free = (f &gt; 0.5) &amp; ~lines
+cover = np.mean((Sknee(f[free]) &gt;= lo[free]) &amp; (Sknee(f[free]) &lt;= hi[free]))
+print(f"\n2. Welch, Hann, L = {L} (bins {fs/L:.2f} Hz), K = {K}, nu = {nu:.1f}:"
+      f" scatter of W/S_n in 32-45 Hz {np.std(W[band]/Sknee(f[band])):.2f} (1/sqrt(K) = {1/np.sqrt(K):.2f})")
+print(f"   95% band: from {nu/chi2.ppf(0.975, nu):.2f} to {nu/chi2.ppf(0.025, nu):.2f} times the estimate;"
+      f" true S_n inside in {100*cover:.0f}% of {free.sum()} line-free bins")
+
+# ---------------------------------------------------------------- 3. weak line
+n = 4096; t = np.arange(n)
+x = 10 * np.sin(2 * np.pi * 0.20 * t) + 1 * np.sin(2 * np.pi * 0.22 * t) + rng.standard_normal(n)
+print("\n3. lines at 0.20 (A = 10) and 0.22 (A = 1, -20 dB), L = 256")
+for win in ("boxcar", "hann"):
+    fq, Wq = sp.welch(x, 1.0, window=win, nperseg=256)
+    i22 = np.argmin(np.abs(fq - 0.22)); i21 = np.argmin(np.abs(fq - 0.212))
+    print(f"   {win:&lt;7}: weak line / valley at 0.212 = {Wq[i22]/Wq[i21]:6.1f}")
+
+# ---------------------------------------------------------------- 4. colours of noise
+print("\n4. generate pure power laws and measure the slope back (Welch, L = 4096, 0.1-10 Hz, 50 records of 655 s)")
+for a in (0, 1, 2):
+    slopes = []
+    for _ in range(50):
+        y = coloured_noise(65536, lambda f: f ** (-a), rng)
+        fq, Wq = sp.welch(y, fs, nperseg=4096)
+        m = (fq &gt;= 0.1) &amp; (fq &lt;= 10)
+        slopes.append(-np.polyfit(np.log10(fq[m]), np.log10(Wq[m]), 1)[0])
+    print(f"   alpha = {a}: measured {np.mean(slopes):.3f} +- {np.std(slopes):.3f}")
+
+# ---------------------------------------------------------------- 5. knee: LS vs Whittle
+print("\n5. knee fit, 60 records of 64 s (truth sigma2 = 1e-3, fk = 1 Hz, alpha = 1)")
+logS = lambda f, q: np.log(2 * 10 ** q[0]) + np.log1p((10 ** q[1] / f) ** q[2])
+res_ls, res_wh = [], []
+for _ in range(60):
+    y = coloured_noise(6400, Sknee, rng)
+    fq, Wq = sp.welch(y, fs, nperseg=1000)
+    m = fq &gt; 0
+    ls = minimize(lambda q: np.sum((np.log(Wq[m]) - logS(fq[m], q)) ** 2), [-3, 0, 1], method="Nelder-Mead").x
+    fp, P = sp.periodogram(y, fs)
+    mp = fp &gt; 0
+    wh = minimize(lambda q: np.sum(logS(fp[mp], q) + P[mp] / np.exp(logS(fp[mp], q))), ls, method="Nelder-Mead").x
+    res_ls.append(ls); res_wh.append(wh)
+for name, r in (("least squares on log Welch", np.array(res_ls)), ("Whittle on the periodogram", np.array(res_wh))):
+    print(f"   {name:&lt;28}: sigma2 = {1e3*np.mean(10**r[:,0]):.3f}e-3 +- {1e3*np.std(10**r[:,0]):.3f}e-3,"
+          f" fk = {np.mean(10**r[:,1]):.2f} +- {np.std(10**r[:,1]):.2f}, alpha = {np.mean(r[:,2]):.2f} +- {np.std(r[:,2]):.2f}")
+
+# ---------------------------------------------------------------- 6. steep spectrum
+Ssteep = lambda f: 1e-6 + (f / 10) ** (-4)
+y = coloured_noise(2 ** 16, Ssteep, rng)
+print("\n6. spectrum ~ f^-4 over a white floor, Welch L = 512: estimate / truth at 40 Hz")
+for win in ("boxcar", "hann"):
+    fq, Wq = sp.welch(y, fs, window=win, nperseg=512)
+    i = np.argmin(np.abs(fq - 40))
+    print(f"   {win:&lt;7}: {Wq[i]/Ssteep(fq[i]):.3g}")
+yd = np.diff(y)                                       # prewhiten: first difference, |A(f)|^2 = 4 sin^2(pi f/fs)
+fq, Wd = sp.welch(yd, fs, window="hann", nperseg=512)
+A2 = 4 * np.sin(np.pi * fq / fs) ** 2
+i = np.argmin(np.abs(fq - 0.4))
+fq2, Wh = sp.welch(y, fs, window="hann", nperseg=512)
+print(f"   at the lowest bins (0.4 Hz): Hann alone {Wh[i]/Ssteep(fq[i]):.2f}, prewhitened {Wd[i]/A2[i]/Ssteep(fq[i]):.2f}")
+
+fig, ax = plt.subplots(1, 2, figsize=(12, 4))
+x = model_signal(64, rng)
+fp_, P_ = sp.periodogram(x, fs)
+ax[0].loglog(fp_[1:], P_[1:], ",", color="0.6"); ax[0].loglog(f[1:], W[1:], "b"); ax[0].fill_between(f[1:], lo[1:], hi[1:], alpha=.3)
+ax[0].loglog(f[1:], Sknee(f[1:]), "r"); ax[0].set(xlabel="f [Hz]", title="periodogram, Welch and its 95% band")
+for a in (0, 1, 2):
+    y = coloured_noise(65536, lambda f: f ** (-a), rng); fq, Wq = sp.welch(y, fs, nperseg=4096)
+    ax[1].loglog(fq[1:], Wq[1:], label=f"alpha = {a}")
+ax[1].legend(); ax[1].set(xlabel="f [Hz]", title="colours of noise")
+fig.tight_layout(); fig.savefig("spectral_estimation.png", dpi=110)
+print("saved spectral_estimation.png")</code></pre><pre data-lang="f90" hidden><code>! welch_omp.f90  --  Lecture 10: Welch's method in Fortran with FFTW (r2c) and OpenMP
+!   white Gaussian noise of variance sigma^2 (Box-Muller), periodic Hann window, 50% overlap,
+!   mean removed per segment; one-sided PSD in units^2/Hz. Checks:
+!     * E[P] = 2 sigma^2 / fs for white noise, whatever the window (the U normalisation)
+!     * relative scatter of the estimate ~ 1/sqrt(K)
+!     * same result with 1 and with several threads
+! Build:  gfortran -O2 -fopenmp welch_omp.f90 -I/usr/include -lfftw3 -o welch_omp &amp;&amp; ./welch_omp
+module welch_mod
+  use, intrinsic :: iso_c_binding
+  use, intrinsic :: iso_fortran_env, only: dp =&gt; real64
+  implicit none
+  include 'fftw3.f03'
+  real(dp), parameter :: pi = 4.0_dp*atan(1.0_dp)
+contains
+  subroutine welch(x, fs, L, P)
+    real(dp), intent(in)  :: x(:), fs
+    integer,  intent(in)  :: L
+    real(dp), intent(out) :: P(:)                    ! L/2 + 1 bins
+    real(dp), allocatable :: w(:), seg(:)
+    complex(dp), allocatable :: Xk(:)
+    type(c_ptr) :: plan
+    real(dp) :: U
+    integer :: Kseg, D, i, s, n
+    D = L/2
+    Kseg = (size(x) - L)/D + 1
+    allocate(w(L), seg(L), Xk(L/2+1))
+    w = [(0.5_dp - 0.5_dp*cos(2.0_dp*pi*n/L), n = 0, L-1)]   ! PERIODIC Hann (denominator L)
+    U = sum(w**2)/L                                          ! mean power of the taper
+    plan = fftw_plan_dft_r2c_1d(L, seg, Xk, ior(FFTW_ESTIMATE, FFTW_UNALIGNED))   ! once, outside
+    P = 0.0_dp                                               ! must be initialised
+    !$omp parallel do default(none) private(i, s, seg, Xk) shared(x, w, Kseg, D, L, plan) reduction(+:P)
+    do i = 1, Kseg
+       s = (i-1)*D + 1
+       seg = x(s:s+L-1)
+       seg = w*(seg - sum(seg)/L)                            ! remove the mean, taper
+       call fftw_execute_dft_r2c(plan, seg, Xk)              ! new-array execute: thread-safe
+       P = P + abs(Xk)**2
+    end do
+    !$omp end parallel do
+    P = P/(real(Kseg, dp)*L*U*fs)
+    P(2:L/2) = 2.0_dp*P(2:L/2)                               ! one-sided: double all but DC, Nyquist
+    call fftw_destroy_plan(plan)
+  end subroutine welch
+end module welch_mod
+
+program welch_omp
+  use welch_mod
+  !$ use omp_lib
+  implicit none
+  integer, parameter :: n = 2**22, L = 1024
+  real(dp), parameter :: fs = 100.0_dp, sigma = 0.7_dp
+  real(dp), allocatable :: x(:), u1(:), u2(:)
+  real(dp) :: P(L/2+1), P1(L/2+1), mean_ratio, scatter
+  integer :: Kseg, t0, t1, rate, nth
+
+  allocate(x(n), u1(n/2), u2(n/2))
+  call random_number(u1); call random_number(u2); u1 = 1.0_dp - u1        ! (0,1]: no log(0)
+  x(1:n/2)   = sigma*sqrt(-2*log(u1))*cos(2*pi*u2)                       ! Box-Muller
+  x(n/2+1:n) = sigma*sqrt(-2*log(u1))*sin(2*pi*u2)
+
+  nth = 1
+  !$ nth = omp_get_max_threads()
+  !$ call omp_set_num_threads(1)
+  call system_clock(t0, rate); call welch(x, fs, L, P1); call system_clock(t1)
+  print '(a, f8.1, a)', '1 thread : ', 1000.0_dp*(t1-t0)/rate, ' ms'
+  !$ call omp_set_num_threads(nth)
+  call system_clock(t0); call welch(x, fs, L, P); call system_clock(t1)
+  print '(a, i0, a, f8.1, a, es9.2)', 'threads = ', nth, ': ', 1000.0_dp*(t1-t0)/rate, &amp;
+        ' ms,  max relative difference ', maxval(abs(P - P1)/P1)
+
+  Kseg = (n - L)/(L/2) + 1
+  mean_ratio = sum(P(2:L/2))/(L/2 - 1)/(2*sigma**2/fs)
+  scatter = sqrt(sum((P(2:L/2)/(2*sigma**2/fs) - mean_ratio)**2)/(L/2 - 2))
+  print '(a, i0)',  'segments K = ', Kseg
+  print '(a, f8.4, a)', 'mean of P / (2 sigma^2/fs)   = ', mean_ratio, '   (1 expected)'
+  print '(a, f8.4, a, f8.4)', 'relative scatter of P        = ', scatter, '   1/sqrt(K) = ', 1.0_dp/sqrt(real(Kseg, dp))
+end program welch_omp</code></pre></div>
+    <div class="task"><b>EXERCISE 10.1 — THE COLOUR OF THE NOISE</b>256 s at 100 Hz of noise with σ² = 10⁻³, f<sub>k</sub> = 5 Hz, α = 1.5 (Timmer–König), plus harmonics 7–28 Hz with amplitudes 0.05, 0.03, 0.02, 0.01. (1) Periodogram and Welch (Hann, L = 1024, 50%), scatter in a line-free band, 95% band. (2) Fit σ², f<sub>k</sub>, α: least squares on log Welch with lines masked, then Whittle. (3) Which lines are real at 1% false alarms over all bins searched, with Welch/model vs χ²ν and periodogram/model vs exponential? Do they agree?</div>
+    <div class="task"><b>EXERCISE 10.2 — WINDOWS AND FORTRAN</b>(4) Noise alone with α = 1 and α = 3, rectangular and Hann: by how much is each off at 2–4 Hz? Predict when the rectangle fails. (5) Write the record to a binary stream file, compute Welch in Fortran with FFTW (r2c, periodic Hann, mean removed per segment), compare with scipy bin by bin.</div>
+    <div class="task"><b>EXERCISE 10.3 — THINK</b>For a continuum you average; for a line? What would you do to detect a line ten times weaker?</div>
+    <p><b>Further reading by keyword</b>: multitaper/DPSS (Thomson 1982); red-noise tests for QPOs (Vaughan 2005); Lomb–Scargle for uneven sampling (VanderPlas 2018); AR/Burg/MUSIC parametric methods; cross-spectrum and coherence; wavelets (Torrence &amp; Compo 1998).</p>
+  </div>
+</section>
+
+      </div>
+      <div class="view v-practice"><h1 style="margin:6px 0 2px">Practice</h1><p class="subtitle">Every exercise of this unit in one place. Answers are checked to about 1%; fractions like 1/3 are accepted.</p></div>
+      <div class="view v-code"><h1 style="margin:6px 0 2px">Code Lab</h1><p class="subtitle">Every Python and Fortran snippet of this unit, plus the hyperspectral project tasks. The full files are in the <code>code</code> folder next to this page.</p></div>
+      <div class="view v-sheet"><h1 style="margin:6px 0 2px">Cheatsheet</h1><p class="subtitle">All the formulas of this unit. Hover any symbol for its name, meaning and code.</p></div>
+    </div>
+  </main>
+  <aside class="right learnonly">
+    <div class="rcard">
+      <div class="rtop"><span id="r-step"></span><span class="badge" id="r-badge"></span></div>
+      <h2 id="r-title"></h2>
+      <div id="r-body"></div>
+      <div class="keyidea" id="r-key"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3c.5 4 2 5.5 6 6-4 .5-5.5 2-6 6-.5-4-2-5.5-6-6 4-.5 5.5-2 6-6zM18.5 15.5c.2 1.6.9 2.3 2.5 2.5-1.6.2-2.3.9-2.5 2.5-.2-1.6-.9-2.3-2.5-2.5 1.6-.2 2.3-.9 2.5-2.5z"/></svg><b>KEY IDEA</b><span id="r-key-t"></span></div>
+      <div class="navbtns"><button class="btn back" id="r-back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M19 12H5M11 6l-6 6 6 6"/></svg> Back</button><button class="btn next" id="r-next"><span id="r-next-t">Next</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></div>
+      <div class="keys"><span class="kbd">←</span><span class="kbd">→</span> step · <span class="kbd">Ctrl K</span> search · hover symbols</div>
+    </div>
+    <div class="rcard"><div class="rtop">YOU'LL LEARN</div><ul class="learn" id="r-learn"></ul></div>
+  </aside>
+</div>
+<script src="../assets/katex/katex.min.js"></script>
+<script src="../assets/katex/auto-render.min.js"></script>
+<script src="../assets/js/course.js"></script>
+<script src="../assets/js/plot.js"></script>
+<script src="../assets/js/symbols-common.js"></script>
+<script src="lesson10.js"></script>
+<script src="../assets/js/app.js"></script>
+</body></html>

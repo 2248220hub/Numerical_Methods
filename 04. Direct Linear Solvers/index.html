@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>04. Direct Linear Solvers · Comp Astro</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='14' fill='%23cfe3b2' stroke='%231d1b18' stroke-width='3'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="../assets/katex/katex.min.css">
+<link rel="stylesheet" href="../assets/css/style.css">
+<script>try{document.documentElement.dataset.theme=JSON.parse(localStorage.getItem("cma.theme"))||"light"}catch(e){}</script>
+</head>
+<body data-unit="04" data-root="../">
+<header class="topbar">
+  <button class="iconbtn burger" data-act="burger" aria-label="menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+  <a class="brand" href="../index.html"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="15.5" fill="none" stroke="currentColor" stroke-width="2.5"/>
+<ellipse cx="20" cy="20" rx="19" ry="6.5" fill="none" stroke="currentColor" stroke-width="2.2" transform="rotate(-24 20 20)"/>
+<circle cx="20" cy="20" r="6" fill="#cfe3b2" stroke="currentColor" stroke-width="2.2"/><circle cx="35" cy="11.5" r="2.6" fill="#e6824c" stroke="currentColor" stroke-width="1.5"/></svg><span>Comp <mark>Astro</mark></span></a>
+  <nav class="tabs"><a class="tab on" data-view="learn" href="../index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 5.5C5 4 8.5 4 12 6c3.5-2 7-2 10-.5V19c-3-1.5-6.5-1.5-10 .5-3.5-2-7-2-10-.5z"/><path d="M12 6v13.5"/></svg><span>Learn</span></a><a class="tab" data-view="practice" href="../index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg><span>Practice</span></a><a class="tab" data-view="code" href="../index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2.5" y="4" width="19" height="16" rx="2"/><path d="M2.5 8.5h19M7 13l-2 2 2 2M11 17h5"/></svg><span>Code Lab</span></a><a class="tab" data-view="sheet" href="../index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 17.5h7M17.5 14v7"/></svg><span>Cheatsheet</span></a></nav>
+  <div class="search" data-act="search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><span>Search lessons &amp; formulas…</span><kbd>Ctrl K</kbd></div>
+  <button class="iconbtn" data-act="theme" aria-label="dark mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg></button>
+  <div class="credit"><div class="av">∑</div><div>open study guide<b>numerical methods</b></div></div>
+</header>
+<div class="layout">
+  <aside class="sidebar"><nav class="tree"></nav><div class="progress"></div></aside>
+  <main class="main">
+    <div class="stepper learnonly"><div class="stepper-h">IN THIS LESSON <small id="stepper-n"></small></div><div class="dots"></div></div>
+    <div class="card">
+      <div class="crumbs"><span>04. Direct Linear Solvers</span><span class="sep">/</span><span id="crumb-sub"></span></div>
+      <div class="learnonly">
+        <div class="titlebar"><h1 id="title"></h1>
+          <div class="badges"><span class="badge y" id="b-time"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> </span><span class="badge g" id="b-level"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="15" width="3.2" height="6" rx="1"/><rect x="8.5" y="11" width="3.2" height="10" rx="1"/><rect x="14" y="7" width="3.2" height="14" rx="1"/><rect x="19.5" y="3" width="2.5" height="18" rx="1" opacity=".35"/></svg> </span><span class="badge p" id="b-steps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 6h12M9 12h12M9 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg> </span></div>
+        </div>
+        <p class="subtitle" id="subtitle"></p>
+        <!-- ================================================================== 1 -->
+<section class="lesson" data-title="Accuracy, stability and efficiency" data-short="Stability" data-badge="CONCEPT" data-time="30 min" data-level="Beginner"
+  data-sub="A mathematically correct formula is not necessarily a good algorithm. The quadratic equation shows why, before we meet Ax = b.">
+  <div class="stage" data-widget="quadcancel"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>Roots of x² + bx + 1 = 0 with |b| large: the textbook formula subtracts two almost equal numbers and loses almost all its digits.</p><p>Above: move b and compare the naive and the stable formula in single and double precision.</p></div>
+    <div class="s-key">Numerical analysis is not only finding a solution: it is knowing how accurate and how reliable that solution is.</div>
+    <ul class="s-learn"><li>Three requirements: accuracy, stability, efficiency</li><li>Bisection vs Newton–Raphson</li><li>Stopping criteria</li><li>Catastrophic cancellation</li><li>Overflow in intermediate steps</li></ul>
+  </aside>
+  <div class="prose">
+    <h2><span class="lv basic">BASIC</span>Three questions for every algorithm</h2>
+    <ol class="steps">
+      <li><b>Accuracy</b>: how close is the computed answer to the true one, compared with the floating-point precision?</li>
+      <li><b>Stability</b>: are the unavoidable rounding errors kept small, or amplified during the computation?</li>
+      <li><b>Efficiency</b>: how many floating-point operations (flops) and how much memory does it need?</li>
+    </ol>
+    <p>They will be asked of root finders, linear systems, optimisers, differential-equation solvers and inverse problems alike.</p>
+    <h2><span class="lv basic">BASIC</span>Iterative root finding and stopping criteria</h2>
+    <div class="formula" data-name="Newton–Raphson iteration"><div class="f-head"><span class="t">ALGORITHM</span>Newton–Raphson iteration<span class="hint">hover the symbols ↓</span></div><div class="tex">\h{xk}{x_{k+1}}=x_k-\frac{\h{fx}{f(x_k)}}{f'(x_k)},\qquad \text{stop when } |f(x_k)|<\varepsilon\ \ \text{or}\ \ \frac{|x_k-x_{k-1}|}{|x_k|}<\varepsilon\ \ \text{or}\ \ k=k_{\max}</div><div class="f-note">Bisection halves an interval with a sign change: always converges, one binary digit per step (linear). Newton doubles the number of correct digits per step near the root (quadratic) but needs a good start and f′ ≠ 0. For f = x² − 10x + 9, root 9 to 10⁻¹²: bisection 42 iterations, Newton from x₀ = 12: 6.</div><div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><button data-lang="f90" data-file="" class="">Fortran</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code>x = 12.0
+while True:
+    x_new = x - f(x) / df(x)
+    if abs(x_new - x) / abs(x_new) &lt; 1e-12: break
+    x = x_new</code></pre><pre data-lang="f90" hidden><code>x = 12.0_dp
+do
+   xn = x - f(x)/df(x)
+   if (abs(xn - x)/abs(xn) &lt; 1.0e-12_dp) exit
+   x = xn
+end do</code></pre></div></div>
+    <h2><span class="lv core">CORE</span>Catastrophic cancellation</h2>
+    <div class="formula" data-name="Stable quadratic roots"><div class="f-head"><span class="t">ALGORITHM</span>Stable quadratic roots<span class="hint">hover the symbols ↓</span></div><div class="tex">u=-b-\mathrm{sgn}(b)\sqrt{b^2-4ac},\qquad x_1=\frac{u}{2a},\qquad x_2=\frac{c}{a\,x_1}</div><div class="f-note">With b² ≫ 4ac the naive −b + √(b²−4ac) subtracts two nearly equal numbers. The stable form only adds numbers of the same sign and gets the second root from the product x₁x₂ = c/a. Measured (a = c = 1): at |b| = 1.6×10⁴ the naive small root has 100% error in float32; at |b| = 10⁸ still 25% error in float64. The stable formula stays at rounding level.</div><div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><button data-lang="f90" data-file="" class="">Fortran</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code>u = -b - np.sign(b) * np.sqrt(b*b - 4*a*c)
+x1 = u / (2*a);  x2 = c / (a*x1)</code></pre><pre data-lang="f90" hidden><code>u  = -b - sign(1.0_dp, b)*sqrt(b*b - 4*a*c)
+x1 = u/(2*a);  x2 = c/(a*x1)</code></pre></div></div>
+    <p><b>Intermediate overflow</b>: √(a² + b²) with a = b = 10²⁰⁰ is 1.4×10²⁰⁰, well inside the double range, yet a² overflows to ∞. Use <code>hypot(a, b)</code> (Fortran 2008: <code>hypot</code>, or <code>norm2</code>), which rescales internally. Instability can hide in any intermediate step, not only in the final formula.</p>
+    <div class="ex" id="e4-1a" data-ans="0.00000012" data-tol="0.00000001"><div class="ex-h">EXERCISE <span class="lvl">Basic</span></div><div class="ex-q">Machine epsilon of single precision (float32), 2⁻²³? Give the value.</div><div class="ex-in"><input placeholder="your answer"> <button class="btn go check">Check</button><span class="ex-res"></span></div><details><summary>Hint</summary>2⁻²³ ≈ 1.19×10⁻⁷.</details><details><summary>Full solution</summary>1.19×10⁻⁷: about 7 significant decimal digits.</details></div>
+    <div class="ex" id="e4-1b" data-ans="0.00000001" data-tol="0.000000002"><div class="ex-h">EXERCISE <span class="lvl">Core</span></div><div class="ex-q">x² − 10⁸x + 1 = 0. Small root, from the product of the roots (x₁ ≈ 10⁸)?</div><div class="ex-in"><input placeholder="your answer"> <button class="btn go check">Check</button><span class="ex-res"></span></div><details><summary>Hint</summary>x₁x₂ = c/a = 1.</details><details><summary>Full solution</summary>x₂ = 1/x₁ ≈ 10⁻⁸. The naive formula in float64 gets it with 25% error.</details></div>
+    <div class="oral">Why is a formula that is exact in algebra not necessarily a good algorithm? Use the quadratic example to explain the difference between the conditioning of a problem and the stability of an algorithm.</div>
+  </div>
+</section>
+
+<!-- ================================================================== 2 -->
+<section class="lesson" data-title="Linear systems and Cramer's rule" data-short="Cramer" data-badge="MATH" data-time="25 min" data-level="Beginner"
+  data-sub="Ax = b is everywhere in physics. Cramer's rule is exact and elegant — and useless beyond n ≈ 4.">
+  <div class="stage" data-widget="cramer"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>Discretised differential equations, least-squares fits, implicit time steps, map-making: all end in Ax = b with n from a few to billions.</p></div>
+    <div class="s-key">We never need A⁻¹ or det(A) to solve Ax = b. We need a triangular system — which is trivial to solve.</div>
+    <ul class="s-learn"><li>Where Ax = b comes from</li><li>Cramer's rule and the Leibniz determinant</li><li>Factorial cost</li><li>Overflow and cancellation in determinants</li><li>The plan: reduce to triangular form</li></ul>
+  </aside>
+  <div class="prose">
+    <div class="formula" data-name="Cramer&#x27;s rule"><div class="f-head"><span class="t">FORMULA</span>Cramer's rule<span class="hint">hover the symbols ↓</span></div><div class="tex">x_i=\frac{\det(\h{A}{A}_i)}{\det(\h{A}{A})},\qquad \det(A)=\h{sum}{\sum_{\sigma\in S_n}}\mathrm{sgn}(\sigma)\h{prod}{\prod_{i=1}^n}a_{i,\sigma(i)}</div><div class="f-note">A<sub>i</sub>: A with column i replaced by b. n + 1 determinants, each a sum over n! permutations: about (n+1)! products. Measured: n = 8 takes 2 s (LU: 0.2 ms); n = 20 would take ~1600 years at 1 Gflop/s.</div><div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><button data-lang="f90" data-file="" class="">Fortran</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code>for p in itertools.permutations(range(n)):       # n! terms
+    s += sign(p) * np.prod([A[i, p[i]] for i in range(n)])</code></pre><pre data-lang="f90" hidden><code>! do not: the cost is (n+1)! — use dgesv (LU) instead</code></pre></div></div>
+    <h2><span class="lv core">CORE</span>Why determinants are numerically dangerous</h2>
+    <ul>
+      <li><b>Scaling</b>: det(cA) = cⁿ det(A). A 400×400 matrix with entries ~10 has |det| ≈ 10<sup>832</sup>: overflow, although the system is perfectly well behaved. Its log-determinant (1914.9) is fine.</li>
+      <li><b>Cancellation</b>: det = Σ₊ − Σ₋, two huge sums of products that nearly cancel.</li>
+      <li><b>Small det ≠ ill-conditioned</b>: 10⁻³·I has det 10<sup>−3n</sup> and is perfectly conditioned (Lecture 5).</li>
+    </ul>
+    <h2><span class="lv basic">BASIC</span>What we actually compute</h2>
+    <p>Not A⁻¹ (three times more work and more rounding), not det(A). The target is an equivalent <b>triangular</b> system Ux = y, obtained by operations that do not change the solution.</p>
+    <div class="ex" id="e4-2a" data-ans="720" data-tol="0.5"><div class="ex-h">EXERCISE <span class="lvl">Basic</span></div><div class="ex-q">How many products does Cramer's rule need, roughly (n+1)!, for n = 5?</div><div class="ex-in"><input placeholder="your answer"> <button class="btn go check">Check</button><span class="ex-res"></span></div><details><summary>Hint</summary>6!.</details><details><summary>Full solution</summary>720 (measured 3 ms against 0.16 ms for LU).</details></div>
+    <div class="ex" id="e4-2b" data-ans="83" data-tol="1"><div class="ex-h">EXERCISE <span class="lvl">Core</span></div><div class="ex-q">Gaussian elimination costs (2/3)n³ flops. For n = 5, how many?</div><div class="ex-in"><input placeholder="your answer"> <button class="btn go check">Check</button><span class="ex-res"></span></div><details><summary>Hint</summary>(2/3)·125.</details><details><summary>Full solution</summary>≈ 83 flops — for n = 5 the two are comparable; the factorial wins badly from n ≈ 6 on.</details></div>
+  </div>
+</section>
+
+<!-- ================================================================== 3 -->
+<section class="lesson" data-title="Triangular systems and back substitution" data-short="Triangular" data-badge="ALGORITHM" data-time="20 min" data-level="Beginner"
+  data-sub="An upper triangular system is solved from the bottom row up, in n² flops. Everything else in this lesson is a way to get there.">
+  <div class="stage" data-widget="backsub"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>The last equation has one unknown; once it is known, the one above has one unknown left; and so on to the top.</p><p>Step through the substitution above.</p></div>
+    <div class="s-key">Back substitution: n² flops and n divisions by the diagonal u<sub>ii</sub> — which must not be zero.</div>
+    <ul class="s-learn"><li>Upper and lower triangular systems</li><li>Back substitution</li><li>Forward substitution</li><li>Cost n²</li></ul>
+  </aside>
+  <div class="prose">
+    <div class="formula" data-name="Back substitution"><div class="f-head"><span class="t">ALGORITHM</span>Back substitution<span class="hint">hover the symbols ↓</span></div><div class="tex">x_n=\frac{y_n}{u_{nn}},\qquad x_i=\frac{1}{\h{uii}{u_{ii}}}\Big(\h{yv}{y_i}-\h{sum}{\sum_{j=i+1}^{n}}u_{ij}\,x_j\Big),\quad i=n-1,\dots,1</div><div class="f-note">About n² flops: row i costs n − i multiply–adds. Forward substitution for a lower triangular Ly = c runs top-down in the same way; with l<sub>ii</sub> = 1 it needs no division.</div><div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><button data-lang="f90" data-file="" class="">Fortran</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code>x = np.zeros(n)
+for i in range(n - 1, -1, -1):
+    x[i] = (y[i] - U[i, i+1:] @ x[i+1:]) / U[i, i]</code></pre><pre data-lang="f90" hidden><code>do i = n, 1, -1
+   x(i) = (y(i) - dot_product(U(i, i+1:n), x(i+1:n))) / U(i, i)
+end do</code></pre></div></div>
+    <div class="ex" id="e4-3a" data-ans="2" data-tol="0.001"><div class="ex-h">EXERCISE <span class="lvl">Basic</span></div><div class="ex-q">U = [[2, 1], [0, 4]], y = [8, 8]. Solve Ux = y from the bottom: x₂?</div><div class="ex-in"><input placeholder="your answer"> <button class="btn go check">Check</button><span class="ex-res"></span></div><details><summary>Hint</summary>Last row: 4x₂ = 8.</details><details><summary>Full solution</summary>x₂ = 2.</details></div>
+    <div class="ex" id="e4-3b" data-ans="3" data-tol="0.001"><div class="ex-h">EXERCISE <span class="lvl">Basic</span></div><div class="ex-q">Same system: x₁?</div><div class="ex-in"><input placeholder="your answer"> <button class="btn go check">Check</button><span class="ex-res"></span></div><details><summary>Hint</summary>(y₁ − u₁₂x₂)/u₁₁.</details><details><summary>Full solution</summary>3.</details></div>
+  </div>
+</section>
+
+<!-- ================================================================== 4 -->
+<section class="lesson" data-title="Gaussian elimination and pivoting" data-short="Pivoting" data-badge="ALGORITHM" data-time="40 min" data-level="Intermediate"
+  data-sub="Row operations reduce A to triangular form. A zero or tiny pivot breaks it: swap rows (partial pivoting) or rows and columns (full pivoting).">
+  <div class="stage" data-widget="pivot"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>Subtract multiples of the pivot row to zero the column below the diagonal, column after column. With a tiny pivot the multipliers are huge and the rounding of large numbers wipes out the small ones.</p></div>
+    <div class="s-key">Partial pivoting picks the largest entry of the column as pivot: every multiplier satisfies |m<sub>ik</sub>| ≤ 1, so intermediate entries cannot blow up.</div>
+    <ul class="s-learn"><li>Elementary row operations</li><li>Multipliers and the forward reduction</li><li>Breakdown: zero pivot</li><li>Instability: tiny pivot</li><li>Partial and full pivoting</li><li>Determinant from the elimination</li></ul>
+  </aside>
+  <div class="prose">
+    <h2><span class="lv core">CORE</span>Forward reduction</h2>
+    <div class="formula" data-name="Elimination step k"><div class="f-head"><span class="t">ALGORITHM</span>Elimination step k<span class="hint">hover the symbols ↓</span></div><div class="tex">\h{mik}{m_{ik}}=\frac{a^{(k)}_{ik}}{a^{(k)}_{kk}},\qquad a^{(k+1)}_{ij}=a^{(k)}_{ij}-m_{ik}\,a^{(k)}_{kj},\qquad b^{(k+1)}_i=b^{(k)}_i-m_{ik}\,b^{(k)}_k,\qquad i,j>k</div><div class="f-note">Allowed operations: scale a row, subtract a multiple of one row from another, swap rows. They change the matrix but not the solution. Cost: Σ(n−k)² · 2 ≈ (2/3)n³ flops.</div><div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><button data-lang="f90" data-file="" class="">Fortran</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code>for k in range(n - 1):
+    for i in range(k + 1, n):
+        m = A[i, k] / A[k, k]
+        A[i, k:] -= m * A[k, k:];  b[i] -= m * b[k]</code></pre><pre data-lang="f90" hidden><code>do k = 1, n-1
+   do i = k+1, n
+      m = A(i,k)/A(k,k)
+      A(i,k:n) = A(i,k:n) - m*A(k,k:n);  b(i) = b(i) - m*b(k)
+   end do
+end do</code></pre></div></div>
+    <h2><span class="lv core">CORE</span>Why pivot</h2>
+    <p>A = [[ε, 1], [1, 1]], b = [1, 2], exact solution ≈ [1, 1]. Without pivoting the multiplier is 1/ε; the second row becomes [0, 1 − 1/ε] and the 1 disappears in rounding.</p>
+    <table><tr><th>ε</th><th>no pivoting: error</th><th>partial pivoting: error</th></tr>
+      <tr><td>10⁻⁴</td><td>2.8×10⁻¹³</td><td>2.2×10⁻¹⁶</td></tr>
+      <tr><td>10⁻⁸</td><td>5.0×10⁻⁹</td><td>2.2×10⁻¹⁶</td></tr>
+      <tr><td>10⁻¹²</td><td>2.2×10⁻⁵</td><td>0</td></tr>
+      <tr><td>10⁻¹⁶</td><td>1.2 (100%)</td><td>2.2×10⁻¹⁶</td></tr></table>
+    <div class="formula" data-name="Partial pivoting"><div class="f-head"><span class="t">ALGORITHM</span>Partial pivoting<span class="hint">hover the symbols ↓</span></div><div class="tex">p_k=\arg\max_{k\le i\le n}\big|a^{(k)}_{ik}\big|,\quad \text{swap rows }k\leftrightarrow p_k\ \text{in }A\text{ and }b\ \ \Longrightarrow\ \ |\h{mik}{m_{ik}}|\le1</div><div class="f-note">Search cost O(n²) in total, negligible. <b>Full pivoting</b> searches the whole trailing block (O(n³) comparisons), swaps rows and columns and must record the column order q to unscramble x. Theoretically more stable; in practice partial pivoting is the standard (LAPACK dgesv). Random 60×60: errors 2.7×10⁻¹³ (none), 6.2×10⁻¹⁵ (partial), 8.4×10⁻¹⁵ (full).</div><div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><button data-lang="f90" data-file="" class="">Fortran</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code>p = k + np.argmax(np.abs(A[k:, k]))
+A[[k, p]] = A[[p, k]];  b[[k, p]] = b[[p, k]]</code></pre><pre data-lang="f90" hidden><code>p = k - 1 + maxloc(abs(A(k:n,k)), dim=1)
+tmp = A(k,:); A(k,:) = A(p,:); A(p,:) = tmp
+t = b(k); b(k) = b(p); b(p) = t</code></pre></div></div>
+    <div class="formula" data-name="Determinant from the elimination"><div class="f-head"><span class="t">RESULT</span>Determinant from the elimination<span class="hint">hover the symbols ↓</span></div><div class="tex">\det(A)=(-1)^{p}\h{prod}{\prod_{i=1}^n}u_{ii}\qquad(p=\text{number of row swaps})</div><div class="f-note">Adding a multiple of a row leaves det unchanged, a swap flips its sign. O(n) extra work after the (2/3)n³ reduction, against O(n!) for the cofactor expansion. For big matrices compute log|det| = Σ log|u<sub>ii</sub>| to avoid overflow.</div></div>
+    <div class="ex" id="e4-4a" data-ans="10000" data-tol="1"><div class="ex-h">EXERCISE <span class="lvl">Basic</span></div><div class="ex-q">A = [[10⁻⁴, 1], [1, 1]] without pivoting: size of the multiplier m₂₁?</div><div class="ex-in"><input placeholder="your answer"> <button class="btn go check">Check</button><span class="ex-res"></span></div><details><summary>Hint</summary>a₂₁/a₁₁.</details><details><summary>Full solution</summary>10⁴. With pivoting the rows are swapped and m₂₁ = 10⁻⁴.</details></div>
+    <div class="ex" id="e4-4b" data-ans="6" data-tol="0.001"><div class="ex-h">EXERCISE <span class="lvl">Core</span></div><div class="ex-q">After elimination with one row swap, U has diagonal 2, −1, 3. det(A)?</div><div class="ex-in"><input placeholder="your answer"> <button class="btn go check">Check</button><span class="ex-res"></span></div><details><summary>Hint</summary>(−1)¹ · 2 · (−1) · 3.</details><details><summary>Full solution</summary>2·(−1)·3 = −6; one swap flips the sign: det(A) = 6.</details></div>
+  </div>
+</section>
+
+<!-- ================================================================== 5 -->
+<section class="lesson" data-title="LU factorisation: PA = LU" data-short="LU" data-badge="ALGORITHM" data-time="40 min" data-level="Intermediate"
+  data-sub="Record the multipliers instead of throwing them away: factor once in (2/3)n³, then solve any number of right-hand sides in 2n² each.">
+  <div class="stage" data-widget="lufact"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>Gaussian elimination works on [A | b] together: a new b means starting again. LU stores the elimination itself — L holds the multipliers, U the reduced matrix — so b can come later.</p><p>Step through the factorisation above: watch the multipliers fill the zeros they create.</p></div>
+    <div class="s-key">Factor once (O(n³)), solve many times (O(n²)). Memory: L and U overwrite A, P is an integer array.</div>
+    <ul class="s-learn"><li>Why LU: multiple right-hand sides</li><li>Existence: why P is needed</li><li>Uniqueness: Doolittle and Crout</li><li>In-place storage</li><li>The 3-step solve</li><li>Inverse via LU</li></ul>
+  </aside>
+  <div class="prose">
+    <div class="formula" data-name="Pivoted LU factorisation"><div class="f-head"><span class="t">THEOREM</span>Pivoted LU factorisation<span class="hint">hover the symbols ↓</span></div><div class="tex">\h{P}{P}\h{A}{A}=\h{L}{L}\h{U}{U},\qquad L=\begin{bmatrix}1&&&\\ l_{21}&1&&\\ \vdots&&\ddots&\\ l_{n1}&\cdots&l_{n,n-1}&1\end{bmatrix},\quad l_{ik}=m_{ik}</div><div class="f-note">For every non-singular A there is a permutation P with PA = LU, and with l<sub>ii</sub> = 1 (Doolittle) the factors are unique (Crout fixes u<sub>ii</sub> = 1 instead). Unpivoted A = LU exists only if all leading principal minors are non-zero: A = [[0, 1], [1, 0]] is invertible but has no LU.</div><div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><button data-lang="f90" data-file="" class="">Fortran</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code>lu, piv = scipy.linalg.lu_factor(A)      # LAPACK dgetrf
+x = scipy.linalg.lu_solve((lu, piv), b)  # LAPACK dgetrs</code></pre><pre data-lang="f90" hidden><code>call dgetrf(n, n, A, n, ipiv, info)              ! A &lt;- L\U in place
+call dgetrs('N', n, 1, A, n, ipiv, b, n, info)   ! b &lt;- x</code></pre></div></div>
+    <h2><span class="lv core">CORE</span>The algorithm, in place</h2>
+    <div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><button data-lang="f90" data-file="" class="">Fortran</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code>def lu_inplace(A):
+    A = A.copy(); n = A.shape[0]; p = np.arange(n)
+    for k in range(n - 1):
+        r = k + np.argmax(np.abs(A[k:, k]))
+        A[[k, r]] = A[[r, k]]; p[[k, r]] = p[[r, k]]
+        A[k+1:, k] /= A[k, k]                              # multipliers l_ik
+        A[k+1:, k+1:] -= np.outer(A[k+1:, k], A[k, k+1:])   # trailing update
+    return A, p</code></pre><pre data-lang="f90" hidden><code>do k = 1, n
+  r = k - 1 + maxloc(abs(a(k:n,k)), dim=1);  piv(k) = r
+  if (r /= k) then; tmp = a(k,:); a(k,:) = a(r,:); a(r,:) = tmp; end if
+  if (k == n) exit
+  a(k+1:n,k) = a(k+1:n,k) / a(k,k)
+  do j = k+1, n                      ! column-oriented: Fortran is column-major
+    a(k+1:n,j) = a(k+1:n,j) - a(k+1:n,k)*a(k,j)
+  end do
+end do</code></pre></div>
+    <h3>Solving with the factors</h3>
+    <ol class="steps">
+      <li>Permute: b̃ = Pb (apply the recorded swaps).</li>
+      <li>Forward substitution Ly = b̃: n² − n flops, no divisions.</li>
+      <li>Back substitution Ux = y: n² flops.</li>
+    </ol>
+    <p>Measured, n = 800, 50 right-hand sides: 968 ms re-solving from scratch each time, 38 ms factoring once. Our hand-written LU matches LAPACK: ‖PA − LU‖/‖A‖ = 2×10⁻¹⁵, max |l<sub>ik</sub>| = 1.</p>
+    <div class="formula" data-name="Inverse via LU (only when explicitly needed)"><div class="f-head"><span class="t">RESULT</span>Inverse via LU (only when explicitly needed)<span class="hint">hover the symbols ↓</span></div><div class="tex">A\,X=I\ \Rightarrow\ LU\,\mathbf x_i=P\mathbf e_i,\quad \text{cost }\tfrac23n^3+n\cdot2n^2=\tfrac83n^3;\qquad \text{LAPACK getri: }A^{-1}=U^{-1}L^{-1}P,\ \ 2n^3</div><div class="f-note">To solve a system never form A⁻¹: inv(A) @ b costs more and is less accurate (n = 200: 1.9×10⁻¹² vs 8.8×10⁻¹³). Needed explicitly e.g. for a covariance matrix = inverse of a Fisher matrix (Lecture 12).</div></div>
+    <div class="ex" id="e4-5a" data-ans="2000000" data-tol="1"><div class="ex-h">EXERCISE <span class="lvl">Basic</span></div><div class="ex-q">Flops of one LU-based solve (2n²) for n = 1000?</div><div class="ex-in"><input placeholder="your answer"> <button class="btn go check">Check</button><span class="ex-res"></span></div><details><summary>Hint</summary>2·10⁶.</details><details><summary>Full solution</summary>2×10⁶, against (2/3)·10⁹ for the factorisation.</details></div>
+    <div class="ex" id="e4-5b" data-ans="333" data-tol="2"><div class="ex-h">EXERCISE <span class="lvl">Core</span></div><div class="ex-q">With n = 1000, how many right-hand sides cost as much as one factorisation? ((2/3)n³ / 2n²)</div><div class="ex-in"><input placeholder="your answer"> <button class="btn go check">Check</button><span class="ex-res"></span></div><details><summary>Hint</summary>n/3.</details><details><summary>Full solution</summary>≈ 333.</details></div>
+    <div class="oral">Explain why LU is preferred to Gaussian elimination when the same matrix is used with many right-hand sides, and what P is for. Give the flop counts.</div>
+  </div>
+</section>
+
+<!-- ================================================================== 6 -->
+<section class="lesson" data-title="Cholesky: A = LLᵀ for symmetric positive definite matrices" data-short="Cholesky" data-badge="ALGORITHM" data-time="35 min" data-level="Intermediate"
+  data-sub="Covariances, normal equations, stiffness matrices: symmetric positive definite. Half the work of LU, no pivoting, and a way to draw correlated Gaussian noise.">
+  <div class="stage" data-widget="cholgauss"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>If A = Aᵀ and xᵀAx > 0 for every x ≠ 0, then U = Lᵀ: one triangle carries all the information.</p><p>Above: build a 2×2 covariance Σ, factor it, and turn independent normal numbers Z into correlated ones Y = μ + LZ.</p></div>
+    <div class="s-key">SPD ⇒ Cholesky exists, is unique (l<sub>jj</sub> > 0) and is stable without pivoting: (1/3)n³ flops, half the memory.</div>
+    <ul class="s-learn"><li>Symmetric positive definite matrices</li><li>The column-by-column recurrence</li><li>Existence, uniqueness, stability</li><li>Determinant and inverse</li><li>Sampling correlated Gaussians</li><li>Failure as a test of positive definiteness</li></ul>
+  </aside>
+  <div class="prose">
+    <div class="formula" data-name="Cholesky factorisation"><div class="f-head"><span class="t">ALGORITHM</span>Cholesky factorisation<span class="hint">hover the symbols ↓</span></div><div class="tex">\h{A}{A}=\h{Lc}{L}L^T,\qquad l_{jj}=\sqrt{a_{jj}-\h{sum}{\sum_{k<j}}l_{jk}^2},\qquad l_{ij}=\frac{1}{l_{jj}}\Big(a_{ij}-\sum_{k<j}l_{ik}l_{jk}\Big),\ i>j</div><div class="f-note">The quantity under the root is positive at every step exactly when A is SPD — so a failed Cholesky is the cheapest test of positive definiteness ([[1, 2], [2, 1]], eigenvalues 3 and −1, fails at j = 2). Entries are bounded: l²<sub>ik</sub> ≤ a<sub>ii</sub>, no growth, no pivoting. Cost (1/3)n³ + n square roots; measured n = 1500: 40 ms vs 69 ms for LU.</div><div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><button data-lang="f90" data-file="" class="">Fortran</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code>L = np.linalg.cholesky(A)                  # or scipy.linalg.cho_factor / cho_solve
+x = scipy.linalg.cho_solve(scipy.linalg.cho_factor(A), b)</code></pre><pre data-lang="f90" hidden><code>call dpotrf('L', n, A, n, info)            ! info &gt; 0: not positive definite
+call dpotrs('L', n, 1, A, n, b, n, info)</code></pre></div></div>
+    <table><tr><th></th><th>LU (PA = LU)</th><th>Cholesky (A = LLᵀ)</th></tr>
+      <tr><td>matrices</td><td>any non-singular</td><td>symmetric positive definite</td></tr>
+      <tr><td>flops</td><td>(2/3)n³</td><td>(1/3)n³</td></tr>
+      <tr><td>storage</td><td>n²</td><td>n(n+1)/2</td></tr>
+      <tr><td>pivoting</td><td>needed</td><td>not needed</td></tr>
+      <tr><td>solves</td><td>Ly = Pb, Ux = y</td><td>Ly = b, Lᵀx = y</td></tr></table>
+    <div class="formula" data-name="Determinant and correlated Gaussian samples"><div class="f-head"><span class="t">RESULT</span>Determinant and correlated Gaussian samples<span class="hint">hover the symbols ↓</span></div><div class="tex">\det A=\Big(\prod_i l_{ii}\Big)^2>0,\qquad \h{Sig}{\Sigma}=LL^T\ \Rightarrow\ \mathbf Y=\h{mu}{\boldsymbol\mu}+L\,\h{Zv}{\mathbf Z},\ \ \mathbf Z\sim\mathcal N(0,I)\ \Rightarrow\ \mathrm{Cov}(\mathbf Y)=L\,I\,L^T=\Sigma</div><div class="f-note">Check: Σ = [[4, 2.4], [2.4, 2.25]], 2×10⁵ samples: sample covariance [[3.996, 2.392], [·, 2.240]]. log det Σ = 2 Σ log l<sub>ii</sub> appears in every Gaussian likelihood (Lecture 12).</div><div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><button data-lang="f90" data-file="" class="">Fortran</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code>L = np.linalg.cholesky(Sigma)
+Y = mu[:, None] + L @ rng.standard_normal((len(mu), n_samples))</code></pre><pre data-lang="f90" hidden><code>call dpotrf('L', d, Sig, d, info)
+! z: standard normal deviates (Box-Muller); y = mu + L z
+y = mu + matmul(Sig_lower, z)</code></pre></div></div>
+    <div class="uses">
+      <div class="use"><b>Least squares</b>Normal equations AᵀAx = Aᵀb: AᵀA is SPD if A has full column rank (but see Lecture 5 for why QR is safer).</div>
+      <div class="use"><b>Gaussian likelihoods</b>χ² = rᵀC⁻¹r and log det C from one Cholesky of the covariance.</div>
+      <div class="use"><b>Simulations</b>Correlated noise, Gaussian random fields, Kalman filters, Newton steps with an SPD Hessian.</div>
+    </div>
+    <div class="ex" id="e4-6a" data-ans="2" data-tol="0.001"><div class="ex-h">EXERCISE <span class="lvl">Basic</span></div><div class="ex-q">Σ = [[4, 2.4], [2.4, 2.25]]. l₁₁ = √4?</div><div class="ex-in"><input placeholder="your answer"> <button class="btn go check">Check</button><span class="ex-res"></span></div><details><summary>Hint</summary>First column.</details><details><summary>Full solution</summary>2.</details></div>
+    <div class="ex" id="e4-6b" data-ans="1.2" data-tol="0.001"><div class="ex-h">EXERCISE <span class="lvl">Basic</span></div><div class="ex-q">l₂₁ = a₂₁/l₁₁?</div><div class="ex-in"><input placeholder="your answer"> <button class="btn go check">Check</button><span class="ex-res"></span></div><details><summary>Hint</summary>2.4/2.</details><details><summary>Full solution</summary>1.2.</details></div>
+    <div class="ex" id="e4-6c" data-ans="0.9" data-tol="0.001"><div class="ex-h">EXERCISE <span class="lvl">Core</span></div><div class="ex-q">l₂₂ = √(a₂₂ − l₂₁²)?</div><div class="ex-in"><input placeholder="your answer"> <button class="btn go check">Check</button><span class="ex-res"></span></div><details><summary>Hint</summary>√(2.25 − 1.44).</details><details><summary>Full solution</summary>√0.81 = 0.9.</details></div>
+    <a class="hsi-link" href="../Hyperspectral%20Project/index.html#s2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg><span><small>RELATED · HYPERSPECTRAL PROJECT</small>Unmixing a pixel is a least-squares problem: normal equations and Cholesky on the endmember matrix</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+  </div>
+</section>
+
+<!-- ================================================================== 7 -->
+<section class="lesson" data-title="Matching the solver to the structure" data-short="Structure" data-badge="MATH" data-time="25 min" data-level="Intermediate"
+  data-sub="Tridiagonal and banded systems in O(n), QR for least squares, sparse direct solvers: exploit what you know about A.">
+  <div class="stage" data-widget="thomas"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>A 1D diffusion problem gives a tridiagonal matrix: elimination never creates entries outside the band, so LU costs O(n) instead of O(n³).</p></div>
+    <div class="s-key">Symmetry, positive definiteness and bandwidth are computational assets: choose the algorithm that uses them.</div>
+    <ul class="s-learn"><li>The Thomas algorithm</li><li>Banded LU</li><li>QR for least squares</li><li>Sparse direct solvers and fill-in</li><li>The decision table</li></ul>
+  </aside>
+  <div class="prose">
+    <div class="formula" data-name="Thomas algorithm (tridiagonal LU)"><div class="f-head"><span class="t">ALGORITHM</span>Thomas algorithm (tridiagonal LU)<span class="hint">hover the symbols ↓</span></div><div class="tex">c'_1=\frac{c_1}{b_1},\ d'_1=\frac{d_1}{b_1};\quad c'_i=\frac{c_i}{b_i-a_ic'_{i-1}},\ \ d'_i=\frac{d_i-a_id'_{i-1}}{b_i-a_ic'_{i-1}};\qquad x_n=d'_n,\ \ x_i=d'_i-c'_ix_{i+1}</div><div class="f-note">a: sub-diagonal, b: diagonal, c: super-diagonal. 8n flops, stable for diagonally dominant matrices. −u″ = 1 on (0, 1) with n = 10⁶ points: 0.9 s in pure Python (milliseconds in Fortran), error 8×10⁻⁸; dense LU would need 7×10¹⁷ flops.</div><div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><button data-lang="f90" data-file="" class="">Fortran</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code>scipy.linalg.solve_banded((1, 1), ab, d)       # LAPACK gbsv</code></pre><pre data-lang="f90" hidden><code>call dgtsv(n, 1, dl, d, du, b, n, info)       ! LAPACK tridiagonal solver</code></pre></div></div>
+    <table><tr><th>method</th><th>matrix</th><th>cost</th><th>stability</th><th>use</th></tr>
+      <tr><td>Cramer</td><td>non-singular, n ≤ 3</td><td>O((n+1)!)</td><td>poor</td><td>hand calculation</td></tr>
+      <tr><td>Gauss / LU (PA = LU)</td><td>general</td><td>(2/3)n³ + 2n² per b</td><td>good with pivoting</td><td>default dense solver</td></tr>
+      <tr><td>Cholesky</td><td>SPD</td><td>(1/3)n³ + 2n² per b</td><td>unconditional</td><td>covariances, normal equations</td></tr>
+      <tr><td>QR</td><td>rectangular, full rank</td><td>≈ 2× LU</td><td>excellent</td><td>least squares, ill-conditioned</td></tr>
+      <tr><td>banded / Thomas</td><td>bandwidth w</td><td>O(n w²) / O(n)</td><td>good</td><td>1D grids, splines, implicit steps</td></tr>
+      <tr><td>sparse direct (SuperLU, MUMPS)</td><td>sparse</td><td>depends on fill-in</td><td>good</td><td>2D/3D grids up to ~10⁶</td></tr></table>
+    <p><b>Summary</b>: never compute A⁻¹ or det(A) to solve Ax = b; pivoting is mandatory for general matrices; separate the O(n³) factorisation from the O(n²) solves; use the structure of A.</p>
+    <div class="ex" id="e4-7a" data-ans="8000000" data-tol="1"><div class="ex-h">EXERCISE <span class="lvl">Basic</span></div><div class="ex-q">Thomas algorithm, about 8n flops: how many for n = 10⁶?</div><div class="ex-in"><input placeholder="your answer"> <button class="btn go check">Check</button><span class="ex-res"></span></div><details><summary>Hint</summary>8×10⁶.</details><details><summary>Full solution</summary>8×10⁶ — milliseconds.</details></div>
+  </div>
+</section>
+
+<!-- ================================================================== 8 -->
+<section class="lesson" data-title="Code lab: direct solvers" data-short="Code lab" data-badge="CODE" data-time="45 min" data-level="Intermediate"
+  data-sub="Cancellation, Cramer vs LU, pivoting, LU and Cholesky from scratch in Python and Fortran, compared with LAPACK.">
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>Write LU and Cholesky once to understand them, then always call LAPACK (dgesv, dpotrf, dgels) or scipy.linalg.</p></div>
+    <div class="s-key">Validate every solver against a known solution: build b = A x<sub>true</sub> and print the error.</div>
+    <ul class="s-learn"><li>Run direct_solvers.py</li><li>Compile lu_cholesky.f90 with LAPACK</li><li>Do the tasks</li></ul>
+  </aside>
+  <div class="prose">
+    <div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><button data-lang="f90" data-file="" class="">Fortran</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code># inside "04. Direct Linear Solvers/code"
+python direct_solvers.py</code></pre><pre data-lang="f90" hidden><code>gfortran -O2 lu_cholesky.f90 -llapack -lblas -o lu_cholesky &amp;&amp; ./lu_cholesky</code></pre></div>
+    <table><tr><th>n</th><th>our Fortran LU</th><th>LAPACK dgetrf + dgetrs</th><th>error ours / LAPACK</th></tr>
+      <tr><td>200</td><td>2.6 ms</td><td>2.6 ms</td><td>4×10⁻¹⁴ / 8×10⁻¹⁴</td></tr>
+      <tr><td>500</td><td>40 ms</td><td>19 ms</td><td>2×10⁻¹³ / 2×10⁻¹³</td></tr>
+      <tr><td>1000</td><td>240 ms</td><td>158 ms</td><td>3×10⁻¹³ / 4×10⁻¹²</td></tr></table>
+    <p>Reference (unoptimised) LAPACK was used here; with OpenBLAS or MKL the library is 10–50× faster through blocked, cache-friendly (Level-3 BLAS) kernels. Cholesky n = 400: max |S − LLᵀ| = 6×10⁻¹⁴, same factor as dpotrf to 2×10⁻¹⁴.</p>
+    <div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="direct_solvers.py" class="on">Python</button><button data-lang="f90" data-file="lu_cholesky.f90" class="">Fortran</button><span class="fn">direct_solvers.py</span><button class="copy">copy</button></div><pre data-lang="py"><code>"""
+direct_solvers.py  --  Lecture 4: numerical stability and direct solvers for Ax = b.
+
+  1. Catastrophic cancellation in the quadratic formula (float32 / float64), the stable formula
+  2. Iterative root finding: bisection vs Newton, stopping criteria
+  3. Cramer's rule (Leibniz determinant) vs Gaussian elimination: cost and accuracy
+  4. Why pivoting: a tiny pivot epsilon, naive vs partial vs full pivoting
+  5. PA = LU written from scratch, compared with scipy.linalg.lu_factor; multiple right-hand sides
+  6. Determinant via LU (and log-determinant to avoid overflow); inverse via LU
+  7. Cholesky from scratch; correlated Gaussian samples Y = mu + L Z
+  8. Thomas algorithm for tridiagonal systems: O(n)
+
+Run:  python direct_solvers.py          Figure: direct_solvers.png
+"""
+import itertools
+import math
+import time
+import numpy as np
+import scipy.linalg as la
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+
+rng = np.random.default_rng(1)
+
+# ---------------------------------------------------------------- 1. quadratic cancellation
+print("1. roots of x^2 + b x + 1 = 0: relative error of the small root")
+print(f"{'b':&gt;8} {'naive f32':&gt;11} {'stable f32':&gt;11} {'naive f64':&gt;11} {'stable f64':&gt;11}")
+bs = np.logspace(1, 8, 36)
+errs = {k: [] for k in ("n32", "s32", "n64", "s64")}
+for b in bs:
+    b = -b
+    exact = 1.0 / (-b / 2 + math.sqrt(b * b / 4 - 1))            # small root, computed stably in extended reasoning
+    for dt, tag in ((np.float32, "32"), (np.float64, "64")):
+        a_, b_, c_ = dt(1), dt(b), dt(1)
+        disc = np.sqrt(b_ * b_ - dt(4) * a_ * c_)
+        naive = (-b_ - disc) / (dt(2) * a_)                          # the root that suffers cancellation
+        u = -b_ - np.sign(b_) * disc
+        x1 = u / (dt(2) * a_)
+        stable = c_ / (a_ * x1)
+        errs["n" + tag].append(abs(float(naive) - exact) / exact)
+        errs["s" + tag].append(abs(float(stable) - exact) / exact)
+for i in (0, 8, 16, 24, 35):
+    print(f"{bs[i]:8.1e} {errs['n32'][i]:11.2e} {errs['s32'][i]:11.2e} {errs['n64'][i]:11.2e} {errs['s64'][i]:11.2e}")
+with np.errstate(over="ignore"):
+    naive_c = np.sqrt(np.float64(1e200) ** 2 + np.float64(1e200) ** 2)
+print("   overflow in an intermediate step, a = b = 1e200: sqrt(a^2 + b^2) =", naive_c, "; math.hypot(a, b) =", math.hypot(1e200, 1e200))
+
+# ---------------------------------------------------------------- 2. bisection vs Newton
+f = lambda x: x * x - 10 * x + 9
+df = lambda x: 2 * x - 10
+a, b, k = 5.0, 12.0, 0
+while (b - a) / 2 &gt; 1e-12:
+    m = 0.5 * (a + b)
+    a, b = (a, m) if f(a) * f(m) &lt;= 0 else (m, b)
+    k += 1
+x, kn = 12.0, 0
+while True:
+    xn = x - f(x) / df(x); kn += 1
+    if abs(xn - x) / abs(xn) &lt; 1e-12: break
+    x = xn
+print(f"\n2. root x = 9 to 1e-12: bisection {k} iterations ({0.5 * (a + b):.13f}), Newton {kn} iterations ({xn:.13f})")
+
+# ---------------------------------------------------------------- 3. Cramer vs Gaussian elimination
+def det_leibniz(A):
+    n = A.shape[0]; s = 0.0
+    for p in itertools.permutations(range(n)):
+        inv = sum(1 for i in range(n) for j in range(i + 1, n) if p[i] &gt; p[j])
+        s += (-1) ** inv * np.prod([A[i, p[i]] for i in range(n)])
+    return s
+
+
+def cramer(A, b):
+    d = det_leibniz(A); x = np.empty(len(b))
+    for i in range(len(b)):
+        Ai = A.copy(); Ai[:, i] = b; x[i] = det_leibniz(Ai) / d
+    return x
+
+
+print("\n3. Cramer (Leibniz determinants) vs LU")
+la.solve(np.eye(3), np.ones(3))                                       # warm-up: the first call loads LAPACK
+for n in (3, 5, 7, 8):
+    A = rng.standard_normal((n, n)); xt = rng.standard_normal(n); b = A @ xt
+    t0 = time.perf_counter(); xc = cramer(A, b); tc = time.perf_counter() - t0
+    t0 = time.perf_counter(); xl = la.solve(A, b); tl = time.perf_counter() - t0
+    print(f"   n = {n}: Cramer {tc * 1e3:9.2f} ms (error {np.abs(xc - xt).max():.1e}),"
+          f"  LU {tl * 1e3:6.3f} ms (error {np.abs(xl - xt).max():.1e});  (n+1)! = {math.factorial(n + 1):,}")
+print(f"   n = 20 by Cramer would need ~ (n+1)! = {math.factorial(21):.1e} products: about {math.factorial(21) / 1e9 / 3.15e7:,.0f} years at 1 Gflop/s")
+
+
+# ---------------------------------------------------------------- 4. pivoting
+def gauss(A, b, pivot="partial"):
+    A = A.astype(float).copy(); b = b.astype(float).copy(); n = len(b); q = np.arange(n)
+    for k in range(n - 1):
+        if pivot == "partial":
+            p = k + np.argmax(np.abs(A[k:, k])); A[[k, p]] = A[[p, k]]; b[[k, p]] = b[[p, k]]
+        elif pivot == "full":
+            sub = np.abs(A[k:, k:]); p, r = np.unravel_index(np.argmax(sub), sub.shape); p += k; r += k
+            A[[k, p]] = A[[p, k]]; b[[k, p]] = b[[p, k]]; A[:, [k, r]] = A[:, [r, k]]; q[[k, r]] = q[[r, k]]
+        for i in range(k + 1, n):
+            m = A[i, k] / A[k, k]; A[i, k:] -= m * A[k, k:]; b[i] -= m * b[k]
+    x = np.zeros(n)
+    for i in range(n - 1, -1, -1):
+        x[i] = (b[i] - A[i, i + 1:] @ x[i + 1:]) / A[i, i]
+    out = np.empty(n); out[q] = x
+    return out
+
+
+print("\n4. A = [[eps, 1], [1, 1]], b = [1, 2]  (exact x ~ [1, 1])")
+for eps in (1e-4, 1e-8, 1e-12, 1e-16, 1e-20):
+    A = np.array([[eps, 1.0], [1.0, 1.0]]); b = np.array([1.0, 2.0])
+    xe = np.array([1 / (1 - eps), (1 - 2 * eps) / (1 - eps)])
+    e0 = np.abs(gauss(A, b, "none") - xe).max(); e1 = np.abs(gauss(A, b, "partial") - xe).max()
+    print(f"   eps = {eps:.0e}: no pivoting error {e0:.1e}, partial pivoting {e1:.1e}")
+n = 60
+A = rng.standard_normal((n, n)); xt = rng.standard_normal(n); b = A @ xt
+for pv in ("none", "partial", "full"):
+    print(f"   random 60x60, {pv:7s} pivoting: error {np.abs(gauss(A, b, pv) - xt).max():.1e}")
+
+
+# ---------------------------------------------------------------- 5. PA = LU from scratch
+def lu_inplace(A):
+    A = A.astype(float).copy(); n = A.shape[0]; p = np.arange(n); swaps = 0
+    for k in range(n - 1):
+        r = k + np.argmax(np.abs(A[k:, k]))
+        if A[r, k] == 0: raise np.linalg.LinAlgError("singular")
+        if r != k: A[[k, r]] = A[[r, k]]; p[[k, r]] = p[[r, k]]; swaps += 1
+        A[k + 1:, k] /= A[k, k]                                      # multipliers l_ik stored in place
+        A[k + 1:, k + 1:] -= np.outer(A[k + 1:, k], A[k, k + 1:])    # update of the trailing submatrix
+    return A, p, swaps
+
+
+def lu_solve(LU, p, b):
+    n = len(b); y = b[p].astype(float).copy()
+    for i in range(1, n): y[i] -= LU[i, :i] @ y[:i]                 # forward, unit diagonal: no division
+    x = y.copy()
+    for i in range(n - 1, -1, -1): x[i] = (y[i] - LU[i, i + 1:] @ x[i + 1:]) / LU[i, i]
+    return x
+
+
+n = 300
+A = rng.standard_normal((n, n)); LU, p, sw = lu_inplace(A)
+L = np.tril(LU, -1) + np.eye(n); U = np.triu(LU)
+print(f"\n5. PA = LU, n = {n}: ||PA - LU|| / ||A|| = {np.linalg.norm(A[p] - L @ U) / np.linalg.norm(A):.1e},"
+      f" max |l_ik| = {np.abs(L).max():.3f} (&lt;= 1 with partial pivoting)")
+lus, piv = la.lu_factor(A)
+print(f"   same U as LAPACK dgetrf: {np.abs(np.triu(lus) - U).max():.1e}")
+n = 800; A = rng.standard_normal((n, n)); B = rng.standard_normal((n, 50))
+t0 = time.perf_counter(); [la.solve(A, B[:, j]) for j in range(50)]; t_rep = time.perf_counter() - t0
+t0 = time.perf_counter(); f_ = la.lu_factor(A); [la.lu_solve(f_, B[:, j]) for j in range(50)]; t_once = time.perf_counter() - t0
+print(f"   50 right-hand sides, n = {n}: full solve each time {t_rep * 1e3:.0f} ms, factor once + 50 solves {t_once * 1e3:.0f} ms")
+
+# ---------------------------------------------------------------- 6. determinant and inverse
+A = rng.standard_normal((5, 5)); LU, p, sw = lu_inplace(A)
+print(f"\n6. det via LU {(-1) ** sw * np.prod(np.diag(LU)):.10f}, numpy {np.linalg.det(A):.10f}, Leibniz {det_leibniz(A):.10f}")
+A = 10 * rng.standard_normal((400, 400)); LU, p, sw = lu_inplace(A)
+sign, logdet = np.linalg.slogdet(A)
+with np.errstate(over="ignore"):
+    prod = np.prod(np.diag(LU))
+print(f"   400x400 with entries ~10: prod(diag U) = {prod} (overflow), "
+      f"log|det| = sum log|u_ii| = {np.sum(np.log(np.abs(np.diag(LU)))):.4f} (numpy slogdet {logdet:.4f})")
+A = rng.standard_normal((200, 200)); Ainv = la.inv(A); xt = rng.standard_normal(200); b = A @ xt
+print(f"   solve vs inv(A) @ b, n = 200: error {np.abs(la.solve(A, b) - xt).max():.1e} vs {np.abs(Ainv @ b - xt).max():.1e};"
+      f" ||A inv(A) - I|| = {np.abs(A @ Ainv - np.eye(200)).max():.1e}")
+
+
+# ---------------------------------------------------------------- 7. Cholesky
+def cholesky(A):
+    A = A.astype(float).copy(); n = A.shape[0]
+    for j in range(n):
+        s = A[j, j] - A[j, :j] @ A[j, :j]
+        if s &lt;= 0: raise np.linalg.LinAlgError("not positive definite")
+        A[j, j] = math.sqrt(s)
+        A[j + 1:, j] = (A[j + 1:, j] - A[j + 1:, :j] @ A[j, :j]) / A[j, j]
+    return np.tril(A)
+
+
+M = rng.standard_normal((300, 300)); S = M @ M.T + 300 * np.eye(300)
+L = cholesky(S)
+print(f"\n7. Cholesky n = 300: ||S - L L^T|| / ||S|| = {np.linalg.norm(S - L @ L.T) / np.linalg.norm(S):.1e},"
+      f" vs numpy {np.abs(L - np.linalg.cholesky(S)).max():.1e}")
+n = 1500; M = rng.standard_normal((n, n)); S = M @ M.T + n * np.eye(n)
+t0 = time.perf_counter(); la.lu_factor(S); t_lu = time.perf_counter() - t0
+t0 = time.perf_counter(); la.cho_factor(S); t_ch = time.perf_counter() - t0
+print(f"   n = {n}: LAPACK LU {t_lu * 1e3:.0f} ms, Cholesky {t_ch * 1e3:.0f} ms (theory: half the flops)")
+try:
+    cholesky(np.array([[1.0, 2.0], [2.0, 1.0]]))
+except np.linalg.LinAlgError as e:
+    print("   [[1,2],[2,1]] (eigenvalues 3, -1):", e)
+Sig = np.array([[4.0, 2.4], [2.4, 2.25]]); Lc = cholesky(Sig); mu = np.array([1.0, -1.0])
+Y = mu[:, None] + Lc @ rng.standard_normal((2, 200_000))
+print(f"   Y = mu + L Z, 2e5 samples: sample covariance [[{np.cov(Y)[0, 0]:.3f}, {np.cov(Y)[0, 1]:.3f}], [., {np.cov(Y)[1, 1]:.3f}]]"
+      " (target [[4, 2.4], [., 2.25]])")
+
+
+# ---------------------------------------------------------------- 8. Thomas algorithm
+def thomas(a, b, c, d):
+    """a: sub-diagonal (n-1), b: diagonal (n), c: super-diagonal (n-1)."""
+    n = len(b); cp = np.empty(n - 1); dp = np.empty(n)
+    cp[0] = c[0] / b[0]; dp[0] = d[0] / b[0]
+    for i in range(1, n):
+        den = b[i] - a[i - 1] * cp[i - 1]
+        if i &lt; n - 1: cp[i] = c[i] / den
+        dp[i] = (d[i] - a[i - 1] * dp[i - 1]) / den
+    x = np.empty(n); x[-1] = dp[-1]
+    for i in range(n - 2, -1, -1): x[i] = dp[i] - cp[i] * x[i + 1]
+    return x
+
+
+print("\n8. Thomas algorithm: -u'' = 1 on (0,1), u(0) = u(1) = 0, exact u = x(1-x)/2")
+for n in (100, 10_000, 1_000_000):
+    h = 1 / (n + 1); xs = np.arange(1, n + 1) * h
+    t0 = time.perf_counter()
+    u = thomas(-np.ones(n - 1), 2 * np.ones(n), -np.ones(n - 1), h * h * np.ones(n))
+    t = time.perf_counter() - t0
+    print(f"   n = {n:&gt;9,}: max error {np.abs(u - xs * (1 - xs) / 2).max():.1e}, {t * 1e3:8.1f} ms (dense LU would need {2 / 3 * n ** 3:.1e} flops)")
+
+fig, ax = plt.subplots(1, 2, figsize=(11, 4))
+for k, lab, st in (("n32", "naive, float32", "C3--"), ("s32", "stable, float32", "C3-"), ("n64", "naive, float64", "C0--"), ("s64", "stable, float64", "C0-")):
+    ax[0].loglog(bs, np.maximum(errs[k], 1e-17), st, label=lab)
+ax[0].axhline(np.finfo(np.float32).eps, color="C3", lw=0.6); ax[0].axhline(np.finfo(np.float64).eps, color="C0", lw=0.6)
+ax[0].set(xlabel="|b| (a = c = 1)", ylabel="relative error of the small root", title="catastrophic cancellation"); ax[0].legend(fontsize=8)
+ns = np.arange(2, 13)
+ax[1].semilogy(ns, [math.factorial(n + 1) for n in ns], "o-", label="Cramer ~ (n+1)!")
+ax[1].semilogy(ns, 2 / 3 * ns ** 3.0, "s-", label="Gauss / LU ~ (2/3) n^3")
+ax[1].semilogy(ns, 1 / 3 * ns ** 3.0, "^-", label="Cholesky ~ (1/3) n^3")
+ax[1].set(xlabel="n", ylabel="flops", title="cost of a direct solve"); ax[1].legend(fontsize=8)
+fig.tight_layout(); fig.savefig("direct_solvers.png", dpi=120)
+print("\nsaved direct_solvers.png")</code></pre><pre data-lang="f90" hidden><code>! lu_cholesky.f90 -- Lecture 4: in-place PA = LU with partial pivoting, forward/back substitution,
+! determinant, Cholesky A = L L^T, and a timing comparison with LAPACK (dgetrf/dgetrs, dpotrf).
+!
+! Build:  gfortran -O2 lu_cholesky.f90 -llapack -lblas -o lu_cholesky &amp;&amp; ./lu_cholesky
+!         (Linux: sudo apt install liblapack-dev; macOS: brew install lapack, or -framework Accelerate)
+!
+! Fortran stores arrays by COLUMN: the inner loops below run down a column (first index) for speed.
+module direct_solvers
+  implicit none
+  integer, parameter :: dp = kind(1.0d0)
+contains
+
+  ! In-place LU with partial pivoting. On exit: strict lower triangle = multipliers l_ik (unit diagonal
+  ! implied), upper triangle = U. piv(k) = row swapped with row k at step k (LAPACK convention).
+  subroutine lu_factor(a, piv, nswap)
+    real(dp), intent(inout) :: a(:,:)
+    integer, intent(out) :: piv(:), nswap
+    integer :: n, k, j, r
+    real(dp) :: tmp(size(a,1))
+    n = size(a,1); nswap = 0
+    do k = 1, n
+      r = k - 1 + maxloc(abs(a(k:n,k)), dim=1)       ! partial pivoting: largest entry in column k
+      piv(k) = r
+      if (a(r,k) == 0.0_dp) stop "lu_factor: matrix is singular"
+      if (r /= k) then
+        tmp = a(k,:); a(k,:) = a(r,:); a(r,:) = tmp; nswap = nswap + 1
+      end if
+      if (k == n) exit
+      a(k+1:n,k) = a(k+1:n,k) / a(k,k)               ! multipliers, |l_ik| &lt;= 1
+      do j = k+1, n                                  ! column-oriented rank-1 update of the trailing block
+        a(k+1:n,j) = a(k+1:n,j) - a(k+1:n,k) * a(k,j)
+      end do
+    end do
+  end subroutine lu_factor
+
+  subroutine lu_solve(a, piv, b)
+    real(dp), intent(in) :: a(:,:)
+    integer, intent(in) :: piv(:)
+    real(dp), intent(inout) :: b(:)                  ! in: right-hand side, out: solution
+    integer :: n, i, k
+    real(dp) :: t
+    n = size(a,1)
+    do k = 1, n                                      ! apply the row swaps to b, in the same order
+      if (piv(k) /= k) then
+        t = b(k); b(k) = b(piv(k)); b(piv(k)) = t
+      end if
+    end do
+    do i = 2, n                                      ! forward substitution, L has unit diagonal
+      b(i) = b(i) - dot_product(a(i,1:i-1), b(1:i-1))
+    end do
+    do i = n, 1, -1                                  ! back substitution
+      b(i) = (b(i) - dot_product(a(i,i+1:n), b(i+1:n))) / a(i,i)
+    end do
+  end subroutine lu_solve
+
+  ! Cholesky A = L L^T, column by column; L overwrites the lower triangle.
+  subroutine cholesky(a)
+    real(dp), intent(inout) :: a(:,:)
+    integer :: n, j, i
+    real(dp) :: s
+    n = size(a,1)
+    do j = 1, n
+      s = a(j,j) - dot_product(a(j,1:j-1), a(j,1:j-1))
+      if (s &lt;= 0.0_dp) stop "cholesky: matrix is not positive definite"
+      a(j,j) = sqrt(s)
+      do i = j+1, n
+        a(i,j) = (a(i,j) - dot_product(a(i,1:j-1), a(j,1:j-1))) / a(j,j)
+      end do
+    end do
+    do j = 2, n
+      a(1:j-1,j) = 0.0_dp                            ! clear the upper triangle
+    end do
+  end subroutine cholesky
+end module direct_solvers
+
+program lu_cholesky
+  use direct_solvers
+  implicit none
+  integer, parameter :: sizes(3) = [200, 500, 1000]
+  real(dp), allocatable :: a(:,:), a0(:,:), x(:), xt(:), b(:), l(:,:)
+  integer, allocatable :: piv(:)
+  integer :: n, is, nswap, info, i
+  integer(8) :: c0, c1, rate
+  real(dp) :: t_mine, t_lapack, logdet
+  external :: dgetrf, dgetrs, dpotrf
+
+  call random_seed(put=[(42, i = 1, 64)])
+  call system_clock(count_rate=rate)
+  allocate(a(4,4), piv(4)); call random_number(a); call dgetrf(4, 4, a, 4, piv, info); deallocate(a, piv)  ! warm-up
+  print '(a)', "     n   my LU [ms]  LAPACK dgetrf+s [ms]   error mine   error LAPACK   log|det|"
+  do is = 1, size(sizes)
+    n = sizes(is)
+    allocate(a(n,n), a0(n,n), x(n), xt(n), b(n), piv(n))
+    call random_number(a0); a0 = a0 - 0.5_dp
+    call random_number(xt)
+    b = matmul(a0, xt)
+    a = a0; x = b
+    call system_clock(c0); call lu_factor(a, piv, nswap); call lu_solve(a, piv, x); call system_clock(c1)
+    t_mine = 1.0e3_dp * real(c1 - c0, dp) / real(rate, dp)
+    logdet = sum(log(abs([(a(i,i), i = 1, n)])))
+    a = a0; xt = xt; b = matmul(a0, xt)
+    call system_clock(c0)
+    call dgetrf(n, n, a, n, piv, info); call dgetrs('N', n, 1, a, n, piv, b, n, info)
+    call system_clock(c1)
+    t_lapack = 1.0e3_dp * real(c1 - c0, dp) / real(rate, dp)
+    print '(i6, f12.1, f22.1, es14.2, es15.2, f11.2)', n, t_mine, t_lapack, maxval(abs(x - xt)), maxval(abs(b - xt)), logdet
+    deallocate(a, a0, x, xt, b, piv)
+  end do
+
+  ! Cholesky on an SPD matrix S = M M^T + n I
+  n = 400
+  allocate(a(n,n), l(n,n))
+  call random_number(a); a = a - 0.5_dp
+  l = matmul(a, transpose(a))
+  do i = 1, n
+    l(i,i) = l(i,i) + n
+  end do
+  a = l
+  call cholesky(l)
+  print '(/,a,i0,a,es10.2)', "Cholesky n = ", n, ": max |S - L L^T| = ", maxval(abs(a - matmul(l, transpose(l))))
+  call dpotrf('L', n, a, n, info)
+  print '(a,es10.2)', "  difference from LAPACK dpotrf: ", maxval(abs([(a(i,i) - l(i,i), i = 1, n)]))
+end program lu_cholesky</code></pre></div>
+    <div class="task"><b>TASK 4.1 — GROWTH FACTOR</b>Run Gaussian elimination without pivoting and with partial pivoting on 1000 random 50×50 matrices; record max |a<sub>ij</sub><sup>(k)</sup>| / max |a<sub>ij</sub>|. Then try Wilkinson's matrix (1 on the diagonal and last column, −1 below the diagonal) for n = 60.</div>
+    <div class="task"><b>TASK 4.2 — IMPLICIT HEAT EQUATION</b>Step u<sub>t</sub> = u<sub>xx</sub> implicitly: (I − Δt D₂)u<sup>n+1</sup> = u<sup>n</sup>. Factor once with the Thomas algorithm (or banded LU) and reuse it for 1000 steps.</div>
+    <div class="task"><b>TASK 4.3 — LOG-LIKELIHOOD</b>For a 500×500 covariance C and a residual r compute −½(rᵀC⁻¹r + log det C) with one Cholesky, without forming C⁻¹. Compare with a version that calls inv and det.</div>
+    <div class="task"><b>TASK 4.4 — FORTRAN MODULE</b>Put lu_factor, lu_solve and cholesky in a module with explicit interfaces and <code>intent</code>s; add a solve for several right-hand sides at once (b(n, m)).</div>
+  </div>
+</section>
+
+      </div>
+      <div class="view v-practice"><h1 style="margin:6px 0 2px">Practice</h1><p class="subtitle">Every exercise of this unit in one place. Answers are checked to about 1%; fractions like 1/3 are accepted.</p></div>
+      <div class="view v-code"><h1 style="margin:6px 0 2px">Code Lab</h1><p class="subtitle">Every Python and Fortran snippet of this unit, plus the hyperspectral project tasks. The full files are in the <code>code</code> folder next to this page.</p></div>
+      <div class="view v-sheet"><h1 style="margin:6px 0 2px">Cheatsheet</h1><p class="subtitle">All the formulas of this unit. Hover any symbol for its name, meaning and code.</p></div>
+    </div>
+  </main>
+  <aside class="right learnonly">
+    <div class="rcard">
+      <div class="rtop"><span id="r-step"></span><span class="badge" id="r-badge"></span></div>
+      <h2 id="r-title"></h2>
+      <div id="r-body"></div>
+      <div class="keyidea" id="r-key"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3c.5 4 2 5.5 6 6-4 .5-5.5 2-6 6-.5-4-2-5.5-6-6 4-.5 5.5-2 6-6zM18.5 15.5c.2 1.6.9 2.3 2.5 2.5-1.6.2-2.3.9-2.5 2.5-.2-1.6-.9-2.3-2.5-2.5 1.6-.2 2.3-.9 2.5-2.5z"/></svg><b>KEY IDEA</b><span id="r-key-t"></span></div>
+      <div class="navbtns"><button class="btn back" id="r-back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M19 12H5M11 6l-6 6 6 6"/></svg> Back</button><button class="btn next" id="r-next"><span id="r-next-t">Next</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></div>
+      <div class="keys"><span class="kbd">←</span><span class="kbd">→</span> step · <span class="kbd">Ctrl K</span> search · hover symbols</div>
+    </div>
+    <div class="rcard"><div class="rtop">YOU'LL LEARN</div><ul class="learn" id="r-learn"></ul></div>
+  </aside>
+</div>
+<script src="../assets/katex/katex.min.js"></script>
+<script src="../assets/katex/auto-render.min.js"></script>
+<script src="../assets/js/course.js"></script>
+<script src="../assets/js/plot.js"></script>
+<script src="../assets/js/symbols-common.js"></script>
+<script src="lesson04.js"></script>
+<script src="../assets/js/app.js"></script>
+</body></html>

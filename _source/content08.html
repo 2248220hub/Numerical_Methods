@@ -1,0 +1,350 @@
+<!-- ================================================================== 1 -->
+<section class="lesson" data-title="Divide and conquer: the radix-2 FFT" data-short="Divide" data-badge="MATH" data-time="30 min" data-level="Intermediate"
+  data-sub="Split the samples into even and odd, transform the halves, recombine: N² becomes (N/2) log₂N.">
+  <div class="stage" data-widget="opcount"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>Cooley and Tukey (1965) — and Gauss around 1805 — noticed that an N-point DFT is two N/2-point DFTs plus N/2 multiplications. Repeat until the pieces have one sample.</p></div>
+    <div class="s-key">X[k] = E[k] + W<sub>N</sub><sup>k</sup>O[k] and X[k+N/2] = E[k] − W<sub>N</sub><sup>k</sup>O[k]: one multiplication serves two outputs.</div>
+    <ul class="s-learn"><li>Why O(N²) is a bottleneck</li><li>Decimation in time: even/odd split</li><li>The identity W<sub>N</sub>² = W<sub>N/2</sub></li><li>Half-period symmetry W<sup>k+N/2</sup> = −W<sup>k</sup></li><li>The recursion T(N) = 2T(N/2) + N/2</li></ul>
+  </aside>
+  <div class="prose">
+    <h2><span class="lv basic">BASIC</span>The complexity challenge</h2>
+    <p>A strain record of N = 2²⁰ ≈ 10⁶ samples (64 s at 16 384 Hz) costs N² ≈ 10¹² complex multiplications by direct DFT, against ≈ 10⁷ for the FFT. Repeated over many templates, channels or antennas, O(N²) is prohibitive.</p>
+    <h2><span class="lv core">CORE</span>Decimation in time</h2>
+    <p>Take N = 2<sup>q</sup>. Split the samples by index parity: e[m] = x[2m], o[m] = x[2m+1], m = 0 … N/2−1; let E[k], O[k] be their N/2-point DFTs.</p>
+    <ol class="steps">
+      <li>Split the DFT sum: \(X[k]=\sum_m x[2m]W_N^{2mk}+\sum_m x[2m+1]W_N^{(2m+1)k}=\sum_m e[m](W_N^2)^{km}+W_N^k\sum_m o[m](W_N^2)^{km}\).</li>
+      <li>Twiddle reduction: \(W_N^2=e^{-j2\pi\cdot2/N}=e^{-j2\pi/(N/2)}=W_{N/2}\). The two sums are N/2-point DFTs: \(X[k]=E[k]+W_N^kO[k]\).</li>
+      <li>E, O have period N/2 in k, and \(W_N^{k+N/2}=-W_N^k\): the second half of the outputs needs no new products.</li>
+    </ol>
+    <x-f name="Radix-2 recombination (butterfly)" tag="ALGORITHM">
+      \h{Xk}{X[k]}=\h{Ek}{E[k]}+\h{WN}{W_N^k}\,\h{Ok}{O[k]},\qquad \h{Xk}{X\big[k+\tfrac N2\big]}=\h{Ek}{E[k]}-\h{WN}{W_N^k}\,\h{Ok}{O[k]},\qquad k=0,\dots,\tfrac N2-1
+      <py>
+      def fft_recursive(x):
+          N = len(x)
+          if N <= 1: return x.astype(complex)
+          E, O = fft_recursive(x[0::2]), fft_recursive(x[1::2])
+          t = np.exp(-2j*np.pi*np.arange(N//2)/N) * O
+          return np.concatenate([E + t, E - t])
+      </py>
+      <f90>
+      ! recursion is possible (recursive subroutine), but the in-place iterative
+      ! version of fft_radix2.f90 is what libraries do
+      t = w(j)*a(k+j+half+1);  u = a(k+j+1)
+      a(k+j+1) = u + t;        a(k+j+half+1) = u - t
+      </f90>
+    </x-f>
+    <h3>Counting the cost</h3>
+    <x-f name="Cost recursion" tag="RESULT">
+      T(N)=2\,T(N/2)+\frac N2,\quad T(1)=0\quad\Longrightarrow\quad T(N)=\frac N2\log_2N=O(N\log N)
+      <note>q = log₂N stages of N/2 butterflies. N = 8: 12 multiplications instead of 64 (fewer still: W⁰ = 1 and W<sup>N/4</sup> = −j are trivial). At N = 2²⁰: 10⁵ times fewer.</note>
+    </x-f>
+    <x-ex id="e8-1a" ans="12" tol="0.01" lvl="Basic">Complex multiplications of a radix-2 FFT for N = 8, (N/2) log₂N?
+      <hint>4 × 3.</hint><sol>12, against 64 for the direct DFT.</sol></x-ex>
+    <x-ex id="e8-1b" ans="10485760" tol="1" lvl="Core">(N/2) log₂N for N = 2²⁰?
+      <hint>2¹⁹ × 20.</hint><sol>524 288 × 20 = 1.05×10⁷ (direct: 1.1×10¹²).</sol></x-ex>
+    <x-ex id="e8-1c" ans="-1" tol="0.001" lvl="Basic">Real part of W<sub>N</sub><sup>N/2</sup> = e<sup>−jπ</sup>?
+      <hint>Half a turn.</hint><sol>−1: this is why X[k+N/2] uses −W<sup>k</sup>O[k].</sol></x-ex>
+  </div>
+</section>
+
+<!-- ================================================================== 2 -->
+<section class="lesson" data-title="Butterflies and bit reversal" data-short="Butterflies" data-badge="MATH" data-time="25 min" data-level="Intermediate"
+  data-sub="The signal-flow graph of the FFT, computed in place, with the input in bit-reversed order.">
+  <div class="stage" data-widget="butterfly"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>Each butterfly takes two numbers, multiplies one by a twiddle, and writes the sum and the difference back into the same two slots.</p><p>Step through the stages above: the pairs are 1, 2, 4 … apart.</p></div>
+    <div class="s-key">Dealing the samples by their least significant bit first puts index n at position rev(n): read the bits backwards.</div>
+    <ul class="s-learn"><li>The butterfly node</li><li>In-place memory property</li><li>Bit-reversal permutation</li><li>The O(N) bit-reversal table</li><li>Iterative in-place algorithm</li></ul>
+  </aside>
+  <div class="prose">
+    <h2><span class="lv core">CORE</span>Bit reversal</h2>
+    <table><tr><th>n</th><th>binary</th><th>reversed</th><th>position</th></tr>
+      <tr><td>0</td><td>000</td><td>000</td><td>x[0]</td></tr><tr><td>1</td><td>001</td><td>100</td><td>x[4]</td></tr>
+      <tr><td>2</td><td>010</td><td>010</td><td>x[2]</td></tr><tr><td>3</td><td>011</td><td>110</td><td>x[6]</td></tr>
+      <tr><td>4</td><td>100</td><td>001</td><td>x[1]</td></tr><tr><td>5</td><td>101</td><td>101</td><td>x[5]</td></tr>
+      <tr><td>6</td><td>110</td><td>011</td><td>x[3]</td></tr><tr><td>7</td><td>111</td><td>111</td><td>x[7]</td></tr></table>
+    <p>Each radix-2 step deals the samples into even and odd piles (by the lowest bit), the next step by the next bit, and so on. To work in place every sub-transform must occupy a contiguous block: the last-dealt bit becomes the most significant bit of the position.</p>
+    <x-f name="Bit-reversal table in O(N)" tag="ALGORITHM">
+      \mathrm{rev}[i]=\big(\mathrm{rev}[i\gg1]\gg1\big)\ \big|\ \big((i\ \&\ 1)\ll(q-1)\big)
+      <py>
+      rev = np.zeros(N, int)
+      for i in range(1, N):
+          rev[i] = (rev[i >> 1] >> 1) | ((i & 1) << (q - 1))
+      </py>
+      <f90>rev(i) = ior(ishft(rev(ishft(i, -1)), -1), ishft(iand(i, 1), q - 1))</f90>
+    </x-f>
+    <h2><span class="lv core">CORE</span>The iterative in-place FFT</h2>
+    <ol class="steps">
+      <li>Permute x[n] ↔ x[rev(n)].</li>
+      <li>For s = 1 … log₂N: block size m = 2<sup>s</sup>, twiddles W<sub>m</sub><sup>j</sup> (a precomputed table is more accurate than the running product w ← w·W<sub>m</sub>).</li>
+      <li>For every block start k = 0, m, 2m, …: for j = 0 … m/2−1, t = W<sub>m</sub><sup>j</sup> x[k+j+m/2], u = x[k+j]; x[k+j] = u + t, x[k+j+m/2] = u − t.</li>
+    </ol>
+    <x-code><py>
+      def fft_iterative(x):
+          x = np.asarray(x, complex)[bit_reverse_table(len(x))]
+          m = 2
+          while m <= len(x):
+              w_m = np.exp(-2j*np.pi*np.arange(m//2)/m)
+              for k in range(0, len(x), m):
+                  t = w_m * x[k+m//2:k+m]; u = x[k:k+m//2].copy()
+                  x[k:k+m//2], x[k+m//2:k+m] = u + t, u - t
+              m *= 2
+          return x
+    </py><f90>
+      m = 2
+      do while (m <= npts)
+         half = m/2
+         w = [(exp(cmplx(0.0_dp, -2*pi*j/m, dp)), j = 0, half-1)]
+         do k = 0, npts-1, m
+            do j = 0, half-1
+               t = w(j)*a(k+j+half+1);  u = a(k+j+1)
+               a(k+j+1) = u + t;        a(k+j+half+1) = u - t
+            end do
+         end do
+         m = 2*m
+      end do
+    </f90></x-code>
+    <x-ex id="e8-2a" ans="6" tol="0.01" lvl="Basic">N = 8: at which position does x[3] go after bit reversal? (3 = 011)
+      <hint>Read 011 backwards.</hint><sol>110 = 6.</sol></x-ex>
+    <x-ex id="e8-2b" ans="11" tol="0.01" lvl="Core">N = 16 (q = 4): rev(13)? (13 = 1101)
+      <hint>Reverse 1101.</hint><sol>1011 = 11.</sol></x-ex>
+    <p>Decimation in frequency (Gentleman–Sande) is the transposed scheme: natural-order input, bit-reversed output.</p>
+  </div>
+</section>
+
+<!-- ================================================================== 3 -->
+<section class="lesson" data-title="Implementations, libraries and cost" data-short="Libraries" data-badge="CODE" data-time="30 min" data-level="Intermediate"
+  data-sub="Recursive, iterative and vectorised Python; FFTW from Fortran; real-input transforms; other sizes.">
+  <div class="stage" data-widget="timing8"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>Operation counts are not run times: constants, memory access and compiled code matter. A library FFT beats any hand-written NumPy version by 10–100×.</p></div>
+    <div class="s-key">Plan once, execute many times. FFTW is unnormalised: backward(forward(x)) = N·x.</div>
+    <ul class="s-learn"><li>Measured times of four implementations</li><li>Mixed radix, prime-factor, Bluestein</li><li>Real-input FFT and the packing trick</li><li>FFTW from modern Fortran</li><li>FFTW conventions and pitfalls</li></ul>
+  </aside>
+  <div class="prose">
+    <h2><span class="lv code">CODE</span>Measured times (one run, one laptop-class CPU)</h2>
+    <table><tr><th>N</th><th>direct (matrix)</th><th>recursive</th><th>iterative</th><th>vectorised</th><th>numpy.fft</th></tr>
+      <tr><td>256</td><td>0.15 ms</td><td>1.31 ms</td><td>0.69 ms</td><td>0.14 ms</td><td>0.023 ms</td></tr>
+      <tr><td>1024</td><td>1.32 ms</td><td>7.85 ms</td><td>3.81 ms</td><td>0.28 ms</td><td>0.033 ms</td></tr>
+      <tr><td>4096</td><td>26.8 ms</td><td>19.8 ms</td><td>8.77 ms</td><td>0.40 ms</td><td>0.056 ms</td></tr></table>
+    <p>The direct DFT as a single matrix product is fast for small N (BLAS); by N = 4096 the O(N²) wins against it. Interpreted Python loops are slow; the vectorised version is within 10× of the library. Fortran from scratch (<code>fft_radix2.f90</code>): 0.18 ms at N = 4096, 87 ms at 2²⁰ (times vary from run to run and machine to machine; the trend is what matters).</p>
+    <h2><span class="lv core">CORE</span>Beyond radix-2</h2>
+    <ul>
+      <li><b>Radix-4, split-radix</b>: fewer operations, same O(N log N); libraries choose empirically.</li>
+      <li><b>Mixed radix</b> for any N = N₁N₂; <b>prime-factor algorithm</b> (gcd(N₁, N₂) = 1, Chinese remainder theorem); <b>Bluestein</b> chirp-z for any N, primes included.</li>
+      <li>In practice choose a fast length (<code>scipy.fft.next_fast_len</code>): a large prime N is much slower.</li>
+    </ul>
+    <x-f name="Real input: packing trick" tag="ALGORITHM">
+      z[n]=x[2n]+j\,x[2n+1],\quad E[k]=\tfrac12\big(Z[k]+Z^*[\tfrac N2-k]\big),\quad O[k]=\tfrac1{2j}\big(Z[k]-Z^*[\tfrac N2-k]\big),\quad X[k]=E[k]+W_N^kO[k]
+      <note>One N/2-point complex FFT gives the N/2+1 unique bins of a real signal: <code>rfft</code>, FFTW r2c. Checked to 3×10⁻¹⁴ in the code lab.</note>
+      <py>X = np.fft.rfft(x)          # N//2 + 1 bins</py>
+      <f90>plan = fftw_plan_dft_r2c_1d(n, xr, ck, FFTW_ESTIMATE)</f90>
+    </x-f>
+    <h2><span class="lv code">CODE</span>FFTW from Fortran</h2>
+    <x-code f90="fftw_demo.f90"/>
+    <ul>
+      <li><b>Unnormalised</b>: divide the backward transform by N. <b>Sign</b>: FFTW_FORWARD uses e<sup>−j2πkn/N</sup>.</li>
+      <li><b>Column-major</b>: for a(n1, n2) call <code>fftw_plan_dft_2d(n2, n1, …)</code> — dimensions reversed.</li>
+      <li><b>Planning</b>: ESTIMATE is instant; MEASURE times kernels and overwrites the arrays — plan before filling them. Plan once, execute many times.</li>
+      <li><b>Threads</b>: <code>-fopenmp -lfftw3_omp</code>; distributed memory: <code>fftw3_mpi</code>.</li>
+    </ul>
+    <p>Tested: peak at k = 50 with |X| = 512 for a cosine of amplitude 1 (N/2); backward∘forward/N recovers x to 5×10⁻¹⁶; r2c agrees with c2c to 6×10⁻¹⁴.</p>
+    <x-ex id="e8-3a" ans="512" tol="0.5" lvl="Core">N = 1024, x[n] = cos(2π·50n/N). |X[50]|?
+      <hint>A cosine splits its amplitude between +50 and −50: N/2 each.</hint><sol>1024/2 = 512 (as printed by fftw_demo).</sol></x-ex>
+  </div>
+</section>
+
+<!-- ================================================================== 4 -->
+<section class="lesson" data-title="The 2D DFT" data-short="2D DFT" data-badge="MATH" data-time="30 min" data-level="Intermediate"
+  data-sub="Images, maps and interferometers: the 2D transform is 1D FFTs along rows then columns.">
+  <div class="stage" data-widget="plane2d"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>A plane wave cos[2π(ux + vy)] is a pair of points at ±(u, v) in the 2D spectrum. Any image is a sum of such waves.</p></div>
+    <div class="s-key">The 2D kernel factorises: transform every row, then every column. Cost O(M log M) for M = N₁N₂ pixels.</div>
+    <ul class="s-learn"><li>2D sampling: the bed of nails</li><li>2D DFT and its inverse</li><li>Separability, row–column algorithm</li><li>Spatial frequencies (u, v) and orientation</li><li>fftshift and log display</li></ul>
+  </aside>
+  <div class="prose">
+    <h2><span class="lv basic">BASIC</span>2D signals</h2>
+    <p>CCD images (FITS), flat-sky CMB patches, and radio interferometers — which measure the 2D transform of the sky directly (the visibilities V(u, v)). The image f(x, y) is sampled on a grid of pitch (X, Y): its spectrum is replicated with periods (1/X, 1/Y) and the Nyquist condition applies along each axis.</p>
+    <x-f name="2D DFT pair" tag="TRANSFORM">
+      F[k_1,k_2]=\h{sum}{\sum_{n_1=0}^{N_1-1}\sum_{n_2=0}^{N_2-1}}f[n_1,n_2]\,e^{-j2\pi\left(\frac{k_1n_1}{N_1}+\frac{k_2n_2}{N_2}\right)},\qquad f[n_1,n_2]=\frac1{N_1N_2}\sum_{k_1,k_2}F[k_1,k_2]\,e^{+j2\pi(\cdots)}
+      <py>F = np.fft.fft2(img);  img = np.fft.ifft2(F).real</py>
+      <f90>plan = fftw_plan_dft_2d(n2, n1, a, F, FFTW_FORWARD, FFTW_ESTIMATE)   ! reversed dims</f90>
+    </x-f>
+    <x-f name="Separability" tag="PROPERTY">
+      F[k_1,k_2]=\h{sum}{\sum_{n_1}}\Big(\h{sum}{\sum_{n_2}}f[n_1,n_2]\,W_{N_2}^{n_2k_2}\Big)W_{N_1}^{n_1k_1}
+      <note>Inner: 1D DFT of every row; outer: 1D DFT of every column. Cost N₁O(N₂ log N₂) + N₂O(N₁ log N₁) = O(M log M), against O(M²) direct. Checked exactly in the code lab.</note>
+      <py>F = np.fft.fft(np.fft.fft(img, axis=1), axis=0)     # == np.fft.fft2(img)</py>
+      <f90>
+      do i = 1, n1;  call fft_inplace(a(i, :), -1);  end do     ! rows
+      do j = 1, n2;  call fft_inplace(a(:, j), -1);  end do     ! columns
+      </f90>
+    </x-f>
+    <h2><span class="lv core">CORE</span>Reading a 2D spectrum</h2>
+    <ul>
+      <li>A plane wave cos[2π(ux + vy)] has wavelength λ = 1/√(u² + v²); its stripes are perpendicular to (u, v).</li>
+      <li>The unshifted FFT puts the DC term at [0, 0]: <b>fftshift</b> moves it to the centre; label axes with <code>fftfreq</code>.</li>
+      <li>Low frequencies dominate by orders of magnitude: display log(1 + |F|).</li>
+      <li>A bright cross along the axes comes from the image edges (periodic wrap): apodise first (Lecture 7 windows).</li>
+    </ul>
+    <x-ex id="e8-4a" ans="0.2" tol="0.001" lvl="Basic">Plane wave with u = 3, v = 4 cycles per unit length. Wavelength?
+      <hint>1/√(u² + v²).</hint><sol>1/5 = 0.2.</sol></x-ex>
+    <x-ex id="e8-4b" ans="20" tol="0.01" lvl="Core">A 1024×1024 image has M = 2²⁰ pixels. log₂M?
+      <hint>2²⁰.</hint><sol>20: the row–column FFT costs about M log₂M ≈ 2×10⁷ operations, against M² ≈ 10¹² for a direct 2D DFT.</sol></x-ex>
+    <x-hsi to="s4">A band of a push-broom hyperspectral image: its 2D spectrum and the stripes of the detector</x-hsi>
+  </div>
+</section>
+
+<!-- ================================================================== 5 -->
+<section class="lesson" data-title="Fourier optics and the 2D theorems" data-short="Optics" data-badge="MATH" data-time="25 min" data-level="Advanced"
+  data-sub="The PSF is the transform of the pupil; shift, convolution and correlation theorems in 2D; interferometry.">
+  <div class="stage" data-widget="pupil"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>In the Fraunhofer regime the focal-plane field is the Fourier transform of the pupil. A circular aperture gives the Airy pattern; a central obstruction pushes light into the rings.</p></div>
+    <div class="s-key">An image is the sky convolved with the PSF: in Fourier space a product with the optical transfer function.</div>
+    <ul class="s-learn"><li>PSF = |F{pupil}|²</li><li>Airy pattern, first zero 1.22 λ/D</li><li>Shift, convolution, correlation in 2D</li><li>Phase correlation for image registration</li><li>Dirty image and dirty beam</li></ul>
+  </aside>
+  <div class="prose">
+    <x-f name="Fraunhofer PSF" tag="OPTICS">
+      \mathrm{PSF}(\theta)=\big|\mathcal F\{P\}\big|^2,\qquad \text{circular pupil: }\Big[\frac{2J_1(x)}{x}\Big]^2,\ x=\frac{\pi\theta D}{\lambda},\ \text{first zero at }1.22\,\frac{\lambda}{D}
+      <note>A zero-padded fft2 of the pupil samples the PSF: padding factor p gives p samples per λ/D (interpolation, not resolution). With turbulence the pupil becomes P e<sup>jφ</sup>: only the phase changes.</note>
+      <py>
+      PSF = np.abs(np.fft.fftshift(np.fft.fft2(pupil, s=(p*N, p*N))))**2
+      </py>
+      <f90>
+      call fftw_execute_dft(plan, pupil_padded, field)
+      psf = abs(field)**2
+      </f90>
+    </x-f>
+    <x-f name="2D theorems" tag="PROPERTIES">
+      f(x-x_0,y-y_0)\Leftrightarrow e^{-j2\pi(ux_0+vy_0)}F;\qquad f*h\Leftrightarrow FH;\qquad f\star g\Leftrightarrow FG^*
+      <note>Shift: |F| unchanged, a linear phase ramp. Convolution: image = sky ∗ PSF; a DFT product is circular — zero-pad. Correlation: |F|² is the transform of the autocorrelation (Wiener–Khinchin). Phase correlation: F⁻¹{F₂F₁*/|F₂F₁*|} is a sharp peak at the shift (found (5, 9) exactly in the code lab).</note>
+      <py>
+      R = F2 * np.conj(F1);  r = np.fft.ifft2(R / np.abs(R)).real
+      shift = np.unravel_index(np.argmax(r), r.shape)
+      </py>
+      <f90>
+      R = F2*conjg(F1);  R = R/abs(R)
+      ! inverse 2D FFT of R, then maxloc
+      </f90>
+    </x-f>
+    <x-ex id="e8-5a" ans="0.126" tol="0.002" lvl="Core">Diffraction limit 1.22 λ/D for λ = 500 nm and D = 1 m, in arcseconds? (1 rad = 206 265″)
+      <hint>1.22 × 5×10⁻⁷ rad.</hint><sol>6.1×10⁻⁷ rad × 206 265 = 0.126″.</sol></x-ex>
+    <div class="uses">
+      <div class="use"><b>Radio interferometry</b>Visibilities are samples of F(u, v): the dirty image is the sky convolved with the dirty beam, cleaned by deconvolution (CLEAN).</div>
+      <div class="use"><b>Adaptive optics</b>Turbulence is a random pupil phase: the seeing disc replaces the Airy pattern.</div>
+      <div class="use"><b>Image registration</b>Stacking exposures: phase correlation finds the shift between frames.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================== 6 -->
+<section class="lesson" data-title="Magnitude, phase and notch filtering" data-short="Phase & notch" data-badge="MATH" data-time="25 min" data-level="Advanced"
+  data-sub="The phase carries where things are; periodic artefacts are isolated spikes that a notch removes.">
+  <div class="stage" data-widget="notch"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>Periodic noise (electronic pickup, scan lines, detector banding) is a pair of bright points in the 2D spectrum. Zero them — gently — and invert.</p></div>
+    <div class="s-key">Always notch the spike and its conjugate partner at (−u₀, −v₀), with a smooth (Gaussian) notch: otherwise the image becomes complex or rings.</div>
+    <ul class="s-learn"><li>Polar form, atan2</li><li>What magnitude and phase encode</li><li>Phase-only vs magnitude-only images</li><li>Notch filter procedure</li><li>Lunar Orbiter destriping</li></ul>
+  </aside>
+  <div class="prose">
+    <x-f name="Polar form of the spectrum" tag="DEFINITION">
+      F(u,v)=|F(u,v)|\,e^{j\varphi(u,v)},\qquad \varphi=\mathrm{atan2}\big(\mathrm{Im}F,\ \mathrm{Re}F\big)\in(-\pi,\pi]
+      <note>arctan alone loses the quadrant; the phase is wrapped and undefined where |F| = 0.</note>
+      <py>mag, phase = np.abs(F), np.angle(F)</py>
+      <f90>mag = abs(F);  phase = atan2(aimag(F), real(F))</f90>
+    </x-f>
+    <table><tr><th>magnitude |F|</th><th>phase φ</th></tr>
+      <tr><td>energy per spatial frequency; |F|² is the transform of the autocorrelation: texture, scales, periodicities</td><td>alignment of the waves: where edges and point sources are</td></tr>
+      <tr><td>contains no position information (a shift changes only the phase)</td><td>phase-only reconstruction keeps edges and positions; magnitude-only gives a centred blur (Oppenheim &amp; Lim 1981)</td></tr></table>
+    <h2><span class="lv core">CORE</span>Notch filtering</h2>
+    <ol class="steps">
+      <li>Compute F = fft2(f), centre it (fftshift).</li>
+      <li>Find the spike coordinates (u₀, v₀) in |F|.</li>
+      <li>Multiply by H = 1 − Gaussian at (u₀, v₀) <b>and</b> at (−u₀, −v₀).</li>
+      <li>Inverse-transform: f<sub>clean</sub> = Re F⁻¹{F·H}.</li>
+    </ol>
+    <x-code><py>
+      def notch_filter(img, spikes, sigma=2.0):
+          F = np.fft.fftshift(np.fft.fft2(img))
+          rows, cols = F.shape;  rr, cc = np.ogrid[:rows, :cols]
+          H = np.ones(F.shape)
+          for r0, c0 in spikes:
+              for r, c in ((r0, c0), (rows - r0, cols - c0)):        # conjugate partner
+                  H *= 1 - np.exp(-((rr - r)**2 + (cc - c)**2) / (2*sigma**2))
+          return np.real(np.fft.ifft2(np.fft.ifftshift(F * H)))
+    </py></x-code>
+    <div class="uses">
+      <div class="use"><b>Lunar Orbiter 1966</b>Horizontal scan lines are a vertical line of spikes in |F|: removing them recovers the surface.</div>
+      <div class="use"><b>CCD banding, fringing</b>Periodic detector artefacts in astronomical frames.</div>
+      <div class="use"><b>Push-broom sensors</b>Column-to-column gain differences produce stripes along the track.</div>
+    </div>
+    <x-hsi to="s4">Destriping a hyperspectral band with a 2D notch</x-hsi>
+  </div>
+</section>
+
+<!-- ================================================================== 7 -->
+<section class="lesson" data-title="Time–frequency: the STFT" data-short="STFT" data-badge="MATH" data-time="30 min" data-level="Advanced"
+  data-sub="When the frequency content changes in time, transform short windowed pieces: the spectrogram.">
+  <div class="stage" data-widget="stft8"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>The FFT of the whole record says which frequencies are present, not when. Slide a window, transform each piece, stack the spectra: a spectrogram.</p></div>
+    <div class="s-key">Δt · Δf ≥ 1/(4π): a short window sees when, a long window sees which frequency. The window chooses the description.</div>
+    <ul class="s-learn"><li>Non-stationary signals: chirps, dispersed pulses</li><li>Continuous and discrete STFT</li><li>Hop, overlap and COLA</li><li>Gabor uncertainty</li><li>Narrowband vs wideband</li></ul>
+  </aside>
+  <div class="prose">
+    <x-f name="Discrete STFT and spectrogram" tag="TRANSFORM">
+      X[m,k]=\h{sum}{\sum_{n=0}^{L-1}}x[n+mH]\,w[n]\,e^{-j\frac{2\pi}{L}kn},\qquad S[m,k]=|X[m,k]|^2,\quad f_k=\frac{kf_s}L,\ t_m=\frac{mH}{f_s}
+      <note>Window length L, hop H; overlap 1 − H/L (typically 50%) recovers what the taper attenuates. COLA (Σ<sub>m</sub> w[n−mH] = const) allows exact inversion: periodic Hann at H = L/2 satisfies it, the symmetric one does not. SciPy: use <code>ShortTimeFFT</code> (spectrogram/stft are legacy).</note>
+      <py>
+      stft = ShortTimeFFT(hann(L, sym=False), hop=L//2, fs=fs, scale_to='psd')
+      Sx = stft.spectrogram(x)          # (frequency, time)
+      </py>
+      <f90>
+      do m = 0, nframes-1
+         seg = w*x(m*H+1 : m*H+L)
+         call fftw_execute_dft_r2c(plan, seg, Xk)
+         S(:, m+1) = abs(Xk)**2
+      end do
+      </f90>
+    </x-f>
+    <x-f name="Gabor uncertainty" tag="THEOREM">
+      \Delta t\cdot\Delta f\ \ge\ \frac1{4\pi}\quad(\text{rms widths of }|x(t)|^2\text{ and }|X(f)|^2;\ \text{equality for a Gaussian})
+    </x-f>
+    <h3>Astrophysical cases</h3>
+    <ul>
+      <li><b>Inspiral chirp</b>: \(f(\tau)=\frac1\pi\big(\frac{5}{256\tau}\big)^{3/8}\big(\frac{GM_c}{c^3}\big)^{-5/8}\), τ = t<sub>c</sub> − t: rising frequency; whiten by √S<sub>n</sub> first.</li>
+      <li><b>Dispersed radio pulse</b>: Δt = 4.149×10³ s · DM (ν<sub>low</sub>⁻² − ν<sub>high</sub>⁻²), ν in MHz: incoherent dedispersion shifts channels; coherent dedispersion is a phase-only FFT filter.</li>
+    </ul>
+    <x-ex id="e8-7a" ans="1.94" tol="0.02" lvl="Core">Dispersion delay across 400–800 MHz for DM = 100 pc cm⁻³, in seconds?
+      <hint>4149 × 100 × (1/400² − 1/800²).</hint><sol>4.149×10⁵ × (6.25×10⁻⁶ − 1.5625×10⁻⁶) = 1.94 s.</sol></x-ex>
+    <x-ex id="e8-7b" ans="8" tol="0.01" lvl="Basic">f<sub>s</sub> = 2048 Hz, L = 256. STFT bin width in Hz?
+      <hint>f<sub>s</sub>/L.</hint><sol>8 Hz (the ridge followed the chirp to 2.3 Hz rms in the code lab).</sol></x-ex>
+  </div>
+</section>
+
+<!-- ================================================================== 8 -->
+<section class="lesson" data-title="Code lab: FFTs from scratch to FFTW" data-short="Code lab" data-badge="CODE" data-time="45 min" data-level="Intermediate"
+  data-sub="Three Python FFTs, an in-place Fortran FFT, FFTW, 2D transforms, notch filter and spectrogram — tested.">
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>Write your own FFT once to understand it; use FFTW / numpy.fft for everything else.</p></div>
+    <div class="s-key">Always validate a transform against a reference (direct DFT or a library) to round-off, ~10⁻¹⁴.</div>
+    <ul class="s-learn"><li>Run fft_algorithms.py</li><li>Compile fft_radix2.f90 and fftw_demo.f90</li><li>Do the tasks</li></ul>
+  </aside>
+  <div class="prose">
+    <x-code><py>
+      # inside "08. The FFT/code"
+      python fft_algorithms.py
+      </py><f90>
+      gfortran -O2 fft_radix2.f90 -o fft_radix2 && ./fft_radix2
+      gfortran fftw_demo.f90 -I/usr/include -lfftw3 -lm -o fftw_demo && ./fftw_demo
+    </f90></x-code>
+    <p>Tested: the three Python FFTs agree with numpy to 6×10⁻¹⁴; bit reversal for N = 8 is [0 4 2 6 1 5 3 7]; rfft by packing 3×10⁻¹⁴; separability exact; phase correlation finds (5, 9); the notch removes the stripes; the STFT ridge follows the chirp to 2.3 Hz. Fortran radix-2: error 9×10⁻¹⁵ against the direct DFT.</p>
+    <x-code py="fft_algorithms.py" f90="fft_radix2.f90"/>
+    <div class="task"><b>TASK 8.1 — RADIX-2 DIF</b>Write the decimation-in-frequency version (natural input, bit-reversed output) and check it.</div>
+    <div class="task"><b>TASK 8.2 — PRIME LENGTHS</b>Time <code>np.fft.fft</code> for N = 2²⁰ and for the prime 1 048 573. Then use <code>scipy.fft.next_fast_len</code>.</div>
+    <div class="task"><b>TASK 8.3 — AIRY</b>Build a circular pupil of 64 pixels in a 512 grid, compute the PSF and measure the first zero in units of λ/D.</div>
+    <div class="task"><b>TASK 8.4 — FFTW 2D IN FORTRAN</b>Transform a 2D array with <code>fftw_plan_dft_2d</code> and check the reversed-dimension rule against numpy.fft.fft2 on a non-square image.</div>
+  </div>
+</section>

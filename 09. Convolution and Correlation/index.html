@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>09. Convolution and Correlation · Comp Astro</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='14' fill='%23cfe3b2' stroke='%231d1b18' stroke-width='3'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="../assets/katex/katex.min.css">
+<link rel="stylesheet" href="../assets/css/style.css">
+<script>try{document.documentElement.dataset.theme=JSON.parse(localStorage.getItem("cma.theme"))||"light"}catch(e){}</script>
+</head>
+<body data-unit="09" data-root="../">
+<header class="topbar">
+  <button class="iconbtn burger" data-act="burger" aria-label="menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+  <a class="brand" href="../index.html"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="15.5" fill="none" stroke="currentColor" stroke-width="2.5"/>
+<ellipse cx="20" cy="20" rx="19" ry="6.5" fill="none" stroke="currentColor" stroke-width="2.2" transform="rotate(-24 20 20)"/>
+<circle cx="20" cy="20" r="6" fill="#cfe3b2" stroke="currentColor" stroke-width="2.2"/><circle cx="35" cy="11.5" r="2.6" fill="#e6824c" stroke="currentColor" stroke-width="1.5"/></svg><span>Comp <mark>Astro</mark></span></a>
+  <nav class="tabs"><a class="tab on" data-view="learn" href="../index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 5.5C5 4 8.5 4 12 6c3.5-2 7-2 10-.5V19c-3-1.5-6.5-1.5-10 .5-3.5-2-7-2-10-.5z"/><path d="M12 6v13.5"/></svg><span>Learn</span></a><a class="tab" data-view="practice" href="../index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg><span>Practice</span></a><a class="tab" data-view="code" href="../index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2.5" y="4" width="19" height="16" rx="2"/><path d="M2.5 8.5h19M7 13l-2 2 2 2M11 17h5"/></svg><span>Code Lab</span></a><a class="tab" data-view="sheet" href="../index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 17.5h7M17.5 14v7"/></svg><span>Cheatsheet</span></a></nav>
+  <div class="search" data-act="search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><span>Search lessons &amp; formulas…</span><kbd>Ctrl K</kbd></div>
+  <button class="iconbtn" data-act="theme" aria-label="dark mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg></button>
+  <div class="credit"><div class="av">∑</div><div>open study guide<b>numerical methods</b></div></div>
+</header>
+<div class="layout">
+  <aside class="sidebar"><nav class="tree"></nav><div class="progress"></div></aside>
+  <main class="main">
+    <div class="stepper learnonly"><div class="stepper-h">IN THIS LESSON <small id="stepper-n"></small></div><div class="dots"></div></div>
+    <div class="card">
+      <div class="crumbs"><span>09. Convolution and Correlation</span><span class="sep">/</span><span id="crumb-sub"></span></div>
+      <div class="learnonly">
+        <div class="titlebar"><h1 id="title"></h1>
+          <div class="badges"><span class="badge y" id="b-time"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> </span><span class="badge g" id="b-level"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="15" width="3.2" height="6" rx="1"/><rect x="8.5" y="11" width="3.2" height="10" rx="1"/><rect x="14" y="7" width="3.2" height="14" rx="1"/><rect x="19.5" y="3" width="2.5" height="18" rx="1" opacity=".35"/></svg> </span><span class="badge p" id="b-steps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 6h12M9 12h12M9 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg> </span></div>
+        </div>
+        <p class="subtitle" id="subtitle"></p>
+        <!-- ================================================================== 1 -->
+<section class="lesson" data-title="Convolution and the convolution theorem" data-short="Convolution" data-badge="MATH" data-time="30 min" data-level="Beginner"
+  data-sub="Every linear, time-invariant system convolves: flip the kernel, slide it, multiply and add. In frequency it is a product.">
+  <div class="stage" data-widget="convslide"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>A telescope blurs the sky with its PSF, an RC circuit smooths a voltage, a moving average smooths a light curve: all are convolutions with an impulse response h.</p></div>
+    <div class="s-key">y = x ∗ h has length N + M − 1. Directly: N·M operations. With FFTs: O(N<sub>fft</sub> log N<sub>fft</sub>) — but the DFT product is a <b>circular</b> convolution.</div>
+    <ul class="s-learn"><li>LTI systems and the impulse response</li><li>Flip-and-slide picture</li><li>Output length N + M − 1</li><li>Convolution theorem (DTFT and DFT)</li><li>Circular convolution ⊛<sub>N</sub></li></ul>
+  </aside>
+  <div class="prose">
+    <h2><span class="lv basic">BASIC</span>The linear convolution</h2>
+    <p>A system is <b>linear</b> (response to a sum = sum of responses) and <b>time-invariant</b> (a delayed input gives a delayed output). Then it is completely described by its response to a single impulse, h[n], and its output for any input is</p>
+    <div class="formula" data-name="Linear convolution"><div class="f-head"><span class="t">DEFINITION</span>Linear convolution<span class="hint">hover the symbols ↓</span></div><div class="tex">\h{yn}{y[n]}=(x*h)[n]=\h{sum}{\sum_{k=-\infty}^{+\infty}}\h{xn}{x[k]}\,\h{hn}{h[n-k]}</div><div class="f-note">Input of length N and kernel of length M: output of length N + M − 1, cost N·M multiply–adds. In practice M ≪ N (a smoothing kernel, a PSF, an FIR filter) and the data may be an endless stream.</div><div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><button data-lang="f90" data-file="" class="">Fortran</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code>y = np.convolve(x, h)            # mode='full': N + M - 1 samples</code></pre><pre data-lang="f90" hidden><code>y = 0.0_dp
+do n = 1, N + M - 1
+   do k = max(1, n-M+1), min(n, N)
+      y(n) = y(n) + x(k)*h(n-k+1)
+   end do
+end do</code></pre></div></div>
+    <p>Read it as: <b>flip</b> h, <b>slide</b> it to position n, <b>multiply</b> by the overlapping x and <b>add</b>. The widget does exactly this.</p>
+    <div class="ex" id="e9-1a" data-ans="1063" data-tol="0.5"><div class="ex-h">EXERCISE <span class="lvl">Basic</span></div><div class="ex-q">x has 1000 samples, h has 64. How many samples does the full convolution have?</div><div class="ex-in"><input placeholder="your answer"> <button class="btn go check">Check</button><span class="ex-res"></span></div><details><summary>Hint</summary>N + M − 1.</details><details><summary>Full solution</summary>1000 + 64 − 1 = 1063.</details></div>
+    <h2><span class="lv core">CORE</span>The convolution theorem</h2>
+    <div class="formula" data-name="Convolution theorem"><div class="f-head"><span class="t">THEOREM</span>Convolution theorem<span class="hint">hover the symbols ↓</span></div><div class="tex">(x*h)[n]\ \Longleftrightarrow\ X(f)\,H(f)\qquad\text{DFT: }\ \mathrm{IDFT}_N\{\h{Xk}{X[k]}\h{Hk}{H[k]}\}=(x\circledast_N h)[n]=\h{sum}{\sum_{m=0}^{N-1}}x[m]\,h[(n-m)\bmod N]</div><div class="f-note">The DFT version is a <b>circular</b> convolution: indices wrap modulo N. Zero-pad both sequences to N<sub>fft</sub> ≥ N + M − 1 and circular = linear. Cost: two FFTs, one product, one inverse FFT. For short kernels (M ≲ 50–100) the direct sum is still faster: <code>scipy.signal.choose_conv_method</code> decides.</div><div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><button data-lang="f90" data-file="" class="">Fortran</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code>nfft = scipy.fft.next_fast_len(N + M - 1)
+y = np.fft.irfft(np.fft.rfft(x, nfft) * np.fft.rfft(h, nfft), nfft)[:N + M - 1]
+# or simply: scipy.signal.fftconvolve(x, h)</code></pre><pre data-lang="f90" hidden><code>xp = 0; xp(1:N) = x;  hp = 0; hp(1:M) = h          ! zero padding to nfft
+call fftw_execute_dft_r2c(pf, xp, Xk);  call fftw_execute_dft_r2c(pf, hp, Hk)
+Xk = Xk*Hk/nfft                                    ! FFTW is unnormalised
+call fftw_execute_dft_c2r(pb, Xk, xp);  y = xp(1:N+M-1)</code></pre></div></div>
+    <div class="ex" id="e9-1b" data-ans="2048" data-tol="0.5"><div class="ex-h">EXERCISE <span class="lvl">Core</span></div><div class="ex-q">N = 1500, M = 300. Smallest power of 2 that avoids wrap-around?</div><div class="ex-in"><input placeholder="your answer"> <button class="btn go check">Check</button><span class="ex-res"></span></div><details><summary>Hint</summary>N + M − 1 = 1799.</details><details><summary>Full solution</summary>2048 ≥ 1799.</details></div>
+    <div class="uses">
+      <div class="use"><b>Imaging</b>Observed image = sky ∗ PSF (+ noise): blurring, and the starting point of deconvolution.</div>
+      <div class="use"><b>Light curves</b>Moving averages and Gaussian smoothing of time series.</div>
+      <div class="use"><b>Instruments</b>Every detector chain (amplifier, anti-alias filter, spectrometer slit) has an impulse response.</div>
+    </div>
+    <a class="hsi-link" href="../Hyperspectral%20Project/index.html#s5"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg><span><small>RELATED · HYPERSPECTRAL PROJECT</small>The spectrometer blurs each spectrum with its spectral response function: a convolution along wavelength</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+  </div>
+</section>
+
+<!-- ================================================================== 2 -->
+<section class="lesson" data-title="Correlation and the matched filter" data-short="Correlation" data-badge="MATH" data-time="25 min" data-level="Intermediate"
+  data-sub="Correlation is convolution with the time-reversed kernel: H → H*. It finds a known template in noise.">
+  <div class="stage" data-widget="matched"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>Slide the template along the data and measure the overlap: where the data contain the template, the overlap peaks — even when the signal is invisible by eye.</p></div>
+    <div class="s-key">Correlation c = x ⋆ h ⟺ X H*. For a real, even kernel the two operations coincide; for a causal or asymmetric one (a chirp, an RC response) they do not.</div>
+    <ul class="s-learn"><li>Cross-correlation and its transform</li><li>H* = H(−f) for real kernels</li><li>When convolution = correlation</li><li>Matched filter and SNR</li><li>Whitening for coloured noise</li></ul>
+  </aside>
+  <div class="prose">
+    <div class="formula" data-name="Correlation"><div class="f-head"><span class="t">DEFINITION</span>Correlation<span class="hint">hover the symbols ↓</span></div><div class="tex">\h{cn}{c[n]}=\h{sum}{\sum_k}x[k]\,h[k-n]\ \Longleftrightarrow\ \h{Xk}{X}\,\h{Hk}{H}^{*}</div><div class="f-note">For a real kernel H*(f) = H(−f): correlating with h[n] is convolving with h[−n]. Everything said about convolution (zero padding, overlap-save, overlap-add) applies unchanged: in code only <code>H → np.conj(H)</code>.</div><div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><button data-lang="f90" data-file="" class="">Fortran</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code>c = np.fft.irfft(np.fft.rfft(x, nfft) * np.conj(np.fft.rfft(h, nfft)), nfft)</code></pre><pre data-lang="f90" hidden><code>Xk = Xk*conjg(Hk)/nfft</code></pre></div></div>
+    <h2><span class="lv core">CORE</span>Matched filtering</h2>
+    <p>Data d = A·h shifted by t₀ + white noise. The linear filter that maximises the output signal-to-noise ratio at t₀ is the template itself, time-reversed: correlate with h. The peak lag estimates t₀; the peak height over the rms of the output is the detection statistic.</p>
+    <div class="formula" data-name="Matched filter in coloured noise"><div class="f-head"><span class="t">ESTIMATOR</span>Matched filter in coloured noise<span class="hint">hover the symbols ↓</span></div><div class="tex">\rho(t_0)=\frac{\big|\sum_k \tilde d[k]\,\tilde h^*[k]\,e^{j2\pi kt_0/N}/S_n[k]\big|}{\sqrt{\sum_k|\tilde h[k]|^2/S_n[k]}}</div><div class="f-note">Dividing by the noise PSD S<sub>n</sub> (estimated as in Lecture 10) "whitens" the data: frequencies where noise is strong count less. With white noise it reduces to plain correlation. This is how gravitational-wave searches work.</div></div>
+    <p>Code lab result: a template buried in noise with amplitude 0.3 is found at lag 2600 (true 2600), with peak/rms = 3.8 — by eye the record looks like pure noise.</p>
+    <div class="ex" id="e9-2a" data-ans="0" data-tol="0.01"><div class="ex-h">EXERCISE <span class="lvl">Basic</span></div><div class="ex-q">For a real, even (symmetric, centred) kernel, what is the imaginary part of H(f)?</div><div class="ex-in"><input placeholder="your answer"> <button class="btn go check">Check</button><span class="ex-res"></span></div><details><summary>Hint</summary>Even and real ⇒ cosine terms only.</details><details><summary>Full solution</summary>0: H is real, H* = H, and correlation equals convolution.</details></div>
+  </div>
+</section>
+
+<!-- ================================================================== 3 -->
+<section class="lesson" data-title="Wrap-around and zero padding" data-short="Wrap-around" data-badge="MATH" data-time="30 min" data-level="Intermediate"
+  data-sub="The DFT treats the record as periodic: the end touches the start. Kernel storage, spoiled samples, buffer zones and edges.">
+  <div class="stage" data-widget="wrap"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>The DFT silently assumes the data are one period of a periodic sequence and that the kernel is as long as the data. Neither is true.</p></div>
+    <div class="s-key">A kernel with m₊ positive and m₋ negative lags spoils m₊ outputs at the start and m₋ at the end. A buffer of K ≥ max(m₊, m₋) zeros removes the wrap-around.</div>
+    <ul class="s-learn"><li>Kernel storage in wrap-around order</li><li>Wrap-around pollution</li><li>Which samples are spoiled</li><li>Zero padding: K ≥ max(m₊, m₋)</li><li>Edges: zero, periodic, reflect, nearest</li></ul>
+  </aside>
+  <div class="prose">
+    <h2><span class="lv core">CORE</span>Storing the kernel</h2>
+    <p>Pad h to N<sub>fft</sub>. Lag −k lives at index N<sub>fft</sub> − k (indices are modulo N<sub>fft</sub>):</p>
+    <div class="formula" data-name="Wrap-around storage"><div class="f-head"><span class="t">CONVENTION</span>Wrap-around storage<span class="hint">hover the symbols ↓</span></div><div class="tex">\big[\,h_0,\ h_1,\ \dots,\ h_{m_+},\ 0,\ \dots,\ 0,\ h_{-m_-},\ \dots,\ h_{-1}\,\big],\qquad m_++m_-=M-1</div><div class="f-note">Causal kernel: m₋ = 0 (only the past). Centred kernel: m₊ = m₋ = (M−1)/2. Getting this wrong shifts the output by m₋ samples.</div><div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><button data-lang="f90" data-file="" class="">Fortran</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code>hb = np.zeros(nfft)
+hb[:M - m_minus] = h[m_minus:]           # lags 0 .. m_plus
+if m_minus: hb[nfft - m_minus:] = h[:m_minus]   # lags -m_minus .. -1</code></pre><pre data-lang="f90" hidden><code>buf = 0.0_dp
+buf(1:m_plus+1)            = h(m_minus+1:M)     ! lags 0 .. m_plus
+buf(nfft-m_minus+1:nfft)   = h(1:m_minus)       ! lags -m_minus .. -1</code></pre></div></div>
+    <h2><span class="lv core">CORE</span>Spoiled samples and the buffer zone</h2>
+    <ul>
+      <li>Without padding, the first m₊ outputs mix in data from the <b>end</b> of the record, the last m₋ from the <b>start</b>. Only N − m₊ − m₋ samples are correct.</li>
+      <li>Append K ≥ max(m₊, m₋) zeros (symmetric kernel: K ≥ (M−1)/2; causal: K ≥ M−1): what wraps is now zero. Code lab: step response with N = 64, M = 15 — error 0.773 on the first 14 samples without padding, 2×10⁻¹⁶ with N<sub>fft</sub> = N + M − 1.</li>
+    </ul>
+    <h3>Edges of the record</h3>
+    <table><tr><th>boundary</th><th>meaning</th><th>when</th></tr>
+      <tr><td>zero (constant)</td><td>data vanish outside</td><td>only if they really do; otherwise a step at the edge biases ~M/2 outputs</td></tr>
+      <tr><td>periodic (wrap)</td><td>what the plain DFT does</td><td>truly periodic data (a full circle of a ring, a periodic box)</td></tr>
+      <tr><td>reflect / nearest</td><td>mirror or extend the last value</td><td>images, light curves: continuous at the edge</td></tr></table>
+    <p>Output sizes: <b>full</b> (N + M − 1), <b>same</b> (N), <b>valid</b> (N − M + 1, edge-free). Subtract the mean or trend first, or taper the edges; always flag outputs within one kernel width of an edge or a mask. Libraries: <code>scipy.ndimage.convolve(mode=…)</code>, <code>astropy.convolution.convolve(boundary=…)</code>.</p>
+    <div class="ex" id="e9-3a" data-ans="50" data-tol="0.5"><div class="ex-h">EXERCISE <span class="lvl">Core</span></div><div class="ex-q">N = 64, kernel with m₊ = 6 and m₋ = 8, no padding. How many output samples are correct?</div><div class="ex-in"><input placeholder="your answer"> <button class="btn go check">Check</button><span class="ex-res"></span></div><details><summary>Hint</summary>N − m₊ − m₋.</details><details><summary>Full solution</summary>64 − 14 = 50.</details></div>
+    <div class="ex" id="e9-3b" data-ans="20" data-tol="0.5"><div class="ex-h">EXERCISE <span class="lvl">Basic</span></div><div class="ex-q">Symmetric kernel of length M = 41: minimum buffer K?</div><div class="ex-in"><input placeholder="your answer"> <button class="btn go check">Check</button><span class="ex-res"></span></div><details><summary>Hint</summary>(M − 1)/2.</details><details><summary>Full solution</summary>20 zeros.</details></div>
+  </div>
+</section>
+
+<!-- ================================================================== 4 -->
+<section class="lesson" data-title="Long data: overlap-save and overlap-add" data-short="O&S / O&A" data-badge="ALGORITHM" data-time="40 min" data-level="Intermediate"
+  data-sub="Cut a long record into blocks, convolve each with a fixed-length FFT, stitch: by discarding (save) or by adding (add).">
+  <div class="stage" data-widget="olsola"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>One giant FFT is not always possible (memory, streaming data, latency) nor optimal (cost O(N log N) vs O(N log M)).</p></div>
+    <div class="s-key">Overlap-save: overlapping inputs, discard the wrapped outputs. Overlap-add: disjoint zero-padded inputs, add the overlapping outputs. Same cost; O&amp;S parallelises more easily.</div>
+    <ul class="s-learn"><li>Why blocks: memory, streaming, cost</li><li>Full vs valid convolution of a block</li><li>Overlap-save algorithm and indices</li><li>Overlap-add algorithm</li><li>Choosing N<sub>fft</sub> ≈ 4–8 M</li></ul>
+  </aside>
+  <div class="prose">
+    <h2><span class="lv core">CORE</span>Overlap-save (O&amp;S)</h2>
+    <ol class="steps">
+      <li>Pad h to N<sub>fft</sub>, compute H[k] once.</li>
+      <li>Prepend M − 1 zeros to x. Cut blocks of N<sub>fft</sub> samples starting every B = N<sub>fft</sub> − M + 1: consecutive blocks overlap by M − 1.</li>
+      <li>Each block: y<sub>j</sub> = IFFT{FFT(x<sub>j</sub>)·H} — a circular convolution.</li>
+      <li>Discard the first M − 1 outputs (wrapped; for a general kernel: m₊ at the start, m₋ at the end), keep B.</li>
+      <li>Concatenate the kept pieces.</li>
+    </ol>
+    <div class="formula" data-name="Block indices"><div class="f-head"><span class="t">ALGORITHM</span>Block indices<span class="hint">hover the symbols ↓</span></div><div class="tex">\text{block }j:\ x_p[jB,\ jB+N_{\rm fft}),\qquad B=\h{Nfft}{N_{\rm fft}}-\h{M}{M}+1,\qquad \text{keep } y_j[m_+,\ m_++B)</div><div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><button data-lang="f90" data-file="" class="">Fortran</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code>def overlap_save(x, h, nfft, m_minus=0):
+    M = len(h); B = nfft - M + 1; m_plus = M - 1 - m_minus
+    H = kernel_spectrum(h, m_minus, nfft)
+    xp = np.concatenate((np.zeros(M-1), x, np.zeros(nfft)))
+    Ny = len(x) + M - 1;  y = np.empty(Ny)
+    for s in range(0, Ny, B):
+        yb = irfft(rfft(xp[s:s+nfft]) * H, nfft)
+        n = min(B, Ny - s)
+        y[s:s+n] = yb[m_plus:m_plus+n]     # discard m_plus at start, m_minus at end
+    return y</code></pre><pre data-lang="f90" hidden><code>do j = 1, nblk
+   s = (j-1)*B + 1                        ! 1-based block start
+   buf = xp(s : s+nfft-1)
+   call fftw_execute_dft_r2c(pf, buf, Xk)
+   Xk = Xk*Hk/nfft
+   call fftw_execute_dft_c2r(pb, Xk, buf)
+   n = min(B, Ny - s + 1)
+   y(s : s+n-1) = buf(m_plus+1 : m_plus+n)
+end do</code></pre></div></div>
+    <h2><span class="lv core">CORE</span>Overlap-add (O&amp;A)</h2>
+    <ol class="steps">
+      <li>H[k] once, as above.</li>
+      <li>Cut x into <b>disjoint</b> blocks of B = N<sub>fft</sub> − M + 1 samples.</li>
+      <li>Zero-pad each block to N<sub>fft</sub>: its circular convolution is now the full linear one, B + M − 1 = N<sub>fft</sub> samples.</li>
+      <li>Add y<sub>j</sub> into the output from sample jB (for a general kernel: spread m₋ left, m₊ right): the last M − 1 samples overlap the next block's first M − 1.</li>
+    </ol>
+    <div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code>def overlap_add(x, h, nfft, m_minus=0):
+    M = len(h); B = nfft - M + 1
+    H = kernel_spectrum(h, m_minus, nfft)
+    y = np.zeros(len(x) + M - 1 + nfft)
+    for s in range(0, len(x), B):
+        yb = irfft(rfft(x[s:s+B], nfft) * H, nfft)
+        y[s:s+nfft] += np.roll(yb, m_minus)    # spreads m_minus left, m_plus right
+    return y[:len(x) + M - 1]</code></pre></div>
+    <table><tr><th></th><th>overlap-save</th><th>overlap-add</th></tr>
+      <tr><td>input blocks</td><td>overlap by M − 1</td><td>disjoint, zero-padded</td></tr>
+      <tr><td>output blocks</td><td>disjoint, concatenated</td><td>overlap by M − 1, added</td></tr>
+      <tr><td>discarded work</td><td>M − 1 outputs per block</td><td>none</td></tr>
+      <tr><td>cost</td><td colspan="2">identical: same N<sub>fft</sub>, same number of blocks</td></tr>
+      <tr><td>parallel writes</td><td>disjoint: no synchronisation</td><td>overlapping: needs care</td></tr></table>
+    <p>Both agree with <code>np.convolve</code> to 1.6×10⁻¹⁴ for every m₋ = 0 … M−1 (code lab). Library: <code>scipy.signal.oaconvolve</code>.</p>
+    <h2><span class="lv adv">ADVANCED</span>Choosing N<sub>fft</sub></h2>
+    <div class="formula" data-name="Cost per output sample"><div class="f-head"><span class="t">COST</span>Cost per output sample<span class="hint">hover the symbols ↓</span></div><div class="tex">\text{cost per sample}\ \propto\ \frac{\h{Nfft}{N_{\rm fft}}\log_2 N_{\rm fft}}{N_{\rm fft}-\h{M}{M}+1}</div><div class="f-note">N<sub>fft</sub> ≈ M: almost every output is discarded. N<sub>fft</sub> ≫ M: the log grows. Minimum near N<sub>fft</sub> ≈ 4–8 M, at a fast length. For M = 101: 32.0 at 128, 13.1 at 256, 11.2 at 512, 11.1 at 1024, 14.1 at 16 384.</div></div>
+    <div class="ex" id="e9-4a" data-ans="412" data-tol="0.5"><div class="ex-h">EXERCISE <span class="lvl">Basic</span></div><div class="ex-q">N<sub>fft</sub> = 512, M = 101. How many new output samples per block, B?</div><div class="ex-in"><input placeholder="your answer"> <button class="btn go check">Check</button><span class="ex-res"></span></div><details><summary>Hint</summary>N<sub>fft</sub> − M + 1.</details><details><summary>Full solution</summary>412.</details></div>
+    <div class="ex" id="e9-4b" data-ans="11.2" data-tol="0.1"><div class="ex-h">EXERCISE <span class="lvl">Core</span></div><div class="ex-q">Cost per sample N<sub>fft</sub> log₂N<sub>fft</sub>/B for N<sub>fft</sub> = 512, M = 101?</div><div class="ex-in"><input placeholder="your answer"> <button class="btn go check">Check</button><span class="ex-res"></span></div><details><summary>Hint</summary>512 × 9 / 412.</details><details><summary>Full solution</summary>4608/412 = 11.2.</details></div>
+  </div>
+</section>
+
+<!-- ================================================================== 5 -->
+<section class="lesson" data-title="Deconvolution and the Wiener filter" data-short="Deconvolution" data-badge="MATH" data-time="40 min" data-level="Advanced"
+  data-sub="Undoing a blur divides by H, which explodes where |H| is small. Wiener and Tikhonov regularise the division.">
+  <div class="stage" data-widget="deconv"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>Filtering applies a response, Y = XH. Deconvolution tries to remove it: X̂ = Y/H. Where the instrument kills a frequency, the noise there gets multiplied by a huge number.</p></div>
+    <div class="s-key">Wiener: X̂ = Φ·Y/H with Φ = S<sub>signal</sub>/(S<sub>signal</sub> + S<sub>noise</sub>) ∈ [0, 1]. Invert where the signal dominates, suppress where noise dominates.</div>
+    <ul class="s-learn"><li>Why plain inversion fails</li><li>Wiener filter and the factor Φ</li><li>Estimating S<sub>n</sub> from the data</li><li>Tikhonov with a constant λ</li><li>Discrepancy, L-curve, GCV; Richardson–Lucy</li></ul>
+  </aside>
+  <div class="prose">
+    <h2><span class="lv core">CORE</span>The Wiener filter</h2>
+    <p>Model: Y = HX + N, with S<sub>x</sub> the PSD of the true signal and S<sub>n</sub> that of the noise. The linear estimate X̂ = WY that minimises the mean squared error is</p>
+    <div class="formula" data-name="Wiener deconvolution"><div class="f-head"><span class="t">ESTIMATOR</span>Wiener deconvolution<span class="hint">hover the symbols ↓</span></div><div class="tex">\hat X[k]=\h{Wk}{W[k]}\,Y[k],\qquad W=\frac{\h{Hk}{H}^{*}}{|H|^2+\h{Sn}{S_n}/\h{Sx}{S_x}}=\underbrace{\frac1H}_{\text{inversion}}\cdot\underbrace{\frac{|H|^2S_x}{|H|^2S_x+S_n}}_{\h{Phi}{\Phi}\,\in\,[0,1]}</div><div class="f-note">S<sub>n</sub> ≪ |H|²S<sub>x</sub>: Φ → 1, pure inversion. Noise dominates: Φ → 0, output suppressed. H* here is not a correlation: 1/H = H*/|H|², and the noise term added to the positive denominator prevents division by zero.</div><div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><button data-lang="f90" data-file="" class="">Fortran</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code>P = np.abs(Y)**2                          # or a Welch estimate
+Phi = np.clip((P - Sn) / P, 0, 1)
+Xhat = Phi * Y / H</code></pre><pre data-lang="f90" hidden><code>phi = max(0.0_dp, min(1.0_dp, (abs(Yk)**2 - Sn)/abs(Yk)**2))
+Xk  = phi*Yk/Hk</code></pre></div></div>
+    <h3>Estimating the noise from the data</h3>
+    <ol class="steps">
+      <li>|Y|² with Welch (Lecture 10).</li>
+      <li>S<sub>n</sub>: the flat floor at high f, a signal-free region, or the detector model.</li>
+      <li>Signal: |Y|² − S<sub>n</sub>, clipped at 0; Φ = (|Y|² − S<sub>n</sub>)/|Y|².</li>
+      <li>X̂ = ΦY/H. The "threshold" is where the signal sinks into the floor: read from the data, not chosen. Φ is a ratio: 20–30% errors on S<sub>n</sub> matter little.</li>
+    </ol>
+    <p>With several bands each one above its own noise level gets its own window: no global threshold. Smooth the edges of Φ — sharp edges ring in time. Bands with S<sub>x</sub> ≈ S<sub>n</sub> get Φ ≈ 0.5: Wiener minimises the total error, it does not preserve amplitudes.</p>
+    <h2><span class="lv adv">ADVANCED</span>Without a noise model: Tikhonov</h2>
+    <div class="formula" data-name="Tikhonov regularisation"><div class="f-head"><span class="t">ESTIMATOR</span>Tikhonov regularisation<span class="hint">hover the symbols ↓</span></div><div class="tex">\hat X[k]=\frac{\h{Hk}{H^*[k]}}{|H[k]|^2+\h{lam}{\lambda}}\,Y[k]</div><div class="f-note">λ too small: noise amplified, ringing. λ too large: under-deconvolved. Choose by the discrepancy principle (residual ≈ Nσ²), the L-curve corner, or generalised cross-validation (no σ needed). Code lab: blurred 0.464, plain inverse 10⁹ (!), best Tikhonov 0.329, Wiener from the data 0.333 (rms errors). For photon-counting images: Richardson–Lucy, where the iteration count plays the role of λ.</div><div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><button data-lang="f90" data-file="" class="">Fortran</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code>Xhat = np.conj(H) * Y / (np.abs(H)**2 + lam)</code></pre><pre data-lang="f90" hidden><code>Xk = conjg(Hk)*Yk/(abs(Hk)**2 + lam)</code></pre></div></div>
+    <div class="ex" id="e9-5a" data-ans="0.75" data-tol="0.005"><div class="ex-h">EXERCISE <span class="lvl">Basic</span></div><div class="ex-q">At some frequency the observed power is |Y|² = 4 and the noise floor S<sub>n</sub> = 1. Φ?</div><div class="ex-in"><input placeholder="your answer"> <button class="btn go check">Check</button><span class="ex-res"></span></div><details><summary>Hint</summary>(|Y|² − S<sub>n</sub>)/|Y|².</details><details><summary>Full solution</summary>3/4 = 0.75.</details></div>
+    <div class="ex" id="e9-5b" data-ans="0.5" data-tol="0.005"><div class="ex-h">EXERCISE <span class="lvl">Core</span></div><div class="ex-q">A band where the blurred signal power equals the noise power. Φ?</div><div class="ex-in"><input placeholder="your answer"> <button class="btn go check">Check</button><span class="ex-res"></span></div><details><summary>Hint</summary>S/(S + N) with S = N.</details><details><summary>Full solution</summary>0.5: the amplitude of that band is halved — Wiener trades bias for noise.</details></div>
+    <a class="hsi-link" href="../Hyperspectral%20Project/index.html#s5"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg><span><small>RELATED · HYPERSPECTRAL PROJECT</small>Wiener deconvolution of the spatial PSF of a hyperspectral band</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+  </div>
+</section>
+
+<!-- ================================================================== 6 -->
+<section class="lesson" data-title="Digital filters, causality and delay" data-short="Filters & delay" data-badge="MATH" data-time="25 min" data-level="Intermediate"
+  data-sub="FIR and IIR filters; causal kernels delay or distort, centred kernels have zero phase but need the future.">
+  <div class="stage" data-widget="delay"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>In real time you only have the past: the filter must be causal. The price is a delay — constant for a symmetric FIR, frequency-dependent for an IIR.</p></div>
+    <div class="s-key">A symmetric FIR made causal is a pure delay of (M−1)/2 samples. An IIR has a group delay that depends on f: pulses get skewed and their peaks move.</div>
+    <ul class="s-learn"><li>FIR: a convolution with a compact kernel</li><li>IIR: a recursion, no block FFT</li><li>Linear phase and pure delay</li><li>Group delay τ<sub>g</sub>(f)</li><li>Zero phase: filtfilt</li></ul>
+  </aside>
+  <div class="prose">
+    <table><tr><th>FIR (finite impulse response)</th><th>IIR (infinite impulse response)</th></tr>
+      <tr><td>\(y[n]=\sum_{k=0}^{M-1}b_kx[n-k]\)</td><td>\(y[n]=\sum_{k=0}^{P}b_kx[n-k]-\sum_{k=1}^{Q}a_ky[n-k]\)</td></tr>
+      <tr><td>a convolution with h[k] = b<sub>k</sub>: O&amp;S and O&amp;A apply directly</td><td>recursive: the response never ends, no block FFT; <code>lfilter</code>, <code>sosfilt</code></td></tr>
+      <tr><td>always stable; linear phase if h is symmetric</td><td>sharp responses with few coefficients; can be unstable; non-linear phase</td></tr>
+      <tr><td>design: truncate the ideal response × window (<code>firwin</code>)</td><td>zero phase offline: filter forward and backward (<code>filtfilt</code>)</td></tr></table>
+    <div class="formula" data-name="Linear phase and group delay"><div class="f-head"><span class="t">PROPERTY</span>Linear phase and group delay<span class="hint">hover the symbols ↓</span></div><div class="tex">H(f)=|H(f)|\,e^{-j2\pi f(M-1)/2}\ \ (\text{symmetric causal FIR}),\qquad \h{taug}{\tau_g(f)}=-\frac1{2\pi}\frac{d\varphi}{df}</div><div class="f-note">Linear phase = every frequency delayed by the same (M−1)/2 samples: shape preserved. For the RC filter y[n] = a y[n−1] + (1−a)x[n] the delay depends on frequency (≈ τ at low f). Code lab: a pulse centred at 104.5 comes out at 104.5 (centred Hann), 114.5 (causal Hann, M = 21: delay 10) and 110.0 (RC with τ = 6).</div><div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><button data-lang="f90" data-file="" class="">Fortran</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code>y = scipy.signal.lfilter([1 - a], [1, -a], x)      # causal RC
+y0 = scipy.signal.filtfilt([1 - a], [1, -a], x)    # zero phase, offline</code></pre><pre data-lang="f90" hidden><code>y(1) = (1-a)*x(1)
+do n = 2, N
+   y(n) = a*y(n-1) + (1-a)*x(n)
+end do</code></pre></div></div>
+    <p><b>Timing measurements</b> (arrival times, pulsar phases, transient epochs): correct for the delay, or use a zero-phase kernel.</p>
+    <div class="ex" id="e9-6a" data-ans="10" data-tol="0.01"><div class="ex-h">EXERCISE <span class="lvl">Basic</span></div><div class="ex-q">Delay of a causal symmetric FIR with M = 21 taps, in samples?</div><div class="ex-in"><input placeholder="your answer"> <button class="btn go check">Check</button><span class="ex-res"></span></div><details><summary>Hint</summary>(M − 1)/2.</details><details><summary>Full solution</summary>10 samples.</details></div>
+  </div>
+</section>
+
+<!-- ================================================================== 7 -->
+<section class="lesson" data-title="Convolution as linear algebra; parallel blocks" data-short="Linear algebra" data-badge="MATH" data-time="30 min" data-level="Advanced"
+  data-sub="Convolution is a Toeplitz matrix; circular convolution a circulant one, diagonalised by the DFT. Blocks in OpenMP and MPI.">
+  <div class="stage" data-widget="toeplitz"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>y = h ∗ x is a matrix–vector product. Its matrix is constant along diagonals (Toeplitz). Zero padding turns it into a circulant, whose eigenvectors are the Fourier modes.</p></div>
+    <div class="s-key">The FFT multiplies by H in its eigenbasis: O(N log N). Deconvolution solves Hx = y, ill-conditioned when eigenvalues H<sub>k</sub> → 0; Wiener is least squares with a Gaussian prior.</div>
+    <ul class="s-learn"><li>Toeplitz and circulant matrices</li><li>The DFT diagonalises circulants</li><li>Condition number and deconvolution</li><li>Wiener as generalised least squares</li><li>OpenMP: O&amp;S writes disjoint slices; MPI: the halo</li></ul>
+  </aside>
+  <div class="prose">
+    <div class="formula" data-name="Circulant diagonalisation"><div class="f-head"><span class="t">THEOREM</span>Circulant diagonalisation<span class="hint">hover the symbols ↓</span></div><div class="tex">\mathbf H=\mathbf F^{-1}\,\mathrm{diag}(H_k)\,\mathbf F,\qquad \text{eigenvectors: Fourier modes, eigenvalues: } H_k</div><div class="f-note">Condition number = max|H<sub>k</sub>|/min|H<sub>k</sub>|: a Gaussian blur has exponentially small H<sub>k</sub> at high k ⇒ huge condition number ⇒ plain inversion amplifies noise (Lecture on linear systems).</div></div>
+    <div class="formula" data-name="Wiener as least squares with a prior"><div class="f-head"><span class="t">RESULT</span>Wiener as least squares with a prior<span class="hint">hover the symbols ↓</span></div><div class="tex">\hat{\mathbf x}=\big(\mathbf H^\dagger\mathbf N^{-1}\mathbf H+\mathbf S^{-1}\big)^{-1}\mathbf H^\dagger\mathbf N^{-1}\mathbf y\ \xrightarrow{\ \text{Fourier basis}\ }\ \hat X_k=\frac{H_k^*}{|H_k|^2+S_{n,k}/S_{x,k}}\,Y_k</div><div class="f-note">N, S: noise and signal covariances, diagonal in Fourier space for stationary processes. The same formula with non-diagonal matrices is CMB map-making.</div></div>
+    <h2><span class="lv code">CODE</span>Parallel blocks</h2>
+    <ul>
+      <li><b>OpenMP, overlap-save</b>: each iteration reads an overlapping slice but writes a disjoint slice of y — no race, no critical section. FFTW plans once outside the parallel region; inside, new-array execute on private buffers.</li>
+      <li><b>OpenMP, overlap-add</b>: neighbours write the same M − 1 samples — a race. Use private buffers and a cheap serial pass for the tails, or process even blocks then odd blocks.</li>
+      <li><b>MPI</b>: process p owns outputs [a<sub>p</sub>, b<sub>p</sub>) and needs inputs x[a<sub>p</sub> − M + 1 … b<sub>p</sub> − 1]: its block plus a <b>halo</b> of M − 1 samples. Then no further communication; <code>Gatherv</code> collects.</li>
+    </ul>
+    <div class="codebox"><div class="cb-tabs"><button data-lang="f90" data-file="overlap_save.f90" class="on">Fortran</button><span class="fn">overlap_save.f90</span><button class="copy">copy</button></div><pre data-lang="f90"><code>! overlap_save.f90  --  Lecture 9: overlap-save convolution with FFTW and OpenMP
+!   any kernel (h(1) is lag -m_minus), blocks processed in parallel: each block writes a
+!   disjoint slice of the output, so there is no race condition.
+!   The driver compares with a direct double loop and times the two.
+! Build:  gfortran -O2 -fopenmp overlap_save.f90 -I/usr/include -lfftw3 -o ols &amp;&amp; ./ols
+module ols_mod
+  use, intrinsic :: iso_c_binding
+  use, intrinsic :: iso_fortran_env, only: dp =&gt; real64
+  implicit none
+  include 'fftw3.f03'
+contains
+  subroutine overlap_save(x, h, nfft, m_minus, y)
+    real(dp), intent(in)  :: x(:), h(:)
+    integer,  intent(in)  :: nfft, m_minus
+    real(dp), intent(out) :: y(:)                     ! size(x) + size(h) - 1
+    real(dp), allocatable :: xp(:), buf(:)
+    complex(dp), allocatable :: Hk(:), Xk(:)
+    type(c_ptr) :: pf, pb
+    integer :: M, B, Ny, nblk, j, s, n, m_plus
+    M = size(h); B = nfft - M + 1; Ny = size(x) + M - 1; m_plus = M - 1 - m_minus
+    nblk = (Ny + B - 1)/B
+    allocate(xp(nblk*B + M - 1 + nfft), buf(nfft), Hk(nfft/2+1), Xk(nfft/2+1))
+    xp = 0.0_dp
+    xp(M:M+size(x)-1) = x                             ! M-1 leading zeros
+    ! plans created ONCE, outside the parallel region (planning is not thread-safe)
+    pf = fftw_plan_dft_r2c_1d(nfft, buf, Xk, ior(FFTW_ESTIMATE, FFTW_UNALIGNED))
+    pb = fftw_plan_dft_c2r_1d(nfft, Xk, buf, ior(FFTW_ESTIMATE, FFTW_UNALIGNED))
+    buf = 0.0_dp; buf(1:m_plus+1) = h(m_minus+1:M)    ! lags 0..m_plus
+    if (m_minus &gt; 0) buf(nfft-m_minus+1:nfft) = h(1:m_minus)   ! lags -m_minus..-1
+    call fftw_execute_dft_r2c(pf, buf, Hk)             ! kernel spectrum, once
+    !$omp parallel do default(none) private(j, s, n, buf, Xk) &amp;
+    !$omp&amp; shared(nblk, B, nfft, Ny, m_plus, xp, Hk, y, pf, pb)
+    do j = 1, nblk
+       s = (j-1)*B + 1                                 ! 1-based block start
+       buf = xp(s:s+nfft-1)
+       call fftw_execute_dft_r2c(pf, buf, Xk)           ! new-array execute: thread-safe
+       Xk = Xk*Hk/nfft                                  ! FFTW is unnormalised
+       call fftw_execute_dft_c2r(pb, Xk, buf)
+       n = min(B, Ny - s + 1)
+       y(s:s+n-1) = buf(m_plus+1:m_plus+n)              ! discard m_plus / m_minus
+    end do
+    !$omp end parallel do
+    call fftw_destroy_plan(pf); call fftw_destroy_plan(pb)
+  end subroutine overlap_save
+end module ols_mod
+
+program ols
+  use ols_mod
+  !$ use omp_lib
+  implicit none
+  integer, parameter :: nx = 2000000, M = 101
+  real(dp), allocatable :: x(:), h(:), y(:), yd(:)
+  integer :: i, k, mm, t0, t1, rate
+  allocate(x(nx), h(M), y(nx+M-1), yd(nx+M-1))
+  call random_number(h); h = h - 0.5_dp
+  call random_number(x); x = x - 0.5_dp
+  ! direct convolution: y(i) = sum_k h(k) x(i-k+1)   (O(N M))
+  call system_clock(t0, rate)
+  yd = 0.0_dp
+  do i = 1, nx + M - 1
+     do k = max(1, i-nx+1), min(M, i)
+        yd(i) = yd(i) + h(k)*x(i-k+1)
+     end do
+  end do
+  call system_clock(t1)
+  print '(a, f8.1, a)', 'direct convolution         ', 1000.0_dp*(t1-t0)/rate, ' ms'
+  do mm = 0, M - 1, 50                               ! causal (0), centred (50), anti-causal (100)
+     call system_clock(t0)
+     call overlap_save(x, h, 1024, mm, y)
+     call system_clock(t1)
+     ! output indices as np.convolve(x, h) for every m_minus (m_minus only labels the lags of h)
+     print '(a, i3, a, es9.2, a, f7.1, a)', 'overlap-save m_minus =', mm, ':  max error ', &amp;
+          maxval(abs(y - yd)), ',  ', 1000.0_dp*(t1-t0)/rate, ' ms'
+  end do
+  !$ print '(a, i0)', 'OpenMP threads: ', omp_get_max_threads()
+end program ols</code></pre></div>
+    <p>Tested (4 threads): error 4×10⁻¹⁵ against a direct double loop; 171 ms direct vs 20–33 ms overlap-save.</p>
+    <div class="ex" id="e9-7a" data-ans="100" data-tol="0.5"><div class="ex-h">EXERCISE <span class="lvl">Core</span></div><div class="ex-q">MPI convolution with a kernel of M = 101: how many halo samples does each process need from its left neighbour?</div><div class="ex-in"><input placeholder="your answer"> <button class="btn go check">Check</button><span class="ex-res"></span></div><details><summary>Hint</summary>M − 1.</details><details><summary>Full solution</summary>100.</details></div>
+  </div>
+</section>
+
+<!-- ================================================================== 8 -->
+<section class="lesson" data-title="Code lab: fast convolution" data-short="Code lab" data-badge="CODE" data-time="45 min" data-level="Intermediate"
+  data-sub="Wrap-around, O&S/O&A for any kernel, cost curve, matched filter, deconvolution, delays — tested in Python and Fortran.">
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>Six experiments, each with a printed number you can check against the lesson.</p></div>
+    <div class="s-key">Test every fast convolution against np.convolve or a direct loop for several kernel offsets m₋: index errors show up as a shift of m₋ samples.</div>
+    <ul class="s-learn"><li>Run fast_convolution.py</li><li>Compile overlap_save.f90 with OpenMP</li><li>Do the tasks</li></ul>
+  </aside>
+  <div class="prose">
+    <div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="" class="on">Python</button><button data-lang="f90" data-file="" class="">Fortran</button><span class="fn"></span><button class="copy">copy</button></div><pre data-lang="py"><code># inside "09. Convolution and Correlation/code"
+python fast_convolution.py</code></pre><pre data-lang="f90" hidden><code>gfortran -O2 -fopenmp overlap_save.f90 -I/usr/include -lfftw3 -o ols
+OMP_NUM_THREADS=4 ./ols</code></pre></div>
+    <table><tr><th>experiment</th><th>printed result</th></tr>
+      <tr><td>1. step ∗ causal kernel (N = 64, M = 15)</td><td>wrap-around error 0.773; with padding 2.3×10⁻¹⁶</td></tr>
+      <tr><td>2. O&amp;A and O&amp;S, m₋ = 0 … 30</td><td>max error 1.6×10⁻¹⁴</td></tr>
+      <tr><td>3. cost per sample, M = 101</td><td>minimum ≈ 11.1 at N<sub>fft</sub> = 512–1024</td></tr>
+      <tr><td>4. matched filter</td><td>lag 2600 (true 2600), peak/rms 3.8</td></tr>
+      <tr><td>5. deconvolution (rms error)</td><td>blurred 0.464, inverse 10⁹, Tikhonov 0.329, Wiener 0.333</td></tr>
+      <tr><td>6. pulse centroid at 104.5</td><td>centred 104.5, causal Hann 114.5, RC 110.0</td></tr></table>
+    <div class="codebox"><div class="cb-tabs"><button data-lang="py" data-file="fast_convolution.py" class="on">Python</button><span class="fn">fast_convolution.py</span><button class="copy">copy</button></div><pre data-lang="py"><code>"""
+fast_convolution.py  --  Lecture 9: convolution with the FFT, in blocks, and its inverse.
+  1. circular vs linear convolution: wrap-around pollution and zero padding
+  2. overlap-add and overlap-save (any kernel: causal, centred, asymmetric), checked vs np.convolve
+  3. cost per output sample against the FFT length (optimum ~ 4-8 M)
+  4. correlation = convolution with the time-reversed kernel: a matched filter finds a pulse
+  5. deconvolution: plain inverse, Tikhonov (best constant lambda), Wiener from the spectra
+  6. a causal filter delays: centred Hann vs causal Hann vs RC (IIR)
+Run:  python fast_convolution.py   -&gt; prints numbers, saves fast_convolution.png
+"""
+import numpy as np
+from scipy.fft import rfft, irfft
+from scipy.signal import lfilter
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+
+rng = np.random.default_rng(9)
+
+
+# ---------------------------------------------------------------- 1. wrap-around
+N, M = 64, 15
+x = np.zeros(N); x[40:] = 1.0                       # a step near the end of the record
+h = np.exp(-np.arange(M) / 4.0); h /= h.sum()        # causal kernel
+lin = np.convolve(x, h)                              # N + M - 1 samples
+circ = irfft(rfft(x, N) * rfft(h, N), N)             # Nfft = N: circular
+pad = irfft(rfft(x, N + M - 1) * rfft(h, N + M - 1), N + M - 1)
+print("1. step convolved with a causal kernel (N = 64, M = 15)")
+print(f"   Nfft = N        : max error on the first M-1 samples {np.max(np.abs(circ[:M-1] - lin[:M-1])):.3f} (wrap-around)")
+print(f"   Nfft = N + M - 1: max error everywhere {np.max(np.abs(pad - lin)):.1e}")
+
+
+# ---------------------------------------------------------------- 2. overlap-add / save
+def kernel_spectrum(h, m_minus, nfft):
+    """h[0] is lag -m_minus. Wrap-around storage: lags 0..m_plus first, negative lags at the end."""
+    hb = np.zeros(nfft)
+    hb[: len(h) - m_minus] = h[m_minus:]
+    if m_minus:
+        hb[nfft - m_minus:] = h[:m_minus]
+    return rfft(hb)
+
+
+def overlap_add(x, h, nfft, m_minus=0):
+    M = len(h); B = nfft - M + 1
+    H = kernel_spectrum(h, m_minus, nfft)
+    y = np.zeros(len(x) + M - 1 + nfft)
+    for s in range(0, len(x), B):                    # disjoint blocks of B samples
+        yb = irfft(rfft(x[s:s + B], nfft) * H, nfft)
+        y[s:s + nfft] += np.roll(yb, m_minus)        # spreads m_minus left, m_plus right
+    return y[: len(x) + M - 1]
+
+
+def overlap_save(x, h, nfft, m_minus=0):
+    M = len(h); B = nfft - M + 1; m_plus = M - 1 - m_minus
+    H = kernel_spectrum(h, m_minus, nfft)
+    xp = np.concatenate((np.zeros(M - 1), x, np.zeros(nfft)))
+    Ny = len(x) + M - 1
+    y = np.empty(Ny)
+    for s in range(0, Ny, B):                        # overlapping blocks of nfft samples
+        yb = irfft(rfft(xp[s:s + nfft]) * H, nfft)
+        n = min(B, Ny - s)
+        y[s:s + n] = yb[m_plus:m_plus + n]           # discard m_plus at start, m_minus at end
+    return y
+
+
+x = rng.standard_normal(10_000)
+h = rng.standard_normal(31)
+ref = np.convolve(x, h)
+worst = max(max(np.max(np.abs(f(x, h, 256, mm) - ref)) for f in (overlap_add, overlap_save)) for mm in range(31))
+print(f"\n2. overlap-add and overlap-save vs np.convolve, every m_minus = 0..30: max error {worst:.1e}")
+
+# ---------------------------------------------------------------- 3. FFT length
+print("\n3. cost per output sample ~ Nfft log2 Nfft / (Nfft - M + 1), M = 101")
+M = 101
+for nfft in (128, 256, 512, 1024, 4096, 16384):
+    print(f"   Nfft = {nfft:6d} ({nfft/M:5.1f} M): {nfft*np.log2(nfft)/(nfft-M+1):6.1f}")
+
+# ---------------------------------------------------------------- 4. matched filter
+L = 4096
+template = np.sin(2 * np.pi * np.linspace(0, 8, 200) * np.linspace(1, 3, 200)) * np.hanning(200)   # a short chirp
+data = rng.standard_normal(L)
+t0 = 2600
+data[t0:t0 + 200] += 0.6 * template                  # buried: amplitude below the noise rms
+corr = irfft(rfft(data, 2 * L) * np.conj(rfft(template, 2 * L)), 2 * L)[:L]   # correlation: H -&gt; H*
+print(f"\n4. matched filter: peak of the correlation at lag {np.argmax(corr)} (true {t0}),"
+      f" peak / rms = {corr.max()/corr.std():.1f}")
+
+# ---------------------------------------------------------------- 5. deconvolution
+N = 4096
+f = np.fft.rfftfreq(N)
+Xtrue = (rng.standard_normal(f.size) + 1j * rng.standard_normal(f.size)) / np.sqrt(1 + (f / 0.01) ** 2)
+x_true = irfft(Xtrue, N); x_true /= x_true.std()                     # red-noise "sky"
+Hf = np.exp(-0.5 * (f / 0.02) ** 2)                                   # Gaussian blur
+sig_n = 0.02
+y = irfft(rfft(x_true) * Hf, N) + sig_n * rng.standard_normal(N)
+Y = rfft(y)
+rms = lambda xh: np.sqrt(np.mean((xh - x_true) ** 2))
+inv = irfft(np.where(Hf &gt; 1e-12, Y / np.maximum(Hf, 1e-12), 0), N)
+lams = np.logspace(-6, 0, 61)
+errs = [rms(irfft(np.conj(Hf) * Y / (np.abs(Hf) ** 2 + l), N)) for l in lams]
+Sx = np.abs(rfft(x_true)) ** 2                                         # (the truth: for reference only)
+Sn = N * sig_n ** 2
+from scipy.ndimage import uniform_filter1d
+Ps = uniform_filter1d(np.abs(Y) ** 2, 33)                              # smoothed |Y|^2 (single bins scatter 100%)
+cut = np.argmax(Ps &lt; 1.5 * Sn)                                         # where the data sink into the noise floor
+signal = np.where(np.arange(f.size) &lt; cut, np.clip(Ps - Sn, 0, None), 0.0)   # |H|^2 S_x from the data
+Phi = signal / (signal + Sn)                                           # in [0, 1]; 0 above the cut
+wien = irfft(np.where(Phi &gt; 0, Phi * Y / np.maximum(Hf, 1e-12), 0), N)
+print(f"   noise floor reached at f = {f[cut]:.3f} cycles/sample")
+print(f"\n5. deconvolution rms error: blurred data {rms(y):.3f}, plain inverse {rms(inv):.2e},"
+      f" best Tikhonov {min(errs):.3f} (lambda = {lams[np.argmin(errs)]:.1e}), Wiener from the data {rms(wien):.3f}")
+
+# ---------------------------------------------------------------- 6. delay of causal filters
+pulse = np.zeros(400); pulse[100:110] = 1.0
+hk = np.hanning(21); hk /= hk.sum()
+centred = np.convolve(pulse, hk, mode="same")
+causal = np.convolve(pulse, hk)[:400]
+a = np.exp(-1 / 6.0)
+rc = lfilter([1 - a], [1, -a], pulse)                                   # y[n] = a y[n-1] + (1-a) x[n]
+centroid = lambda v: np.sum(np.arange(v.size) * v) / np.sum(v)
+print(f"\n6. centroid of a pulse at 104.5: centred {centroid(centred):.1f}, causal Hann {centroid(causal):.1f}"
+      f" (delay (M-1)/2 = 10), RC {centroid(rc):.1f} (delay tau = 6)")
+
+fig, ax = plt.subplots(1, 3, figsize=(15, 4))
+ax[0].plot(lin, "k", lw=2, label="linear"); ax[0].plot(circ, "r--", label="circular, Nfft = N")
+ax[0].legend(); ax[0].set_title("wrap-around pollution")
+ax[1].semilogx(lams, errs); ax[1].axhline(rms(wien), color="g", label="Wiener from data")
+ax[1].set(xlabel="lambda", ylabel="rms error", title="Tikhonov vs Wiener"); ax[1].legend()
+ax[2].plot(pulse, "k"); ax[2].plot(centred, label="centred"); ax[2].plot(causal, label="causal Hann"); ax[2].plot(rc, label="RC")
+ax[2].set(xlim=(80, 170), title="causal filters delay"); ax[2].legend()
+fig.tight_layout(); fig.savefig("fast_convolution.png", dpi=110)
+print("saved fast_convolution.png")</code></pre></div>
+    <div class="task"><b>TASK 9.1 — 2D OVERLAP-ADD</b>Convolve a 4096×4096 image with a 31×31 PSF tile by tile (tiles of 256²). Compare with <code>scipy.signal.fftconvolve</code> and time both.</div>
+    <div class="task"><b>TASK 9.2 — L-CURVE</b>For experiment 5, plot ‖y − h∗x̂‖ vs ‖x̂‖ on log axes for 40 values of λ and locate the corner. Does it match the best λ?</div>
+    <div class="task"><b>TASK 9.3 — OVERLAP-ADD IN OPENMP</b>Write the O&amp;A version of overlap_save.f90 with private buffers and a serial tail pass; check it gives the same result for any number of threads.</div>
+    <div class="task"><b>TASK 9.4 — MPI HALO</b>Run the mpi4py snippet of this lesson's notes with 2, 4 and 8 processes and verify the gathered output equals <code>np.convolve</code>.</div>
+  </div>
+</section>
+
+      </div>
+      <div class="view v-practice"><h1 style="margin:6px 0 2px">Practice</h1><p class="subtitle">Every exercise of this unit in one place. Answers are checked to about 1%; fractions like 1/3 are accepted.</p></div>
+      <div class="view v-code"><h1 style="margin:6px 0 2px">Code Lab</h1><p class="subtitle">Every Python and Fortran snippet of this unit, plus the hyperspectral project tasks. The full files are in the <code>code</code> folder next to this page.</p></div>
+      <div class="view v-sheet"><h1 style="margin:6px 0 2px">Cheatsheet</h1><p class="subtitle">All the formulas of this unit. Hover any symbol for its name, meaning and code.</p></div>
+    </div>
+  </main>
+  <aside class="right learnonly">
+    <div class="rcard">
+      <div class="rtop"><span id="r-step"></span><span class="badge" id="r-badge"></span></div>
+      <h2 id="r-title"></h2>
+      <div id="r-body"></div>
+      <div class="keyidea" id="r-key"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3c.5 4 2 5.5 6 6-4 .5-5.5 2-6 6-.5-4-2-5.5-6-6 4-.5 5.5-2 6-6zM18.5 15.5c.2 1.6.9 2.3 2.5 2.5-1.6.2-2.3.9-2.5 2.5-.2-1.6-.9-2.3-2.5-2.5 1.6-.2 2.3-.9 2.5-2.5z"/></svg><b>KEY IDEA</b><span id="r-key-t"></span></div>
+      <div class="navbtns"><button class="btn back" id="r-back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M19 12H5M11 6l-6 6 6 6"/></svg> Back</button><button class="btn next" id="r-next"><span id="r-next-t">Next</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></div>
+      <div class="keys"><span class="kbd">←</span><span class="kbd">→</span> step · <span class="kbd">Ctrl K</span> search · hover symbols</div>
+    </div>
+    <div class="rcard"><div class="rtop">YOU'LL LEARN</div><ul class="learn" id="r-learn"></ul></div>
+  </aside>
+</div>
+<script src="../assets/katex/katex.min.js"></script>
+<script src="../assets/katex/auto-render.min.js"></script>
+<script src="../assets/js/course.js"></script>
+<script src="../assets/js/plot.js"></script>
+<script src="../assets/js/symbols-common.js"></script>
+<script src="lesson09.js"></script>
+<script src="../assets/js/app.js"></script>
+</body></html>

@@ -1,0 +1,440 @@
+<!-- ================================================================== 1 -->
+<section class="lesson" data-title="Objective, data and method" data-short="Overview" data-badge="CONCEPT" data-time="15 min" data-level="Beginner"
+  data-sub="Two 120 s recordings of noise. Is there a signal inside? What is it, and can we make it audible?">
+  <div class="stage">
+    <div class="stage-h"><span class="lbl">LISTEN FIRST · 5 s FROM t = 60 s</span></div>
+    <div class="audio-row">
+      <div>Recording 1, noisy data<audio controls preload="none" src="audio/rec1_noisy.wav"></audio></div>
+      <div>Recording 1, hidden signal (reference)<audio controls preload="none" src="audio/rec1_clean.wav"></audio></div>
+      <div>Recording 2, noisy data<audio controls preload="none" src="audio/rec2_noisy.wav"></audio></div>
+    </div>
+    <div class="note">Use headphones. The noise is a deep rumble with hiss; the signal is about 45 dB below it and cannot be heard.</div>
+  </div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>This laboratory puts Lectures 7–10 to work on real files: from WAV samples to spectra, from spectra to filters, and back to sound.</p><p>The analysis is in the notebook <code>AstroSignal_corrected.ipynb</code> (Python only). Each lesson of this page explains one or two blocks of it.</p></div>
+    <div class="s-key">Every filter here is a real weight H(f) ∈ [0, 1] applied to the FFT of the whole record, with H = 0 at the 50 Hz mains hum.</div>
+    <ul class="s-learn"><li>The objective of the laboratory</li><li>What is in the data files</li><li>The model of the noise and the signal</li><li>The workflow, step by step</li><li>How to run the notebook</li></ul>
+  </aside>
+  <div class="prose">
+    <h2><span class="lv basic">OBJECTIVE</span>What we want to find out</h2>
+    <ol class="steps">
+      <li>Read a WAV file and inspect it in time and in frequency; say what each spectral estimate shows.</li>
+      <li>Choose the window and the segment length of a spectral estimate (Welch).</li>
+      <li>Check with a spectrogram whether the signal is stationary.</li>
+      <li>Filter in the frequency domain — band-pass, comb, Wiener — go back to time and listen.</li>
+      <li>Recognise and remove a systematic line: the 50 Hz mains hum.</li>
+      <li>Compare every filtered output with the clean signal, with a number (SNR) and a plot.</li>
+      <li>Fit a model to the noise, set a detection threshold, build a Wiener filter from the data alone.</li>
+    </ol>
+
+    <h2><span class="lv basic">DATA</span>The four files</h2>
+    <table><tr><th>file</th><th>content</th><th>use</th></tr>
+      <tr><td><code>dati_rumorosi.wav</code></td><td>recording 1: signal + noise</td><td>the data to analyse</td></tr>
+      <tr><td><code>segnale.wav</code></td><td>the noise-free signal of recording 1, same scale</td><td>only to <i>check</i> the filters</td></tr>
+      <tr><td><code>dati_rumorosi_2.wav</code></td><td>recording 2: signal + noise</td><td>the same analysis, harder lines</td></tr>
+      <tr><td><code>segnale_2.wav</code></td><td>clean signal of recording 2</td><td>check</td></tr></table>
+    <ul>
+      <li><b>Format.</b> 120 s, sampling rate f<sub>s</sub> = 44 100 Hz, 16-bit signed integers (−32 768 … 32 767), one channel: N = 5 292 000 samples per file, 10.6 MB.</li>
+      <li><b>Frequency grid.</b> The FFT of the whole record has bins every 1/T = 0.0083 Hz, from 0 to the Nyquist frequency f<sub>s</sub>/2 = 22 050 Hz: 2 646 001 bins.</li>
+      <li><b>Scale.</b> The noisy files peak at 29 490 (90% of full scale: a margin against clipping). The rms of the data is 13 194; the rms of the clean signal only 73: the signal power is 45 dB below the noise.</li>
+      <li><b>The noise</b> is synthetic and coloured: <i>red</i> (∝ f⁻²) below a knee at about 440 Hz and white above — the same knee model \(S_n = A[1 + (f_k/f)^\alpha]\) as in Lectures 10 and 12.</li>
+      <li><b>A systematic effect.</b> Both recordings contain a 50 Hz line, the mains hum: produced by the instrument, not by the source. It must be removed by every filter.</li>
+      <li><b>Why audio?</b> A WAV file is a perfect laboratory for astrophysical time series: the same tools (periodogram, Welch, STFT, Wiener) are used on detector time-ordered data, light curves and gravitational-wave strain, and here you can also <i>hear</i> the result.</li>
+    </ul>
+
+    <h2><span class="lv core">METHOD</span>The workflow</h2>
+    <table><tr><th>step</th><th>block</th><th>method</th><th>theory</th></tr>
+      <tr><td>0 read, listen, look</td><td>0–2</td><td>int16 → float, time plots</td><td><a href="../07.%20Discrete%20Signal%20Analysis/index.html#s2">L7 quantisation</a></td></tr>
+      <tr><td>1 periodogram & Welch</td><td>3–6</td><td>whole-record |FFT|², averaged windowed segments</td><td><a href="../10.%20Spectral%20Estimation/index.html#s3">L10 Welch</a></td></tr>
+      <tr><td>2 stationarity</td><td>7</td><td>STFT spectrogram, line amplitude in 10 s blocks</td><td><a href="../08.%20The%20FFT/index.html#s7">L8 STFT</a></td></tr>
+      <tr><td>3 band-pass</td><td>8</td><td>H = 1 in a band</td><td><a href="../09.%20Convolution%20and%20Correlation/index.html#s1">L9 filtering</a></td></tr>
+      <tr><td>4 comb</td><td>9</td><td>H = 1 around each line</td><td>—</td></tr>
+      <tr><td>5 noise fit</td><td>10</td><td>least squares on log Welch</td><td><a href="../10.%20Spectral%20Estimation/index.html#s6">L10 knee</a></td></tr>
+      <tr><td>6 Wiener</td><td>11–12</td><td>Φ = 1 − 1/z, threshold z*</td><td><a href="../10.%20Spectral%20Estimation/index.html#s5">L10 Wiener</a></td></tr>
+      <tr><td>7 Whittle</td><td>13</td><td>exact likelihood of the periodogram</td><td><a href="../12.%20Bayesian%20Inference/index.html#s3">L12 Whittle</a></td></tr>
+      <tr><td>recording 2</td><td>15</td><td>resolution, beat, filters</td><td>—</td></tr>
+      <tr><td>summary</td><td>14, 16</td><td>SNR table, listening</td><td>—</td></tr></table>
+    <x-f name="Filtering in Fourier space" tag="METHOD">
+      \h{Xk}{X_k}=\mathrm{FFT}(x),\qquad \h{Yk}{Y_k}=\h{Hk}{H_k}\,\h{Xk}{X_k},\qquad y=\mathrm{IFFT}(Y),\qquad \h{Hk}{H_k}\in[0,1]
+      <note>A real H does not shift phases: the signal stays where it was in time. Applied to the whole stored record at once (a circular convolution: fine for a file, not for a stream — Lecture 9).</note>
+      <py>
+      X = rfft(x); f = rfftfreq(N, 1/fs)
+      H = ((f > 493) & (f < 814)).astype(float)
+      y = irfft(H * X, n=N)
+      </py>
+    </x-f>
+    <x-f name="Quality of a filter" tag="METRIC">
+      \mathrm{SNR}=10\log_{10}\frac{\mathrm{var}(\h{sclean}{s})}{\mathrm{var}(y-\h{sclean}{s})}\ \ [\mathrm{dB}]
+      <note>Compares the filtered output y with the clean signal s: 0 dB means the residual is as large as the signal itself; +20 dB means 10 times smaller in amplitude. Possible only because the clean files are given — with real data we never have s.</note>
+      <py>def snr_db(y, s): return 10 * np.log10(np.var(s) / np.var(y - s))</py>
+    </x-f>
+
+    <h2><span class="lv code">RUN</span>How to run the notebook</h2>
+    <ul>
+      <li><b>Google Colab</b>: open <code>AstroSignal_corrected.ipynb</code>, run Block 0 and upload the four WAV files when asked.</li>
+      <li><b>Locally</b>: put the four files in a <code>data/</code> folder next to the notebook (as in this folder) and run all cells; or run the plain script <code>code/lab1_analysis.py</code>. About 40 s on a laptop.</li>
+      <li>Outputs: every figure in <code>figures/</code>, the filtered recordings in <code>out_wav/</code>, 5 s audio clips inline.</li>
+    </ul>
+    <x-code py="block00.py"/>
+  </div>
+</section>
+
+<!-- ================================================================== 2 -->
+<section class="lesson" data-title="Read, listen, look" data-short="Read & look" data-badge="CODE" data-time="15 min" data-level="Beginner"
+  data-sub="Blocks 1–2: from 16-bit integers to floating point, and the first look at 120 s of samples.">
+  <div class="stage"><div class="stage-h"><span class="lbl">BLOCK 2 · THE SAMPLES BEFORE ANY PROCESSING</span></div>
+    <figure class="fig"><img src="figures/b02_time_domain.png" alt="time domain"><figcaption>Left: 120 s of recording 1 (every 200th sample). Right: 20 ms around t = 60 s, data with the mean removed (blue) and the clean signal (red).</figcaption></figure></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>The samples are dominated by a slow wander of ±25 000: red noise. The signal is a ripple of ±170 hidden inside it.</p></div>
+    <div class="s-key">Convert int16 to float before any arithmetic: sums and squares of 16-bit integers overflow at 32 767.</div>
+    <ul class="s-learn"><li>Reading a WAV file with scipy</li><li>Duration, resolution, rms, peak</li><li>Why the signal is invisible in time</li></ul>
+  </aside>
+  <div class="prose">
+    <div class="nbcell"><h3>Block 1 — Read the recordings and the clean references</h3>
+      <p><b>What it does.</b> Reads the noisy recording and its clean signal, converts both to float64, builds the time axis t = n/f<sub>s</sub> and a 20 ms mask used for every later comparison, and prints a table of properties.</p>
+      <x-code py="block01.py"/>
+      <table><tr><th>quantity</th><th>value</th><th>meaning</th></tr>
+        <tr><td>f<sub>s</sub></td><td>44 100 Hz</td><td>CD-quality sampling: Nyquist 22 050 Hz</td></tr>
+        <tr><td>N</td><td>5 292 000</td><td>120 s × 44 100</td></tr>
+        <tr><td>1/T</td><td>0.0083 Hz</td><td>bin width of the whole-record FFT</td></tr>
+        <tr><td>rms of the data</td><td>13 194</td><td>almost all noise</td></tr>
+        <tr><td>peak |x|</td><td>29 490</td><td>90% of int16 full scale</td></tr>
+        <tr><td>rms of the clean signal</td><td>73.4</td><td>the hidden chord</td></tr>
+        <tr><td>signal / noise power</td><td>−45.1 dB</td><td>the signal power is 1/32 000 of the noise</td></tr></table>
+    </div>
+    <div class="nbcell"><h3>Block 2 — Look at the samples</h3>
+      <x-code py="block02.py"/>
+      <p><b>Reading the plot.</b> Left: the record wanders slowly over most of the int16 range — the signature of red noise (power concentrated at low frequency). Right: in 20 ms the clean chord (red) is a smooth periodic ripple; the data (blue) show nothing of it. <b>Significance:</b> in the time domain the signal is undetectable; the next blocks move to the frequency domain, where a steady tone concentrates all its power in one bin.</p>
+    </div>
+    <x-ex id="l1-2a" ans="-45.1" tol="0.3" lvl="Basic">Signal rms 73.4, noise rms ≈ 13 194. Signal-to-noise power ratio in dB? (10 log₁₀ of the ratio of variances)
+      <hint>10 log₁₀((73.4/13194)²).</hint><sol>20 log₁₀(73.4/13194) = 20·(−2.255) = −45.1 dB.</sol></x-ex>
+    <x-ex id="l1-2b" ans="0.0083" tol="0.0002" lvl="Basic">Bin width of the FFT of the whole 120 s record, in Hz?
+      <hint>1/T.</hint><sol>1/120 = 0.00833 Hz.</sol></x-ex>
+  </div>
+</section>
+
+<!-- ================================================================== 3 -->
+<section class="lesson" data-title="Periodogram, Welch and the choice of window" data-short="Spectra" data-badge="MATH" data-time="35 min" data-level="Intermediate"
+  data-sub="Blocks 3–6: the periodogram shows the lines, Welch shows the noise; the window and the segment length decide what you see.">
+  <div class="stage"><div class="stage-h"><span class="lbl">BLOCK 3 · PERIODOGRAM AND WELCH</span></div>
+    <figure class="fig"><img src="figures/b03_periodogram_welch.png" alt="periodogram and Welch"><figcaption>Left: the whole band, log–log. Right: zoom 30–850 Hz, four narrow lines (50 Hz hum and three notes) above a falling noise.</figcaption></figure></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>The periodogram scatters by 100% in every bin, but a steady tone stands 4–5×10⁴ above it. Welch averages 160 segments: the scatter falls to ~8%, the lines to 240–340.</p></div>
+    <div class="s-key">Lines: keep the full resolution. Continuum: average. Window: fast sidelobe decay for a red spectrum.</div>
+    <ul class="s-learn"><li>Periodogram vs Bartlett vs Welch</li><li>Reading a log–log spectrum</li><li>Finding and naming the lines</li><li>Leakage of the rectangular window (table)</li><li>Line contrast ∝ segment length (table)</li></ul>
+  </aside>
+  <div class="prose">
+    <x-f name="Periodogram (one-sided density)" tag="ESTIMATOR">
+      \h{Pk}{P_k}=\frac{2\,|\h{Xk}{X_k}|^2}{\h{fs}{f_s}\,\h{N}{N}},\qquad f_k=\frac{k\,f_s}{N}
+      <note>Resolution 1/T = 0.008 Hz, but each value is χ²₂/2-distributed around the true spectrum: standard deviation = mean, whatever T (Lecture 10).</note>
+      <py>fp, P = sp.periodogram(x, fs)       # = 2|X|^2/(fs N)</py>
+    </x-f>
+    <x-f name="Welch estimate" tag="ESTIMATOR">
+      \h{PW}{\hat P_W(f)}=\frac{1}{K}\h{sum}{\sum_{i=0}^{K-1}}\frac{2}{f_s\,L\,U}\Big|\sum_{n=0}^{L-1}w[n]\,x[n+iD]\,e^{-j2\pi fn/f_s}\Big|^2
+      <note>K = 160 half-overlapping segments of L = 2¹⁶ samples (1.49 s, bins of 0.67 Hz). Scatter ≈ 1/√K; resolution a few f<sub>s</sub>/L. Bartlett = rectangular window, no overlap (K = 80).</note>
+      <py>fw, W = sp.welch(x, fs, window='nuttall', nperseg=2**16)    # noverlap = L/2</py>
+    </x-f>
+    <div class="nbcell"><h3>Block 3 — Periodogram and Welch</h3>
+      <x-code py="block03.py"/>
+      <p><b>Reading the plot.</b> The noise falls as f⁻² from 1 Hz to a few hundred hertz (six decades of power) and then flattens: red noise with a knee, then white. The periodogram (grey) is a thick band — its 100% scatter; Welch (orange) is a thin line through it. Four spikes: 50 Hz and three near 500–800 Hz. The Bartlett estimate (blue) lies <i>above</i> Welch between 50 and 1000 Hz: leakage of the rectangular window (next block).</p>
+    </div>
+    <div class="nbcell"><h3>Block 4 — Find the lines automatically and name them</h3>
+      <p><b>What it does.</b> Divides Welch by its running median (the local noise floor over 135 Hz), keeps the maxima more than 20 times above it, then reads the exact frequency in the periodogram and converts it to a musical note, \(n = 12\log_2(f/440\ \mathrm{Hz})\).</p>
+      <x-code py="block04.py"/>
+      <table><tr><th>f [Hz]</th><th>Welch / floor</th><th>periodogram contrast</th><th>nature</th></tr>
+        <tr><td>50.00</td><td>19</td><td>3 469</td><td>mains hum (instrument)</td></tr>
+        <tr><td>523.30</td><td>238</td><td>41 623</td><td>C5</td></tr>
+        <tr><td>659.30</td><td>291</td><td>48 593</td><td>E5</td></tr>
+        <tr><td>784.00</td><td>335</td><td>54 067</td><td>G5</td></tr></table>
+      <p><b>Significance.</b> Recording 1 is a <b>C major chord</b> (C–E–G). The periodogram contrast is ~170 times the Welch contrast: averaging segments spreads a line over many bins and loses its coherent gain. The hum looks weak in Welch only because it sits on the steep red noise.</p>
+    </div>
+    <div class="stage"><div class="stage-h"><span class="lbl">BLOCK 5 · FOUR WINDOWS, ZOOM 30–1000 Hz</span></div>
+      <figure class="fig"><img src="figures/b05_windows.png" alt="windows"><figcaption>boxcar (rectangular) and flattop are wrong choices here; hann and nuttall are right.</figcaption></figure></div>
+    <div class="nbcell"><h3>Block 5 — Which window? Leakage and line contrast</h3>
+      <x-code py="block05.py"/>
+      <table><tr><th>window</th><th>noise / reference, 50–100 Hz</th><th>500–1000 Hz</th><th>contrast C5</th><th>E5</th><th>G5</th></tr>
+        <tr><td>boxcar</td><td><b>2.13</b></td><td>1.31</td><td>219</td><td>364</td><td>499</td></tr>
+        <tr><td>triang</td><td>1.05</td><td>1.01</td><td>314</td><td>412</td><td>495</td></tr>
+        <tr><td>hamming</td><td>1.08</td><td>1.01</td><td>309</td><td>402</td><td>482</td></tr>
+        <tr><td>hann</td><td>1.06</td><td>1.01</td><td>292</td><td>373</td><td>439</td></tr>
+        <tr><td>blackmanharris</td><td>1.05</td><td>1.00</td><td>235</td><td>286</td><td>330</td></tr>
+        <tr><td>nuttall</td><td>1.05</td><td>1.00</td><td>238</td><td>291</td><td>335</td></tr>
+        <tr><td>flattop</td><td>1.07</td><td>1.00</td><td><b>139</b></td><td>158</td><td>179</td></tr></table>
+      <p><b>Reading the table.</b> Reference: Nuttall with 2¹⁸ samples. The rectangular window doubles the apparent noise at 50–100 Hz: its sidelobes fall only 6 dB/octave, slower than the f⁻² noise, so power from below leaks upwards. Flattop has a main lobe 3.8 bins wide: half the contrast and poor resolution (it is meant for measuring amplitudes). Hann (−31 dB, 18 dB/oct) and Nuttall (−98 dB) are safe.</p>
+    </div>
+    <div class="stage"><div class="stage-h"><span class="lbl">BLOCK 6 · CONTRAST AGAINST SEGMENT LENGTH</span></div>
+      <figure class="fig"><img src="figures/b06_contrast_vs_L.png" alt="contrast vs L" style="max-width:560px;margin:auto"><figcaption>Line contrast grows in proportion to the segment length L.</figcaption></figure></div>
+    <div class="nbcell"><h3>Block 6 — How long should the segments be?</h3>
+      <x-code py="block06.py"/>
+      <table><tr><th>L</th><th>duration</th><th>bin</th><th>K</th><th>contrast C5</th><th>E5</th><th>G5</th></tr>
+        <tr><td>2¹²</td><td>0.09 s</td><td>10.8 Hz</td><td>2582</td><td>14</td><td>18</td><td>20</td></tr>
+        <tr><td>2¹⁴</td><td>0.37 s</td><td>2.69 Hz</td><td>644</td><td>55</td><td>75</td><td>79</td></tr>
+        <tr><td>2¹⁶</td><td>1.49 s</td><td>0.67 Hz</td><td>160</td><td>238</td><td>291</td><td>335</td></tr>
+        <tr><td>2¹⁸</td><td>5.94 s</td><td>0.17 Hz</td><td>39</td><td>954</td><td>1221</td><td>1242</td></tr>
+        <tr><td>2²⁰</td><td>23.8 s</td><td>0.04 Hz</td><td>9</td><td>3860</td><td>4644</td><td>5083</td></tr></table>
+      <p><b>Significance.</b> A line puts its power in one bin whose width is f<sub>s</sub>/L, while the noise per bin is fixed: contrast ∝ L. But the variance of the continuum ∝ 1/K = L/N. Choose L long enough for the lines to stand out and for the closest pair to separate, and short enough to keep K ≳ 50 for the noise.</p>
+    </div>
+    <x-ex id="l1-3a" ans="160" tol="0.5" lvl="Basic">N = 5 292 000, L = 65 536, 50% overlap (D = L/2). Number of Welch segments K = ⌊(N − L)/D⌋ + 1?
+      <hint>(5292000 − 65536)/32768 = 159.5.</hint><sol>⌊159.5⌋ + 1 = 160.</sol></x-ex>
+    <x-ex id="l1-3b" ans="0.079" tol="0.003" lvl="Core">Expected relative scatter of a Welch value with K = 160 nearly independent segments (≈ 1/√K)?
+      <hint>1/√160.</hint><sol>0.079: about 8%, against 100% for the periodogram.</sol></x-ex>
+  </div>
+</section>
+
+<!-- ================================================================== 4 -->
+<section class="lesson" data-title="Is the signal stationary?" data-short="STFT" data-badge="MATH" data-time="15 min" data-level="Intermediate"
+  data-sub="Block 7: the spectrogram and the amplitude of each line in 10 s blocks.">
+  <div class="stage"><div class="stage-h"><span class="lbl">BLOCK 7 · SPECTROGRAM, 1 s HANN WINDOW</span></div>
+    <figure class="fig"><img src="figures/b07_spectrogram.png" alt="spectrogram"><figcaption>Four horizontal ridges for the whole 120 s: 50 Hz and the three notes.</figcaption></figure></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>The filters of the next blocks use the FFT of the whole record: they assume each line is present all the time at a fixed frequency. Check it first.</p></div>
+    <div class="s-key">A steady line is a horizontal stripe in the spectrogram; its amplitude in 10 s blocks is constant within the noise.</div>
+    <ul class="s-learn"><li>STFT with 1 s windows</li><li>Amplitude of a line by projection</li><li>Why stationarity matters for filtering</li></ul>
+  </aside>
+  <div class="prose">
+    <x-f name="Amplitude of a line in a block" tag="ESTIMATOR">
+      \h{Al}{A_\ell}=\frac{2}{n}\Big|\h{sum}{\sum_{i\in\text{block}}}x_i\,e^{-j2\pi f_\ell t_i}\Big|
+      <note>Projection of the data on a complex exponential at the line frequency: the DFT evaluated at exactly f<sub>ℓ</sub>.</note>
+      <py>A = 2 * np.abs(np.sum(xb * np.exp(-2j*np.pi*fl*tb))) / xb.size</py>
+    </x-f>
+    <div class="nbcell"><h3>Block 7 — Spectrogram and amplitude in 10 s blocks</h3>
+      <x-code py="block07.py"/>
+      <table><tr><th>line</th><th>mean amplitude</th><th>std</th><th>std / mean</th></tr>
+        <tr><td>50.0 Hz (hum)</td><td>120.2</td><td>7.7</td><td>6.4%</td></tr>
+        <tr><td>523.3 Hz</td><td>60.1</td><td>1.1</td><td>1.8%</td></tr>
+        <tr><td>659.3 Hz</td><td>60.0</td><td>0.8</td><td>1.3%</td></tr>
+        <tr><td>784.0 Hz</td><td>60.0</td><td>0.8</td><td>1.4%</td></tr></table>
+      <p><b>Reading the results.</b> The three notes have equal amplitude (60) and vary by less than 2% between blocks — the scatter expected from the noise in each block. The hum is twice as strong (120) and scatters more because it sits on the much stronger red noise at 50 Hz. <b>Significance:</b> a stationary chord justifies whole-record filters; the window (1 s → 1 Hz resolution) separates lines 125 Hz apart easily.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================== 5 -->
+<section class="lesson" data-title="Band-pass and comb filters" data-short="Band & comb" data-badge="CODE" data-time="25 min" data-level="Intermediate"
+  data-sub="Blocks 8–9: keep a band, then keep only narrow teeth around the lines.">
+  <div class="stage"><div class="stage-h"><span class="lbl">BLOCK 8 · BAND-PASS 493–814 Hz, BEFORE / AFTER</span></div>
+    <figure class="fig"><img src="figures/b08_bandpass.png" alt="band-pass"><figcaption>Left: periodogram before (grey) and after (blue) the band-pass. Right: 20 ms of the output on the clean signal.</figcaption></figure>
+    <div class="audio-row"><div>after the band-pass<audio controls preload="none" src="audio/rec1_bandpass.wav"></audio></div><div>after the comb (2.5 Hz teeth)<audio controls preload="none" src="audio/rec1_comb.wav"></audio></div></div></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>Knowing where the noise power is decides the filter: the red noise lives at low frequency, so a band around the notes removes most of it. Narrow teeth around the lines remove almost everything else.</p></div>
+    <div class="s-key">Each tooth lets through noise in proportion to its width: SNR improves by ~6.5 dB for every factor 5 narrower.</div>
+    <ul class="s-learn"><li>A band-pass by eye and its SNR</li><li>Why a low-pass would fail</li><li>Comb width vs SNR (table)</li><li>Putting a tooth at 50 Hz: the hum returns</li></ul>
+  </aside>
+  <div class="prose">
+    <div class="nbcell"><h3>Block 8 — Band-pass by eye</h3>
+      <x-code py="block08.py"/>
+      <table><tr><th>filter</th><th>SNR</th><th>what you hear</th></tr>
+        <tr><td>band 493–814 Hz</td><td>+5.7 dB</td><td>the chord, with hiss</td></tr>
+        <tr><td>band 20–814 Hz</td><td>−8.5 dB</td><td>hum and rumble: the low frequencies are back</td></tr></table>
+      <p><b>Reading the plot.</b> After the filter, only the band 493–814 Hz survives (blue). In time, the output follows the clean signal but wobbles around it: the white noise inside the 321 Hz band is still there. A low-pass at 4 kHz would do nothing: it keeps exactly the low frequencies where the noise lives.</p>
+    </div>
+    <div class="stage"><div class="stage-h"><span class="lbl">BLOCK 9 · COMB: SNR AGAINST TOOTH WIDTH</span></div>
+      <figure class="fig"><img src="figures/b09_comb.png" alt="comb"><figcaption>Left: SNR against the half-width of the teeth. Right: 20 ms with 2.5 Hz teeth, and with an extra tooth at 50 Hz.</figcaption></figure></div>
+    <div class="nbcell"><h3>Block 9 — A comb around the lines</h3>
+      <x-code py="block09.py"/>
+      <table><tr><th>half-width δf</th><th>bins kept</th><th>SNR</th></tr>
+        <tr><td>50 Hz</td><td>35 998</td><td>5.9 dB</td></tr><tr><td>10 Hz</td><td>7 197</td><td>12.9 dB</td></tr>
+        <tr><td>2.5 Hz</td><td>1 797</td><td>19.2 dB</td></tr><tr><td>0.5 Hz</td><td>357</td><td>26.1 dB</td></tr>
+        <tr><td>0.1 Hz</td><td>71</td><td>32.5 dB</td></tr><tr><td>0.01 Hz</td><td>9</td><td>43.2 dB</td></tr>
+        <tr><td>2.5 Hz + tooth at 50 Hz</td><td>2 396</td><td><b>−2.0 dB</b></td></tr></table>
+      <p><b>Significance.</b> The noise passed is proportional to the number of bins kept: every factor 5 in width is 7 dB in SNR (10 log₁₀ 5). The limit is 1/T = 0.008 Hz, one bin per line — possible only because the lines are stationary and their frequencies are known that well. A tooth at 50 Hz brings back the hum, twice as loud as each note.</p>
+    </div>
+    <x-ex id="l1-5a" ans="7" tol="0.2" lvl="Core">If the passed noise power is proportional to the tooth width, how many dB of SNR do you gain by making the teeth 5 times narrower?
+      <hint>10 log₁₀ 5.</hint><sol>6.99 dB: compare 50 → 10 Hz (5.9 → 12.9 dB).</sol></x-ex>
+  </div>
+</section>
+
+<!-- ================================================================== 6 -->
+<section class="lesson" data-title="Fitting the noise spectrum" data-short="Noise fit" data-badge="MATH" data-time="25 min" data-level="Intermediate"
+  data-sub="Block 10: the knee model fitted in logarithms, with and without the lines.">
+  <div class="stage"><div class="stage-h"><span class="lbl">BLOCK 10 · NOISE MODEL AND RESIDUALS</span></div>
+    <figure class="fig"><img src="figures/b10_noise_fit.png" alt="noise fit"><figcaption>Left: Welch and the fitted model. Right: data/model, flat at 1 within the scatter from 1 Hz to 20 kHz.</figcaption></figure></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>To put a number on “above the noise” we need S<sub>n</sub>(f) at every frequency. Fit a smooth three-parameter model to Welch, in logarithms, with the lines masked.</p></div>
+    <div class="s-key">The relative scatter of Welch is the same at every frequency: in ln W it becomes an additive error of constant size, so ordinary least squares is right.</div>
+    <ul class="s-learn"><li>The knee model in logarithms</li><li>Why fit ln W, not W</li><li>Effect of masking the lines</li><li>Checking a fit with data/model</li></ul>
+  </aside>
+  <div class="prose">
+    <x-f name="Knee noise model (in logarithms)" tag="MODEL">
+      \ln \h{Sn}{S_n}(f)=\ln \h{A}{A}+\ln\!\Big[1+\Big(\frac{\h{fk}{f_k}}{f}\Big)^{\h{alpha}{\alpha}}\Big]
+      <note>Free parameters ln A, ln f<sub>k</sub>, α (fitting the logs keeps A and f<sub>k</sub> positive). <code>np.log1p</code> is accurate also when (f<sub>k</sub>/f)<sup>α</sup> ≪ 1.</note>
+      <py>def logS(f, lA, lfk, alpha): return lA + np.log1p((np.exp(lfk)/f)**alpha)</py>
+    </x-f>
+    <div class="nbcell"><h3>Block 10 — Fit the noise spectrum</h3>
+      <x-code py="block10.py"/>
+      <table><tr><th>fit</th><th>A</th><th>f<sub>k</sub> [Hz]</th><th>α</th></tr>
+        <tr><td>all points</td><td>3.072</td><td>457.3</td><td>1.983</td></tr>
+        <tr><td>lines excluded</td><td>3.073</td><td><b>439.4</b></td><td><b>2.007</b></td></tr>
+        <tr><td>log bins, lines excluded</td><td>3.111</td><td>420.6</td><td>2.041</td></tr>
+        <tr><td>generator (truth)</td><td>—</td><td>440</td><td>2</td></tr></table>
+      <p><b>Reading the results.</b> With the lines masked the fit recovers the generator to 0.1% in f<sub>k</sub> and 0.4% in α; the lines bias it a little (457 Hz). The residual plot is flat at 1 (rms of the log residuals 0.079, i.e. the 1/√K scatter), with larger excursions below 10 Hz where few Welch bins exist. Fitting log-binned averages weights each decade equally and moves the parameters by a few per cent. The formal 1σ errors are tiny (±0.003 in α): the real uncertainty is in the choice of weighting.</p>
+    </div>
+    <x-hsi to="s6">The same knee fit for the noise of each band of a hyperspectral cube</x-hsi>
+  </div>
+</section>
+
+<!-- ================================================================== 7 -->
+<section class="lesson" data-title="Wiener filters: naive and on detected lines" data-short="Wiener" data-badge="MATH" data-time="30 min" data-level="Advanced"
+  data-sub="Blocks 11–12: Φ = 1 − 1/z in every bin fails; with a detection threshold and the hum vetoed it returns the clean signal.">
+  <div class="stage"><div class="stage-h"><span class="lbl">BLOCKS 11–12 · WHY THE NAIVE FILTER FAILS, AND THE FIX</span></div>
+    <figure class="fig"><img src="figures/b11_wiener_naive.png" alt="naive wiener"><figcaption>Left: z = P/S<sub>n</sub> in noise-only bins follows e<sup>−z</sup>. Right: the naive output is the low-frequency noise.</figcaption></figure>
+    <figure class="fig"><img src="figures/b12_wiener_lines.png" alt="wiener lines"><figcaption>Left: detected lines without the veto (the hum). Right: hum vetoed — output and clean signal coincide.</figcaption></figure>
+    <div class="audio-row"><div>naive Wiener<audio controls preload="none" src="audio/rec1_wiener_naive.wav"></audio></div><div>Wiener on detected lines<audio controls preload="none" src="audio/rec1_wiener_lines.wav"></audio></div><div>clean reference<audio controls preload="none" src="audio/rec1_clean.wav"></audio></div></div></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>The Wiener filter keeps each frequency in proportion to how much signal it contains. With single periodogram bins, “how much signal” is itself a noisy number: 37% of noise bins look like signal.</p></div>
+    <div class="s-key">Keep a bin only if z exceeds a threshold that noise alone reaches once in a hundred recordings: z* = ln(M/p) = 19.4.</div>
+    <ul class="s-learn"><li>Φ = S<sub>s</sub>/(S<sub>s</sub>+S<sub>n</sub>) = 1 − 1/z</li><li>The exponential statistics of z</li><li>The detection threshold z*</li><li>Systematic lines are detected too</li></ul>
+  </aside>
+  <div class="prose">
+    <x-f name="Wiener weight from the data" tag="FILTER">
+      \h{Phi}{\Phi_k}=\frac{S_s}{S_s+\h{Sn}{S_n}}=1-\frac{1}{\h{zk}{z_k}},\qquad \h{zk}{z_k}=\frac{\h{Pk}{P_k}}{\h{Sn}{S_n(f_k)}},\qquad S_s\approx P_k-S_n
+      <note>All quantities in the same units (one-sided density). With P = |X|²/N instead of 2|X|²/(f<sub>s</sub>N), Φ ≈ 1 everywhere and nothing is filtered (SNR −45 dB).</note>
+      <py>
+      Pk = np.abs(X)**2 * 2 / (fs * N)
+      z = Pk / Sn;  phi = np.clip(1 - 1/z, 0, 1)
+      </py>
+    </x-f>
+    <div class="nbcell"><h3>Block 11 — The naive Wiener filter</h3>
+      <x-code py="block11.py"/>
+      <p><b>Reading the results.</b> In a noise-only bin z is exponential: P(z &gt; 1) = e<sup>−1</sup> = 0.368 (measured 0.369). The naive filter keeps 976 472 bins, a third of the spectrum, including the huge low-frequency noise: SNR −37.5 dB, the output is offset by −3000 and noisy. P − S<sub>n</sub> in a single bin is not an estimate of S<sub>s</sub>: it fluctuates as much as the noise.</p>
+    </div>
+    <x-f name="Detection threshold" tag="DECISION">
+      \h{M}{M}\,e^{-\h{zstar}{z^*}}=\h{pfa}{p}\quad\Longrightarrow\quad \h{zstar}{z^*}=\ln\frac{\h{M}{M}}{\h{pfa}{p}}=\ln\frac{2.64\times10^6}{0.01}=19.4
+      <note>M bins tested (above 20 Hz), p = expected number of false lines per recording. The largest noise-only z above 20 Hz was 15.3 — below the threshold, as it should be.</note>
+      <py>zstar = np.log(np.sum(f > 20) / 0.01)</py>
+    </x-f>
+    <div class="stage" data-widget="zthresh"></div>
+    <div class="nbcell"><h3>Block 12 — Wiener on the detected lines</h3>
+      <x-code py="block12.py"/>
+      <table><tr><th>f [Hz]</th><th>z</th><th>amplitude 2|X|/N</th><th>decision</th></tr>
+        <tr><td>50.000</td><td>3 544</td><td>120.1</td><td>mains hum: vetoed</td></tr>
+        <tr><td>523.300</td><td>41 349</td><td>60.1</td><td>C5: kept</td></tr>
+        <tr><td>659.300</td><td>48 722</td><td>60.0</td><td>E5: kept</td></tr>
+        <tr><td>784.000</td><td>53 536</td><td>60.0</td><td>G5: kept</td></tr></table>
+      <p><b>Significance.</b> Four bins pass the threshold. Without the veto the hum dominates (SNR −1.3 dB); with it, three bins are kept and the SNR is <b>+44.6 dB</b>: the output is the clean chord. The amplitudes are shrunk by 1/z ≈ 10⁻⁴: Wiener trades a tiny bias for much less noise. A detected line is not necessarily signal — knowing the instrument decides.</p>
+    </div>
+    <x-ex id="l1-7a" ans="0.368" tol="0.003" lvl="Basic">Probability that a noise-only periodogram bin has z = P/S<sub>n</sub> &gt; 1?
+      <hint>z is exponential with mean 1.</hint><sol>e⁻¹ = 0.368.</sol></x-ex>
+    <x-ex id="l1-7b" ans="19.4" tol="0.1" lvl="Core">M = 2.64×10⁶ bins, p = 0.01 false lines. Threshold z*?
+      <hint>ln(M/p).</hint><sol>ln(2.64×10⁸) = 19.39.</sol></x-ex>
+  </div>
+</section>
+
+<!-- ================================================================== 8 -->
+<section class="lesson" data-title="Whittle fit of the noise" data-short="Whittle" data-badge="MATH" data-time="15 min" data-level="Advanced"
+  data-sub="Block 13: the exact likelihood of the periodogram — and what a few line bins do to it.">
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>The periodogram values are independent exponentials around S(f): their exact likelihood gives the Whittle estimator, the best fit once the lines are excluded.</p></div>
+    <div class="s-key">A few bins with P/S ~ 10⁴ dominate the Whittle sum: mask the lines first.</div>
+    <ul class="s-learn"><li>Whittle −ln L</li><li>Fitting 2.4 million bins</li><li>Comparison with least squares</li></ul>
+  </aside>
+  <div class="prose">
+    <x-f name="Whittle likelihood" tag="LIKELIHOOD">
+      -\ln\mathcal L(\theta)=\h{sum}{\sum_k}\Big[\ln \h{Sn}{S(f_k;\theta)}+\frac{\h{Pk}{P_k}}{\h{Sn}{S(f_k;\theta)}}\Big]
+      <note>Uses every bin with its exact distribution: no bias from taking logs of averages. Started from the least-squares parameters of Block 10. Theory: <a href="../12.%20Bayesian%20Inference/index.html#s3">Lesson 12, likelihood</a>.</note>
+      <py>nll = lambda q: np.sum(np.log(S(q)) + Ps / S(q))</py>
+    </x-f>
+    <div class="nbcell"><h3>Block 13 — Whittle fit</h3>
+      <x-code py="block13.py"/>
+      <table><tr><th>estimator</th><th>A</th><th>f<sub>k</sub> [Hz]</th><th>α</th></tr>
+        <tr><td>least squares on log Welch</td><td>3.073</td><td>439.4</td><td>2.007</td></tr>
+        <tr><td>Whittle, all bins</td><td>2.977</td><td><b>936.4</b></td><td><b>1.604</b></td></tr>
+        <tr><td>Whittle, lines excluded (±2 Hz)</td><td>3.078</td><td>442.7</td><td>1.994</td></tr>
+        <tr><td>truth</td><td>—</td><td>440</td><td>2</td></tr></table>
+      <p><b>Significance.</b> With all bins the four lines (P/S up to 5×10⁴) drag the fit far away: f<sub>k</sub> doubles. Masking ±2 Hz around them gives the best estimate of all (α = 1.994). Rule: Welch first to look and mask, Whittle for the parameters.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================== 9 -->
+<section class="lesson" data-title="Recording 2: two tones 2 Hz apart" data-short="Recording 2" data-badge="MATH" data-time="25 min" data-level="Advanced"
+  data-sub="Block 15: resolution, the beat, and the same filters on harder lines.">
+  <div class="stage"><div class="stage-h"><span class="lbl">BLOCK 15 · RESOLVING 440 AND 442 Hz</span></div>
+    <figure class="fig"><img src="figures/b15_rec2_resolution.png" alt="recording 2 resolution"><figcaption>Left: Welch with 2¹⁶ samples merges the pair, 2¹⁸ separates it. Centre: STFT with 0.1 s: one line whose power beats. Right: STFT with 2 s: two steady lines.</figcaption></figure>
+    <div class="audio-row"><div>recording 2, noisy<audio controls preload="none" src="audio/rec2_noisy.wav"></audio></div><div>recording 2, comb filter<audio controls preload="none" src="audio/rec2_comb.wav"></audio></div></div></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>Recording 2 contains A4 (440 Hz), A4 + 8 cents (442 Hz) and A5 (880 Hz), plus the hum. Two lines 2 Hz apart are one tone beating twice per second, or two lines — depending on the window.</p></div>
+    <div class="s-key">Δt·Δf is fixed: the window chooses the description. Both are correct.</div>
+    <ul class="s-learn"><li>Resolution: f<sub>s</sub>/L must be well below 2 Hz</li><li>The beat in the spectrogram</li><li>Noise fit and Wiener on recording 2</li></ul>
+  </aside>
+  <div class="prose">
+    <x-f name="Beat of two close tones" tag="RESULT">
+      \cos(2\pi f_1 t)+\cos(2\pi f_2 t)=2\cos\!\Big(2\pi\frac{f_2-f_1}{2}t\Big)\cos\!\Big(2\pi\frac{f_1+f_2}{2}t\Big)
+      <note>440 + 442 Hz: a 441 Hz tone whose envelope |cos(2π·1 Hz·t)| goes to zero twice per second.</note>
+    </x-f>
+    <div class="nbcell"><h3>Block 15 — Recording 2</h3>
+      <x-code py="block15.py"/>
+      <table><tr><th>window, L</th><th>bin</th><th>dip / peak between 440 and 442 Hz</th></tr>
+        <tr><td>nuttall, 2¹⁶ (1.5 s)</td><td>0.67 Hz</td><td>0.45 (barely resolved)</td></tr>
+        <tr><td>flattop, 2¹⁶</td><td>0.67 Hz</td><td>1.00 (not resolved)</td></tr>
+        <tr><td>nuttall, 2¹⁷ (3 s)</td><td>0.34 Hz</td><td>0.00 (resolved)</td></tr>
+        <tr><td>nuttall, 2¹⁸ (6 s)</td><td>0.17 Hz</td><td>0.00</td></tr></table>
+      <table><tr><th>quantity</th><th>value</th></tr>
+        <tr><td>STFT 0.1 s: modulation depth of the 436–446 Hz power</td><td>1.00 (a full beat)</td></tr>
+        <tr><td>STFT 2 s: modulation depth</td><td>0.15 (steady)</td></tr>
+        <tr><td>noise fit</td><td>A = 1.64, f<sub>k</sub> = 437.9 Hz, α = 2.017</td></tr>
+        <tr><td>detected lines</td><td>440.000 (A4), 442.000 (A4 + 8 cents), 880.000 (A5)</td></tr></table>
+    </div>
+    <div class="stage"><div class="stage-h"><span class="lbl">BLOCK 15 · FILTERS ON RECORDING 2</span></div>
+      <figure class="fig"><img src="figures/b15_rec2_filters.png" alt="recording 2 filters"><figcaption>20 ms of each output on the clean signal 2.</figcaption></figure></div>
+    <table><tr><th>filter (recording 2)</th><th>SNR</th></tr>
+      <tr><td>band-pass 400–920 Hz</td><td>3.4 dB</td></tr>
+      <tr><td>comb 2.5 Hz (one band covers 440 and 442)</td><td>19.6 dB</td></tr>
+      <tr><td>Wiener, detected lines, hum vetoed</td><td>41.8 dB</td></tr></table>
+    <p><b>Significance.</b> With δf = 2.5 Hz the teeth at 440 and 442 Hz merge into one band 437.5–444.5 Hz that keeps both: you hear a 441 Hz tone swelling and fading twice per second, plus the octave. The Wiener filter on detected lines again returns the clean signal.</p>
+    <x-ex id="l1-9a" ans="2" tol="0.01" lvl="Basic">How many times per second does the loudness of 440 + 442 Hz go to zero?
+      <hint>Beat frequency |f₂ − f₁|.</hint><sol>2 Hz: twice per second.</sol></x-ex>
+  </div>
+</section>
+
+<!-- ================================================================== 10 -->
+<section class="lesson" data-title="Results and conclusions" data-short="Results" data-badge="CONCEPT" data-time="15 min" data-level="Intermediate"
+  data-sub="Block 14 and 16: all filters side by side, what the numbers mean, and what was corrected in the notebook.">
+  <div class="stage"><div class="stage-h"><span class="lbl">BLOCK 14 · FOUR FILTERS ON RECORDING 1</span></div>
+    <figure class="fig"><img src="figures/b14_filters_2x2.png" alt="filters"><figcaption>20 ms of each output (blue) on the clean signal (red).</figcaption></figure>
+    <figure class="fig"><img src="figures/b14_snr_bar.png" alt="snr bars" style="max-width:720px;margin:auto"><figcaption>SNR of every filter against the clean signal.</figcaption></figure></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>A signal invisible in the samples (−45 dB) comes back at +44.6 dB: three bins out of 2.6 million carry it.</p></div>
+    <div class="s-key">Before filtering, know where the noise power is; before trusting a fit, look at data/model; before trusting a line, know your instrument.</div>
+    <ul class="s-learn"><li>The SNR of every filter</li><li>Six conclusions</li><li>Where each step can fail</li><li>What was fixed in the notebook</li></ul>
+  </aside>
+  <div class="prose">
+    <div class="nbcell"><h3>Block 14 — Summary table</h3>
+      <x-code py="block14.py"/>
+      <table><tr><th>filter</th><th>bins kept</th><th>SNR [dB]</th><th>residual rms</th></tr>
+        <tr><td>no filter (data)</td><td>2 646 001</td><td>−45.1</td><td>13 194</td></tr>
+        <tr><td>band-pass 493–814 Hz</td><td>38 519</td><td>5.7</td><td>38.2</td></tr>
+        <tr><td>band-pass 20–814 Hz</td><td>95 279</td><td>−8.5</td><td>196.3</td></tr>
+        <tr><td>comb, 2.5 Hz teeth</td><td>1 797</td><td>19.2</td><td>8.0</td></tr>
+        <tr><td>comb + tooth at 50 Hz</td><td>2 396</td><td>−2.0</td><td>92.1</td></tr>
+        <tr><td>Wiener, naive</td><td>976 472</td><td>−37.5</td><td>5 521.7</td></tr>
+        <tr><td>Wiener, detected lines, hum kept</td><td>4</td><td>−1.3</td><td>84.9</td></tr>
+        <tr><td><b>Wiener, detected lines, hum vetoed</b></td><td><b>3</b></td><td><b>44.6</b></td><td><b>0.4</b></td></tr></table>
+    </div>
+    <h2><span class="lv core">RESULTS</span>Conclusions</h2>
+    <ol class="steps">
+      <li><b>Lines vs noise.</b> A signal 45 dB below the noise stands 4–5×10⁴ above it in single periodogram bins: steady tones put all their power in one bin of 0.008 Hz.</li>
+      <li><b>Welch shows the noise, the periodogram the lines.</b> Averaging 160 segments reduces the scatter to 8% but the lines to 240–340; the window matters for a red spectrum (rectangular: ×2 noise at 50–100 Hz).</li>
+      <li><b>Resolution is a choice.</b> 440 and 442 Hz merge with 1.5 s segments and separate with 3 s; in a spectrogram they are a 2 Hz beat (0.1 s) or two lines (2 s).</li>
+      <li><b>Knowing where the noise is pays.</b> A band-pass by eye brings the chord back (+5.7 dB); a comb with 2.5 Hz teeth +19 dB; a low-pass would do nothing.</li>
+      <li><b>Systematics.</b> The 50 Hz hum is detected like a signal (z = 3544) and must be vetoed by hand.</li>
+      <li><b>Wiener needs a good S<sub>s</sub>.</b> From single bins it keeps 37% of the noise; from the detected lines it returns the clean signal. The noise model (f<sub>k</sub> = 440 Hz, α = 2) is recovered by least squares on log Welch and, best, by Whittle with the lines masked.</li>
+    </ol>
+    <div class="warn">Where it can fail: wrong units in Φ (factor 2/(f<sub>s</sub>N)); systematic lines treated as signal; S<sub>s</sub> from a smoothed (Welch) estimate spreads the line power and lets noise in; non-stationary lines break whole-record filters (use the STFT).</div>
+    <h2><span class="lv code">FIXES</span>What was corrected in the original notebook</h2>
+    <table><tr><th>original <code>AstroSignal.ipynb</code></th><th>corrected <code>AstroSignal_corrected.ipynb</code></th></tr>
+      <tr><td><code>np.abs(x).max</code> printed “&lt;built-in method max…&gt;”</td><td><code>np.abs(x).max()</code></td></tr>
+      <tr><td><code>fs, s = wavfile.read('segnale.wav')</code> overwrote <code>fs</code></td><td>separate name <code>fs_s</code> and an <code>assert</code></td></tr>
+      <tr><td>cells 8–13 never executed, one empty cell</td><td>every block runs top to bottom, with outputs</td></tr>
+      <tr><td>plots without labels, units, titles, legends</td><td>all labelled; saved in <code>figures/</code></td></tr>
+      <tr><td>windows compared only by eye</td><td>tables of leakage and line contrast; automatic line finding with note names</td></tr>
+      <tr><td>stationarity not quantified</td><td>amplitude of each line in 10 s blocks</td></tr>
+      <tr><td>one comb width</td><td>SNR against tooth width (6 widths)</td></tr>
+      <tr><td><code>print(phi, y_naive)</code> printed whole arrays</td><td>tables of detected lines and SNR</td></tr>
+      <tr><td>recording 2 without noise fit or Wiener</td><td>full analysis of recording 2 (Block 15)</td></tr>
+      <tr><td>audio cell embedded full 120 s WAVs (~10 MB each) as “first 5 seconds”</td><td>real 5 s clips</td></tr>
+      <tr><td>Colab-only upload</td><td>runs in Colab and locally</td></tr></table>
+    <div class="audio-row"><div>noisy data<audio controls preload="none" src="audio/rec1_noisy.wav"></audio></div><div>Wiener on detected lines<audio controls preload="none" src="audio/rec1_wiener_lines.wav"></audio></div><div>clean reference<audio controls preload="none" src="audio/rec1_clean.wav"></audio></div></div>
+    <x-code py="lab1_analysis.py"/>
+  </div>
+</section>

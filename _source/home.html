@@ -1,0 +1,42 @@
+<div class="card">
+  <div class="crumbs"><span>Course map</span><span class="sep">/</span><span>open study guide</span></div>
+  <div class="hero">
+    <div>
+      <div class="titlebar"><h1>Computational Methods in Astrophysics</h1></div>
+      <p class="subtitle">An open, interactive study guide to the numerical methods of astrophysics: linear systems and their solvers, signals and spectra, Fourier transforms, convolution, spectral estimation, Bayesian inference and Monte Carlo. Every formula is hoverable (name, meaning, Python, Fortran), every idea has a widget to play with, and every unit ends with tested code. A hyperspectral-imaging project applies all of it to real data.</p>
+      <div class="badges" style="justify-content:flex-start">
+        <span class="badge y">maths &amp; concepts</span><span class="badge b">Python + Fortran</span><span class="badge p">labs on real data</span><span class="badge g">hyperspectral project</span>
+      </div>
+    </div>
+    <div class="stage" data-widget="hero" style="margin:0"></div>
+  </div>
+
+  <div class="prose">
+    <h2><span class="lv basic">START</span>Units</h2>
+    <div class="units" id="units"></div>
+
+    <h2><span class="lv core">HOW TO</span>Use this site</h2>
+    <ol class="steps">
+      <li><b>Learn</b> — open a unit. The bar at the top (“In this lesson”) stays visible while you scroll; each lesson starts with a widget and a short story in the right panel. Use ← → to move between lessons.</li>
+      <li><b>Hover the maths</b> — every symbol that lights up shows its name, why it matters, and the same thing in Python and Fortran. Click to pin the card.</li>
+      <li><b>Practice</b> (top tab) — all exercises of the unit on one page, checked automatically (fractions like 1/3 are accepted).</li>
+      <li><b>Code Lab</b> (top tab) — all code of the unit; the full, tested files are in each unit's <code>code</code> folder.</li>
+      <li><b>Cheatsheet</b> (top tab) — every formula of the unit on one page.</li>
+      <li><b>Project</b> — the orange buttons at the end of a concept jump to the matching part of the hyperspectral project (last unit).</li>
+    </ol>
+
+    <h2><span class="lv core">PATH</span>A suggested order</h2>
+    <table>
+      <tr><th>Block</th><th>Units</th><th>What you can do afterwards</th></tr>
+      <tr><td>Linear algebra</td><td>04 → 05 → 06</td><td>solve Ax = b reliably: LU and Cholesky, condition numbers and digits lost, SVD and least squares, sparse matrices and (preconditioned) conjugate gradients</td></tr>
+      <tr><td>Signals</td><td>07 → 08 → 09 → 10</td><td>sample and digitise a signal, compute its spectrum fast, filter and deconvolve it, estimate a power spectrum with error bars</td></tr>
+      <tr><td>Laboratory</td><td>Lab 1</td><td>analyse two real noisy recordings end to end: spectra, spectrograms, band-pass, comb and Wiener filters, a noise fit</td></tr>
+      <tr><td>Inference</td><td>12 → 13</td><td>turn data into parameters with error bars: likelihoods, priors, posteriors, and the Monte Carlo integrals behind them</td></tr>
+      <tr><td>Project</td><td>Hyperspectral</td><td>apply every method to images with hundreds of spectral bands</td></tr>
+    </table>
+    <p>Each unit is self-contained: the first lessons are written for a complete beginner, the later parts (marked <span class="lv expert" style="font-size:10px;padding:1px 6px;border:1.5px solid;border-radius:99px">EXPERT</span>) go deeper. Lessons marked “soon” are added as the course notes become available.</p>
+
+    <h2><span class="lv basic">CREDITS</span>Sources</h2>
+    <p>The units follow the structure and notation of the lecture notes of <i>Computing Methods for Astrophysics</i> by G. de Gasperis and L. Graziani (Sapienza University of Rome). Explanations, widgets, exercises and code are written for this guide; references to the original papers and books are given in each lesson.</p>
+  </div>
+</div>

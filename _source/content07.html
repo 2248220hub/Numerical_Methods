@@ -1,0 +1,405 @@
+<!-- ================================================================== 1 -->
+<section class="lesson" data-title="From continuous physics to numbers" data-short="Discretise" data-badge="CONCEPT" data-time="20 min" data-level="Beginner"
+  data-sub="Computers store finite lists of finite numbers: we must cut a continuous signal along time and along amplitude.">
+  <div class="stage" data-widget="discretise"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>A light curve, a strain record, a CMB scan are continuous functions x(t). A computer can only store x[n] = x(nT) rounded to one of 2<sup>B</sup> levels.</p><p>Above: move the sampling rate and the number of bits and watch the stored signal (dots) depart from the true one.</p></div>
+    <div class="s-key">Two independent cuts: <b>sampling</b> (time axis, interval T) and <b>quantisation</b> (amplitude axis, step Δ). Each has its own error and its own rule.</div>
+    <ul class="s-learn"><li>Why computers cannot hold continuous signals</li><li>The detector signal chain: photons → ADU</li><li>Sampling interval T and rate f<sub>s</sub></li><li>Quantisation step Δ and bits B</li><li>Typical ADCs in astronomy</li></ul>
+  </aside>
+  <div class="prose">
+    <h2><span class="lv basic">BASIC</span>Signals in astrophysics are continuous</h2>
+    <ul>
+      <li>Gravitational-wave strain h(t) in a laser interferometer; light curves I(t) from Kepler/TESS photometry.</li>
+      <li>Radio sky brightness I(l, m); CCD/CMOS pixel arrays I[i, j] — a spatial sampling of the telescope PSF.</li>
+      <li>CMB time-ordered data d(t) recorded while a telescope scans the sky.</li>
+    </ul>
+    <p>A digital computer has finite memory and finite precision: it cannot store a function, only a list of numbers. We discretise along two orthogonal axes:</p>
+    <x-f name="The two discretisations" tag="DEFINITION">
+      \underbrace{\h{xn}{x[n]}=x(\h{n}{n}\h{T}{T})}_{\text{sampling (domain)}},\qquad \underbrace{\h{Qx}{Q(x)}=\h{Delta}{\Delta}\cdot\text{round}(x/\h{Delta}{\Delta})}_{\text{quantisation (range)}},\qquad \h{fs}{f_s}=\frac1{\h{T}{T}}
+      <note>T: sampling interval [s]; f<sub>s</sub>: sampling rate [Hz]; Δ: quantisation step (the least significant bit, LSB).</note>
+      <py>
+      t = np.arange(N) / fs                  # sample times nT
+      x = np.sin(2*np.pi*f0*t)               # x[n]
+      xq = Delta * np.round(x / Delta)       # quantised
+      </py>
+      <f90>
+      t = [(n, n = 0, N-1)] / fs
+      x = sin(2*pi*f0*t)
+      xq = Delta * anint(x / Delta)
+      </f90>
+    </x-f>
+    <h2><span class="lv basic">BASIC</span>The detector signal chain</h2>
+    <ol class="steps">
+      <li><b>Physical field</b>: photons hν on a CCD pixel, or CMB temperature fluctuations along the scan.</li>
+      <li><b>Transducer</b>: photo-electrons in the pixel well, or a resistance change in a cryogenic bolometer (TES).</li>
+      <li><b>Conditioning</b>: charge → voltage, pre-amplifier (or SQUID readout): a continuous voltage V(t).</li>
+      <li><b>ADC</b>: voltage → integer codes, 16-bit ADU for CCDs (65 536 levels), 24-bit Σ∆ for CMB time streams.</li>
+      <li><b>File</b>: FITS images or time-ordered data, the numbers we analyse.</li>
+    </ol>
+    <table><tr><th>application</th><th>sampling rate</th><th>resolution</th><th>constraint</th></tr>
+      <tr><td>RF digitisers, transients</td><td>1–10 GS/s</td><td>8–10 bits</td><td>ultrafast clock</td></tr>
+      <tr><td>lab DAQ, acoustics</td><td>100 kS/s–1 MS/s</td><td>16–24 bits</td><td>dynamic range</td></tr>
+      <tr><td>astronomical CCDs</td><td>100 kS/s–1 MS/s</td><td>16 bits</td><td>65 536 ADU full scale</td></tr>
+      <tr><td>bolometers, radiometers</td><td>10 Hz–1 kHz</td><td>24 bits (Σ∆)</td><td>DC stability</td></tr>
+      <tr><td>CMB TES readout</td><td>10–100 kS/s</td><td>24 bits</td><td>SQUID multiplexing, low noise</td></tr></table>
+    <x-ex id="e7-1a" ans="65536" tol="0.5" lvl="Basic">How many distinct codes does a 16-bit ADC provide?
+      <hint>2<sup>B</sup>.</hint><sol>2¹⁶ = 65 536.</sol></x-ex>
+    <x-ex id="e7-1b" ans="0.0000227" tol="0.0000003" lvl="Basic">Audio is sampled at 44.1 kHz. Sampling interval T in seconds?
+      <hint>1/f<sub>s</sub>.</hint><sol>1/44100 = 2.27×10⁻⁵ s = 22.7 µs.</sol></x-ex>
+    <div class="uses">
+      <div class="use"><b>Kepler/TESS</b>Light curves sampled every 2 min (or 20 s): any variability faster than that is aliased.</div>
+      <div class="use"><b>LIGO</b>Strain digitised at 16 384 Hz: signals up to ~8 kHz.</div>
+      <div class="use"><b>Hyperspectral imagers</b>Sample the spectrum in bands and digitise each band to 12–16 bits.</div>
+    </div>
+    <x-hsi to="s3">A hyperspectral sensor also samples — in wavelength: bands, spectral resolution and bits</x-hsi>
+  </div>
+</section>
+
+<!-- ================================================================== 2 -->
+<section class="lesson" data-title="Quantisation noise and SQNR" data-short="Quantisation" data-badge="MATH" data-time="30 min" data-level="Beginner"
+  data-sub="Rounding to 2^B levels adds an error of variance Δ²/12: every bit buys 6 dB.">
+  <div class="stage" data-widget="quant"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>Round a sine to B bits and look at the error e[n] = x − Q(x): it stays within ±Δ/2 and looks like white noise.</p><p>Reduce the amplitude (under-use of the range) or push it over full scale (clipping) and watch the SQNR.</p></div>
+    <div class="s-key">SQNR ≈ 6.02 B + 1.76 dB for a full-scale sine. Using a quarter of the range loses 2 bits (12 dB); exceeding it clips and creates fake harmonics.</div>
+    <ul class="s-learn"><li>The step Δ = V<sub>FS</sub>/2<sup>B</sup></li><li>Derivation of σ²<sub>e</sub> = Δ²/12</li><li>Derivation of SQNR = 6.02B + 1.76 dB</li><li>Under-utilisation and clipping</li><li>An ADC simulator in code</li></ul>
+  </aside>
+  <div class="prose">
+    <h2><span class="lv basic">BASIC</span>The quantisation step</h2>
+    <x-f name="Quantisation step (LSB)" tag="DEFINITION">
+      \h{Delta}{\Delta}=\frac{\h{VFS}{V_{FS}}}{2^{\h{B}{B}}}=\frac{V_{\max}-V_{\min}}{2^{B}},\qquad \h{Qx}{Q(x)}=\h{Delta}{\Delta}\cdot\Big\lfloor\frac{x}{\Delta}+\frac12\Big\rfloor
+      <note>Mid-tread quantiser: zero is a level. Within full scale the error is bounded: −Δ/2 ≤ e ≤ +Δ/2.</note>
+      <py>
+      def simulate_adc(x, B, Vmin, Vmax):
+          Delta = (Vmax - Vmin) / 2**B
+          code = np.floor(x / Delta + 0.5)
+          code = np.clip(code, -2**(B-1), 2**(B-1) - 1)     # saturation
+          return Delta * code, Delta
+      </py>
+      <f90>
+      code = floor(v/delta + 0.5_dp)
+      code = max(-2.0_dp**(B-1), min(2.0_dp**(B-1) - 1.0_dp, code))
+      q = delta*code
+      </f90>
+    </x-f>
+    <x-ex id="e7-2a" ans="0.25" tol="0.001" lvl="Basic">A 3-bit ADC with range −1 V … +1 V. Step Δ in volts?
+      <hint>2 V / 2³.</hint><sol>2/8 = 0.25 V (the example of the lecture).</sol></x-ex>
+
+    <h2><span class="lv core">CORE</span>The power of the quantisation error</h2>
+    <p>Model e[n] as uniform on [−Δ/2, +Δ/2] (true when the signal varies over many levels), density p(e) = 1/Δ:</p>
+    <x-f name="Quantisation noise power" tag="RESULT">
+      \h{Pe}{P_e}=\h{sigmae}{\sigma_e^2}=\int_{-\Delta/2}^{\Delta/2}e^2\,\frac{1}{\h{Delta}{\Delta}}\dd e=\frac1\Delta\Big[\frac{e^3}{3}\Big]_{-\Delta/2}^{\Delta/2}=\frac{\h{Delta}{\Delta}^2}{12}
+      <py>e = x - xq;  print(e.var(), Delta**2 / 12)</py>
+      <f90>print *, sum((x-xq)**2)/size(x), delta**2/12</f90>
+    </x-f>
+    <h3>Signal-to-quantisation-noise ratio</h3>
+    <ol class="steps">
+      <li>Full-scale sine x = (V<sub>FS</sub>/2) sin ωt: power P<sub>x</sub> = (V<sub>FS</sub>/2)²/2 = V<sub>FS</sub>²/8 = (2<sup>B</sup>Δ)²/8.</li>
+      <li>Ratio: P<sub>x</sub>/P<sub>e</sub> = [(2<sup>B</sup>Δ)²/8]/[Δ²/12] = 1.5 · 2<sup>2B</sup>.</li>
+      <li>In decibels: 10 log₁₀ 1.5 + 20 B log₁₀ 2 = 1.76 + 6.02 B.</li>
+    </ol>
+    <x-f name="SQNR rule of thumb" tag="RESULT">
+      \mathrm{SQNR}=10\log_{10}\frac{P_x}{\h{Pe}{P_e}}=10\log_{10}\!\big(1.5\cdot2^{2\h{B}{B}}\big)\approx 6.02\,\h{B}{B}+1.76\ \mathrm{dB}
+      <note>Measured (code lab): 4 bits 23.6 dB (formula 25.8: the uniform model is rough with only 16 levels), 8 bits 49.1 (49.9), 12 bits 73.8 (74.0), 16 bits 98.0 (98.1).</note>
+      <py>sqnr = 10*np.log10(x.var() / (x - xq).var())</py>
+      <f90>sqnr = 10*log10(variance(x)/variance(x - xq))</f90>
+    </x-f>
+    <x-ex id="e7-2b" ans="98.08" tol="0.05" lvl="Basic">SQNR of an ideal 16-bit ADC with a full-scale sine, in dB?
+      <hint>6.02·16 + 1.76.</hint><sol>96.32 + 1.76 = 98.08 dB.</sol></x-ex>
+    <x-ex id="e7-2c" ans="0.000141" tol="0.000002" lvl="Core">12-bit ADC over a 2 V range. Standard deviation of the quantisation error σ<sub>e</sub> = Δ/√12, in volts?
+      <hint>Δ = 2/4096 = 4.88×10⁻⁴ V.</hint><sol>σ<sub>e</sub> = 4.88×10⁻⁴/3.464 = 1.41×10⁻⁴ V: the “noise” of a perfect 12-bit converter.</sol></x-ex>
+
+    <h2><span class="lv core">CORE</span>Managing the dynamic range</h2>
+    <ul>
+      <li><b>Under-utilisation</b>: a signal using a fraction ρ of full scale has B<sub>eff</sub> = B + log₂ ρ. A quarter of the range loses 2 bits (12 dB). Fix: analogue gain before the ADC.</li>
+      <li><b>Clipping</b>: above V<sub>max</sub> the output is flat: a non-linear distortion that creates <i>fake spectral lines</i> (harmonics).</li>
+      <li><b>DC offset</b>: a unipolar sensor (0–1 V) in a bipolar ADC (±2.5 V) uses at most a fifth of the codes: shift and scale first.</li>
+    </ul>
+    <x-ex id="e7-2d" ans="10" tol="0.01" lvl="Core">A 12-bit ADC, signal using ρ = 1/4 of full scale. Effective number of bits?
+      <hint>B + log₂ ρ.</hint><sol>12 − 2 = 10 bits (measured SQNR 61.9 dB instead of 73.8).</sol></x-ex>
+    <div class="uses">
+      <div class="use"><b>CCD gain</b>e⁻/ADU is chosen so that the read noise spans ~1–2 ADU: quantisation noise stays below read noise.</div>
+      <div class="use"><b>Radio astronomy</b>Correlators often use only 2–4 bits: the sky noise dominates, quantisation is corrected statistically.</div>
+      <div class="use"><b>Saturated stars</b>Clipped CCD pixels produce bleeding and wrong photometry: the clipping of this lesson.</div>
+    </div>
+    <div class="oral">Derive σ²<sub>e</sub> = Δ²/12 and the 6.02B + 1.76 dB rule. Why does using a quarter of the range cost 12 dB?</div>
+  </div>
+</section>
+
+<!-- ================================================================== 3 -->
+<section class="lesson" data-title="Sampling, Nyquist and aliasing" data-short="Aliasing" data-badge="MATH" data-time="35 min" data-level="Intermediate"
+  data-sub="Sampling multiplies by a Dirac comb: the spectrum is replicated every f_s. If the copies overlap, high frequencies masquerade as low ones.">
+  <div class="stage" data-widget="alias"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>A 9 Hz tone sampled at 10 Hz gives exactly the same numbers as a 1 Hz tone. No algorithm can tell them apart afterwards.</p><p>Move f and f<sub>s</sub> above: the red curve is the alias the samples describe.</p></div>
+    <div class="s-key">Sampling at f<sub>s</sub> replicates the spectrum at every multiple of f<sub>s</sub>. Exact recovery needs f<sub>s</sub> &gt; 2f<sub>max</sub>; otherwise f folds to |f − k f<sub>s</sub>|.</div>
+    <ul class="s-learn"><li>The Dirac comb and ideal sampling</li><li>Derivation of the replicated spectrum</li><li>The Nyquist–Shannon theorem</li><li>The alias formula</li><li>Anti-aliasing filters</li></ul>
+  </aside>
+  <div class="prose">
+    <h2><span class="lv core">CORE</span>Sampling as a multiplication</h2>
+    <x-f name="Dirac comb and ideal sampling" tag="MODEL">
+      \h{comb}{Ш_T(t)}=\h{sum}{\sum_{n=-\infty}^{\infty}}\delta(t-nT),\qquad \h{xs}{x_s(t)}=x(t)\,Ш_T(t)=\h{sum}{\sum_n}x(nT)\,\delta(t-nT)
+      <note>The sequence x[n] ≡ x(nT) are the weights of the impulses. 2-D: the pixel pitch p of a CCD samples the PSF; undersampling (PSF FWHM &lt; 2p) aliases spatially.</note>
+    </x-f>
+    <h3>The spectrum of the sampled signal</h3>
+    <ol class="steps">
+      <li>The transform of a comb is a comb: \(\mathcal F\{Ш_T\}=\frac{2\pi}T\sum_m\delta(\Omega-m\Omega_s)\), with Ω<sub>s</sub> = 2π/T.</li>
+      <li>A product in time is a convolution in frequency: \(X_s=\frac1{2\pi}X*\mathcal F\{Ш_T\}\).</li>
+      <li>Convolving with a shifted δ shifts: every term gives a copy of X centred at mΩ<sub>s</sub>.</li>
+    </ol>
+    <x-f name="Spectrum of a sampled signal" tag="RESULT">
+      \h{Xs}{X_s(j\Omega)}=\frac{1}{\h{T}{T}}\h{sum}{\sum_{m=-\infty}^{\infty}}X\big(j(\Omega-m\,\h{Oms}{\Omega_s})\big)
+      <note>The original spectrum, scaled by 1/T and repeated at every multiple of the sampling frequency. No information is lost if the copies do not overlap.</note>
+    </x-f>
+    <x-f name="Nyquist–Shannon sampling theorem" tag="THEOREM">
+      X(j\Omega)=0\ \text{for}\ |\Omega|\gt\Omega_B\quad\text{and}\quad \h{fs}{f_s}\gt 2\h{fmax}{f_{\max}}\ \Longrightarrow\ x(t)\ \text{is determined exactly by}\ x[n]
+      <note>Nyquist rate 2f<sub>max</sub>; Nyquist frequency f<sub>s</sub>/2 = the highest unaliased frequency. The inequality is strict: sin(2πf<sub>max</sub>t) sampled at exactly 2f<sub>max</sub> with zero phase gives only zeros. Band-pass sampling allows f<sub>s</sub> ≥ 2(f<sub>H</sub> − f<sub>L</sub>) for a band [f<sub>L</sub>, f<sub>H</sub>] (radio down-conversion).</note>
+      <py>fnyq = fs / 2</py>
+      <f90>fnyq = fs/2</f90>
+    </x-f>
+    <h2><span class="lv core">CORE</span>Aliasing</h2>
+    <x-f name="Alias frequency" tag="RESULT">
+      \h{falias}{f_{\rm alias}}=|f-k\,\h{fs}{f_s}|,\qquad k=\mathrm{round}(f/f_s)
+      <note>9 Hz at f<sub>s</sub> = 10 Hz: k = 1, alias 1 Hz. The samples of cos(2π·9n/10) and cos(2π·1n/10) are identical (code lab). Once aliased, the signal cannot in general be recovered.</note>
+      <py>f_alias = abs(f - round(f / fs) * fs)</py>
+      <f90>f_alias = abs(f - anint(f/fs)*fs)</f90>
+    </x-f>
+    <x-ex id="e7-3a" ans="1" tol="0.01" lvl="Basic">A 9 Hz tone is sampled at 10 Hz. Apparent frequency in Hz?
+      <hint>|9 − 1·10|.</hint><sol>1 Hz.</sol></x-ex>
+    <x-ex id="e7-3b" ans="4" tol="0.01" lvl="Core">A 36 Hz vibration is sampled at 40 Hz. Alias frequency?
+      <hint>k = round(36/40) = 1.</hint><sol>|36 − 40| = 4 Hz.</sol></x-ex>
+    <x-ex id="e7-3c" ans="16384" tol="1" lvl="Basic">Minimum sampling rate (Nyquist rate) to keep a signal up to 8192 Hz, in Hz?
+      <hint>2 f<sub>max</sub>.</hint><sol>16 384 Hz — the LIGO sampling rate.</sol></x-ex>
+    <h3>Preventing aliasing</h3>
+    <p>An <b>analogue low-pass anti-aliasing filter</b> must sit before the ADC: it attenuates everything above f<sub>s</sub> − f<sub>max</sub> (what would fold into [0, f<sub>max</sub>]) down to the noise floor. Oversampling (f<sub>s</sub> ≫ 2f<sub>max</sub>) relaxes the filter's roll-off.</p>
+    <div class="uses">
+      <div class="use"><b>CMB scans</b>Atmospheric fluctuations faster than the sampling fold into low frequencies and contaminate large-scale maps.</div>
+      <div class="use"><b>Undersampled stars</b>Stars smaller than a pixel alias high spatial frequencies: distorted photometry and PSF shapes.</div>
+      <div class="use"><b>Wagon wheels</b>A film at 24 frames/s shows spokes turning backwards: temporal aliasing.</div>
+    </div>
+    <x-hsi to="s3">Spectral aliasing: narrow absorption features sampled by too few bands</x-hsi>
+    <div class="oral">Derive the spectrum of a sampled signal from the comb and the convolution theorem. State the sampling theorem and explain why the inequality must be strict.</div>
+  </div>
+</section>
+
+<!-- ================================================================== 4 -->
+<section class="lesson" data-title="Reconstruction: sinc interpolation" data-short="Sinc" data-badge="MATH" data-time="20 min" data-level="Intermediate"
+  data-sub="A band-limited signal is the sum of shifted sincs weighted by its samples (Whittaker–Kotelnikov–Shannon).">
+  <div class="stage" data-widget="sinc"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>If the sampling theorem holds, the continuous signal can be rebuilt exactly: place a sinc at every sample, scaled by its value, and add them up.</p></div>
+    <div class="s-key">Ideal reconstruction = keep the baseband copy (an ideal low-pass filter) = convolve the samples with sinc(t/T).</div>
+    <ul class="s-learn"><li>The brick-wall filter H(jΩ)</li><li>Its impulse response: the sinc</li><li>The interpolation formula</li><li>Why it is only ideal (infinite tails)</li></ul>
+  </aside>
+  <div class="prose">
+    <h2><span class="lv core">CORE</span>Keep the baseband copy</h2>
+    <x-f name="Ideal low-pass filter and its impulse response" tag="RESULT">
+      H(j\Omega)=\begin{cases}T,&amp;|\Omega|\le\Omega_s/2\\0,&amp;\text{otherwise}\end{cases}\quad\Longrightarrow\quad h(t)=\frac{T}{2\pi}\int_{-\Omega_s/2}^{\Omega_s/2}e^{j\Omega t}\dd\Omega=\h{sinc}{\mathrm{sinc}}\Big(\frac tT\Big)=\frac{\sin(\pi t/T)}{\pi t/T}
+    </x-f>
+    <x-f name="Whittaker–Kotelnikov–Shannon interpolation" tag="THEOREM">
+      x(t)=\h{sum}{\sum_{n=-\infty}^{\infty}}\h{xn}{x[n]}\ \h{sinc}{\mathrm{sinc}}\Big(\frac{t-n\h{T}{T}}{\h{T}{T}}\Big)
+      <note>Each sinc is 1 at its own sample and 0 at all the others: the sum passes exactly through the samples, and in between it is the only band-limited curve that does. The tails decay only as 1/t: in practice the sum is truncated (code lab: error 8×10⁻⁴ with 401 samples) or replaced by shorter kernels (Lanczos).</note>
+      <py>x_t = np.sum(x_n * np.sinc((t - n*T) / T))      # np.sinc(u) = sin(pi u)/(pi u)</py>
+      <f90>
+      do i = 1, size(t)
+        u = (t(i) - n*T)/T
+        xt(i) = sum(xn * merge(1.0_dp, sin(pi*u)/(pi*u), abs(u) < 1e-12_dp))
+      end do
+      </f90>
+    </x-f>
+    <x-ex id="e7-4a" ans="0" tol="0.0001" lvl="Basic">Value of sinc(t/T) at t = 3T?
+      <hint>sin(3π)/(3π).</hint><sol>0: every sinc vanishes at all the other samples.</sol></x-ex>
+    <x-ex id="e7-4b" ans="0.6366" tol="0.001" lvl="Core">Value of sinc(u) = sin(πu)/(πu) at u = ½?
+      <hint>sin(π/2)/(π/2).</hint><sol>2/π = 0.637.</sol></x-ex>
+    <div class="uses">
+      <div class="use"><b>Image resampling</b>Shifting or rotating an astronomical image uses truncated sinc (Lanczos) kernels.</div>
+      <div class="use"><b>Fractional delays</b>Timing a pulsar between samples: sinc interpolation of the profile.</div>
+      <div class="use"><b>Audio DACs</b>Reconstruct the analogue wave with (approximately) this filter.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================== 5 -->
+<section class="lesson" data-title="The Fourier family and the DTFT" data-short="DTFT" data-badge="MATH" data-time="30 min" data-level="Intermediate"
+  data-sub="Four transforms, two duality rules, and the transform of a sampled sequence: continuous and 2π-periodic in frequency.">
+  <div class="stage" data-widget="dtft"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>Periodic in time ⇒ discrete in frequency. Discrete in time ⇒ periodic in frequency. The DFT is both.</p><p>Above: three canonical sequences and their DTFT magnitude.</p></div>
+    <div class="s-key">The DTFT of x[n] is a continuous, 2π-periodic function of ω = ΩT = 2πf/f<sub>s</sub>. Real data ⇒ even magnitude, odd phase: only 0 … π (0 … f<sub>s</sub>/2) is needed.</div>
+    <ul class="s-learn"><li>CTFS, CTFT, DTFT, DFT</li><li>The two duality rules</li><li>Digital frequency ω</li><li>Periodicity, shift, modulation</li><li>Hermitian symmetry and Parseval</li></ul>
+  </aside>
+  <div class="prose">
+    <h2><span class="lv basic">BASIC</span>Four transforms</h2>
+    <table><tr><th></th><th>continuous time</th><th>discrete time</th></tr>
+      <tr><td><b>periodic signal</b></td><td>CTFS: line spectrum at kΩ₀</td><td>DTFS ≡ DFT: N lines, periodic</td></tr>
+      <tr><td><b>aperiodic signal</b></td><td>CTFT: continuous spectrum</td><td>DTFT: continuous, 2π-periodic</td></tr></table>
+    <div class="plain">Periodicity in time ⟹ discretisation in frequency. Discretisation in time ⟹ periodicity in frequency.</div>
+    <x-f name="Fourier series and transform (continuous)" tag="REVIEW">
+      x(t)=\h{sum}{\sum_k}c_k e^{jk\Omega_0t},\ \ c_k=\frac1{T_0}\int_{T_0}x(t)e^{-jk\Omega_0t}\dd t;\qquad X(j\Omega)=\h{integral}{\int_{-\infty}^{\infty}}x(t)e^{-j\Omega t}\dd t
+      <note>Orthogonality: \(\frac1{T_0}\int_0^{T_0}e^{j(k-r)\Omega_0t}{\rm d}t=\delta_{kr}\). Properties: linearity; time scaling x(at) ⇔ X(jΩ/a)/|a|; time shift x(t−t₀) ⇔ e<sup>−jΩt₀</sup>X(jΩ).</note>
+    </x-f>
+    <h2><span class="lv core">CORE</span>The DTFT</h2>
+    <x-f name="Digital frequency" tag="DEFINITION">
+      \h{omega}{\omega}=\Omega T=\frac{2\pi f}{\h{fs}{f_s}}\in[-\pi,\pi]\iff f\in\Big[-\frac{f_s}2,\frac{f_s}2\Big]
+      <py>omega = 2*np.pi*f/fs           # rad/sample</py>
+      <f90>omega = 2*pi*f/fs</f90>
+    </x-f>
+    <x-f name="DTFT pair" tag="TRANSFORM">
+      \h{Xw}{X(e^{j\omega})}=\h{sum}{\sum_{n=-\infty}^{\infty}}\h{xn}{x[n]}\,e^{-j\h{omega}{\omega}n},\qquad \h{xn}{x[n]}=\frac{1}{2\pi}\int_{-\pi}^{\pi}\h{Xw}{X(e^{j\omega})}\,e^{j\omega n}\dd\omega
+      <note>Periodicity: X(e<sup>j(ω+2π)</sup>) = X(e<sup>jω</sup>) because e<sup>−j2πn</sup> = 1. Shift: x[n−n₀] ⇔ e<sup>−jωn₀</sup>X. Modulation: e<sup>jω₀n</sup>x[n] ⇔ X(e<sup>j(ω−ω₀)</sup>) — the basis of heterodyning and digital down-conversion in radio receivers.</note>
+      <py>
+      w = np.linspace(-np.pi, np.pi, 1001)
+      Xw = np.array([np.sum(x * np.exp(-1j*wi*np.arange(x.size))) for wi in w])
+      </py>
+      <f90>
+      do i = 1, nw
+        Xw(i) = sum(x * exp(cmplx(0.0_dp, -w(i)*[(n, n = 0, size(x)-1)], dp)))
+      end do
+      </f90>
+    </x-f>
+    <x-f name="Symmetry and energy" tag="PROPERTIES">
+      x[n]\in\mathbb R\ \Rightarrow\ X^*(e^{j\omega})=X(e^{-j\omega});\qquad \h{sum}{\sum_n}|x[n]|^2=\frac1{2\pi}\int_{-\pi}^{\pi}|X(e^{j\omega})|^2\dd\omega
+      <note>Magnitude even, phase odd: negative frequencies are redundant for real detector data, hence one-sided spectra on [0, f<sub>s</sub>/2]. Parseval: energy is the same in both domains.</note>
+    </x-f>
+    <h3>Three canonical pairs</h3>
+    <table><tr><th>x[n]</th><th>X(e<sup>jω</sup>)</th><th>note</th></tr>
+      <tr><td>δ[n − n₀]</td><td>e<sup>−jωn₀</sup></td><td>|X| = 1, linear phase</td></tr>
+      <tr><td>1 for 0 ≤ n &lt; L</td><td>e<sup>−jω(L−1)/2</sup> sin(ωL/2)/sin(ω/2)</td><td>Dirichlet kernel, main lobe 4π/L</td></tr>
+      <tr><td>aⁿu[n], |a| &lt; 1</td><td>1/(1 − a e<sup>−jω</sup>)</td><td>low-pass; peak 1/(1−a)</td></tr></table>
+    <x-ex id="e7-5a" ans="2.5" tol="0.01" lvl="Core">x[n] = 0.6ⁿ u[n]. |X(e<sup>jω</sup>)| at ω = 0?
+      <hint>1/(1 − a).</hint><sol>1/0.4 = 2.5 (the peak of the plot in the lecture).</sol></x-ex>
+    <x-ex id="e7-5b" ans="2.5133" tol="0.002" lvl="Core">Rectangular pulse of L = 5 samples: null-to-null width of the main lobe, in radians?
+      <hint>4π/L.</hint><sol>4π/5 = 2.513 rad.</sol></x-ex>
+  </div>
+</section>
+
+<!-- ================================================================== 6 -->
+<section class="lesson" data-title="The DFT: sampling the DTFT" data-short="DFT" data-badge="MATH" data-time="35 min" data-level="Intermediate"
+  data-sub="Truncate to N samples, sample the frequency at N points: a computable transform, a matrix, an orthogonal basis.">
+  <div class="stage" data-widget="dftgrid"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>The DFT only sees N samples and N frequencies f<sub>k</sub> = k f<sub>s</sub>/N. A tone exactly on a bin lands in one bin; a tone between bins spreads over all of them (leakage).</p></div>
+    <div class="s-key">Bin spacing Δf = f<sub>s</sub>/N = 1/T<sub>obs</sub>. Zero padding only interpolates the spectrum: it does not improve resolution.</div>
+    <ul class="s-learn"><li>From DTFT to DFT in two steps</li><li>Twiddle factors and the DFT matrix</li><li>Orthogonality (geometric series)</li><li>Implicit periodicity, circular shifts</li><li>Frequency grid and real symmetry</li></ul>
+  </aside>
+  <div class="prose">
+    <h2><span class="lv core">CORE</span>Two steps to a computable transform</h2>
+    <ol class="steps"><li><b>Truncate</b> in time to n = 0 … N−1 (multiply by a rectangular window).</li><li><b>Sample</b> the DTFT at ω<sub>k</sub> = 2πk/N, k = 0 … N−1.</li></ol>
+    <x-f name="N-point DFT pair" tag="TRANSFORM">
+      \h{Xk}{X[k]}=\h{sum}{\sum_{n=0}^{N-1}}\h{xn}{x[n]}\,e^{-j\frac{2\pi}{N}kn},\qquad \h{xn}{x[n]}=\frac1{\h{N}{N}}\h{sum}{\sum_{k=0}^{N-1}}\h{Xk}{X[k]}\,e^{j\frac{2\pi}{N}kn}
+      <py>
+      X = np.fft.fft(x)           # forward, no 1/N
+      x = np.fft.ifft(X)          # inverse carries 1/N
+      </py>
+      <f90>
+      call dft(z, Zk, -1)         ! dft_direct.f90
+      call dft(Zk, z2, +1);  z2 = z2/N
+      </f90>
+    </x-f>
+    <x-f name="Twiddle factor and DFT matrix" tag="LINEAR ALGEBRA">
+      \h{WN}{W_N}=e^{-j2\pi/N},\qquad \h{Xk}{X[k]}=\h{sum}{\sum_n}x[n]\,\h{WN}{W_N}^{kn},\qquad \mathbf X=\mathbf F_N\mathbf x,\quad \mathbf F_N^{-1}=\frac1N\mathbf F_N^*
+      <py>
+      n = np.arange(N); W = np.exp(-2j*np.pi*np.outer(n, n)/N)
+      X = W @ x                   # O(N^2)
+      </py>
+      <f90>
+      do k = 0, N-1
+        do j = 0, N-1
+          W(k+1, j+1) = exp(cmplx(0.0_dp, -2*pi*mod(k*j, N)/real(N, dp), dp))
+        end do
+      end do
+      X = matmul(W, x)
+      </f90>
+    </x-f>
+    <h3>Orthogonality of the basis</h3>
+    <ol class="steps"><li>\(\sum_{n=0}^{N-1}W_N^{kn}W_N^{-rn}=\sum_n W_N^{(k-r)n}\).</li><li>k = r: every term is 1, the sum is N.</li><li>k ≠ r: a geometric series, \(\frac{1-W_N^{(k-r)N}}{1-W_N^{k-r}}=\frac{1-1}{1-W_N^{k-r}}=0\). Hence \(\sum_n W^{kn}W^{-rn}=N\delta_{kr}\).</li></ol>
+    <h2><span class="lv core">CORE</span>Periodicity, grid and symmetry</h2>
+    <ul>
+      <li><b>Implicit periodicity</b>: the DFT treats x[n] and X[k] as one period of periodic sequences; shifts are circular, x[(n−n₀) mod N] ⇔ W<sub>N</sub><sup>kn₀</sup>X[k]; a product of DFTs is a <i>circular</i> convolution (Lecture 9: zero padding).</li>
+      <li><b>Grid</b>: f<sub>k</sub> = k f<sub>s</sub>/N, spacing Δf = f<sub>s</sub>/N = 1/(NT) = 1/T<sub>obs</sub>.</li>
+      <li><b>Real input</b>: X[k] = X*[(N−k) mod N]; X[0] and (N even) X[N/2] are real. N real numbers ↔ N/2+1 unique bins.</li>
+    </ul>
+    <x-f name="Frequency of bin k" tag="GRID">
+      \h{fk}{f_k}=k\,\h{df}{\Delta f}=\frac{k\,\h{fs}{f_s}}{\h{N}{N}},\qquad \h{df}{\Delta f}=\frac{1}{T_{\rm obs}}
+      <py>f = np.fft.rfftfreq(N, 1/fs)       # 0 .. fs/2</py>
+      <f90>f = [(k, k = 0, N/2)] * fs / N</f90>
+    </x-f>
+    <x-ex id="e7-6a" ans="0.0083" tol="0.0002" lvl="Basic">120 s of data at 44.1 kHz. DFT bin spacing in Hz?
+      <hint>1/T<sub>obs</sub>.</hint><sol>1/120 = 0.0083 Hz (Lab 1).</sol></x-ex>
+    <x-ex id="e7-6b" ans="513" tol="0.5" lvl="Basic">How many unique complex bins does the DFT of N = 1024 real samples have?
+      <hint>N/2 + 1.</hint><sol>513 (DC and Nyquist real, 511 complex).</sol></x-ex>
+    <x-ex id="e7-6c" ans="20" tol="0.01" lvl="Core">N = 512, f<sub>s</sub> = 1024 Hz. Which bin k holds 40 Hz?
+      <hint>k = f N/f<sub>s</sub>.</hint><sol>40·512/1024 = 20.</sol></x-ex>
+  </div>
+</section>
+
+<!-- ================================================================== 7 -->
+<section class="lesson" data-title="Windows and spectral leakage" data-short="Windows" data-badge="MATH" data-time="30 min" data-level="Advanced"
+  data-sub="Truncation is a rectangular window: its sidelobes leak strong lines over weak ones. Tapering trades resolution for dynamic range.">
+  <div class="stage" data-widget="windows"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>A strong tone and a companion 60 dB weaker. With the rectangular window the companion is buried in sidelobes; with Hann or Blackman it appears.</p></div>
+    <div class="s-key">Narrow main lobe = resolution; low sidelobes = dynamic range. No window wins both.</div>
+    <ul class="s-learn"><li>Truncation = multiplication by w[n]</li><li>Hann, Hamming, Blackman, Tukey</li><li>Main lobe vs sidelobes (table)</li><li>Symmetric vs periodic forms</li><li>Revealing faint companions</li></ul>
+  </aside>
+  <div class="prose">
+    <x-f name="Windowing = convolution in frequency" tag="RESULT">
+      \h{Xwin}{X_{\rm win}(e^{j\omega})}=\frac1{2\pi}\,X(e^{j\omega})\circledast \h{Ww}{W(e^{j\omega})}
+      <note>Every line of X is replaced by a copy of W: its main lobe (resolution) and sidelobes (leakage).</note>
+    </x-f>
+    <x-f name="Common tapers" tag="WINDOWS">
+      \text{Hann: } 0.5-0.5\cos\frac{2\pi n}{N-1};\quad \text{Hamming: } 0.54-0.46\cos\frac{2\pi n}{N-1};\quad \text{Blackman: } 0.42-0.5\cos\frac{2\pi n}{N-1}+0.08\cos\frac{4\pi n}{N-1}
+      <note>Tukey(α): cosine edges of fractional length α, flat top; α = 0 rectangular, α = 1 Hann (LIGO strain chunks, CMB mask apodisation). These are the <b>symmetric</b> forms (filter design); for spectral estimation use the <b>periodic</b> form, N−1 → N (SciPy <code>sym=False</code>).</note>
+      <py>
+      from scipy.signal.windows import hann, tukey
+      w = hann(N, sym=False)          # periodic: for DFT / Welch / STFT
+      </py>
+      <f90>w = [(0.5_dp - 0.5_dp*cos(2*pi*n/N), n = 0, N-1)]   ! periodic Hann</f90>
+    </x-f>
+    <table><tr><th>window</th><th>main lobe (null-to-null)</th><th>peak sidelobe</th><th>roll-off</th></tr>
+      <tr><td>rectangular</td><td>4π/N</td><td>−13 dB</td><td>−6 dB/oct</td></tr>
+      <tr><td>Tukey(α)</td><td>4π/N → 8π/N</td><td>−13 … −31 dB</td><td>−6 … −18 dB/oct</td></tr>
+      <tr><td>Hann</td><td>8π/N</td><td>−31 dB</td><td>−18 dB/oct</td></tr>
+      <tr><td>Hamming</td><td>8π/N</td><td>−43 dB</td><td>−6 dB/oct</td></tr>
+      <tr><td>Blackman</td><td>12π/N</td><td>−58 dB</td><td>−18 dB/oct</td></tr></table>
+    <p>Code lab: a weak tone 60 dB below a strong one, 25 Hz away: rectangular −40 dB (buried in the skirt), Hann −60 dB (revealed, floor at −107 dB), Blackman −60 dB (floor −114 dB).</p>
+    <x-ex id="e7-7a" ans="0.0245" tol="0.0003" lvl="Core">N = 1024. Null-to-null main-lobe width of Hann, in radians/sample?
+      <hint>8π/N.</hint><sol>8π/1024 = 0.0245.</sol></x-ex>
+    <x-ex id="e7-7b" ans="0.5" tol="0.001" lvl="Basic">Value of the periodic Hann window w[n] = 0.5 − 0.5 cos(2πn/N) at n = N/4?
+      <hint>cos(π/2) = 0.</hint><sol>0.5.</sol></x-ex>
+    <x-hsi to="s4">Leakage in 2D: apodise an image band before its 2D FFT</x-hsi>
+    <div class="oral">Explain spectral leakage from the convolution theorem, and choose a window to detect a faint line next to a bright one.</div>
+  </div>
+</section>
+
+<!-- ================================================================== 8 -->
+<section class="lesson" data-title="Direct DFT: cost and code lab" data-short="Code lab" data-badge="CODE" data-time="40 min" data-level="Intermediate"
+  data-sub="O(N²) operations, tested Python and Fortran, and why we need the FFT.">
+  <div class="stage" data-widget="cost7"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>Each of the N bins needs N complex multiplications: N² in total. For a 2²⁰-sample strain record that is 10¹² — the FFT does it in 10⁷.</p></div>
+    <div class="s-key">Doubling N quadruples the direct DFT time (measured in Fortran: 6, 24, 95, 373 ms for N = 512…4096).</div>
+    <ul class="s-learn"><li>Run discretisation.py</li><li>Compile dft_direct.f90</li><li>Measure the N² scaling</li><li>Do the code tasks</li></ul>
+  </aside>
+  <div class="prose">
+    <x-f name="Cost of the direct DFT" tag="COMPLEXITY">
+      \text{operations}=\h{N}{N}\times\h{N}{N}=O(N^2)\qquad\text{vs}\qquad \text{FFT: } \frac N2\log_2N
+      <note>SKA/ALMA streams with N ≈ 10⁶ samples/s: ~10¹² complex operations per second per stream by direct DFT.</note>
+    </x-f>
+    <h2><span class="lv code">CODE</span>How to run</h2>
+    <x-code><py>
+      # inside "07. Discrete Signal Analysis/code"
+      python discretisation.py
+      </py><f90>
+      gfortran -O2 dft_direct.f90 -o dft_direct && ./dft_direct
+    </f90></x-code>
+    <p>Tested output: SQNR 23.6/49.1/73.8/98.0 dB for 4/8/12/16 bits; a 9 Hz tone at 10 Hz equals a 1 Hz tone; sinc reconstruction error 8×10⁻⁴; direct DFT = numpy.fft; an off-bin tone spreads over 33 of 33 bins; Hann reveals a −60 dB companion that the rectangular window hides.</p>
+    <x-code py="discretisation.py" f90="dft_direct.f90"/>
+    <h2><span class="lv code">CODE</span>Tasks</h2>
+    <div class="task"><b>TASK 7.1 — DITHER</b>Quantise a sine of amplitude 0.3 Δ (below one step!) with 8 bits: it disappears. Add uniform noise of ±Δ/2 before quantising and average 1000 repetitions: the sine comes back. Explain with the error model.</div>
+    <div class="task"><b>TASK 7.2 — ALIASING MAP</b>For f from 0 to 3f<sub>s</sub>, plot the alias frequency: a zig-zag between 0 and f<sub>s</sub>/2.</div>
+    <div class="task"><b>TASK 7.3 — LEAKAGE</b>Make a table of the fraction of the power outside the peak bin for a tone at f = (10 + δ) bins, δ = 0, 0.1, … 0.5, with rectangular and Hann windows.</div>
+    <div class="task"><b>TASK 7.4 — FORTRAN MATRIX DFT</b>Build the full matrix W in Fortran and use <code>matmul</code>; compare the time with the double loop.</div>
+  </div>
+</section>
