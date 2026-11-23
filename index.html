@@ -14,6 +14,7 @@
 <circle cx="20" cy="20" r="6" fill="#cfe3b2" stroke="currentColor" stroke-width="2.2"/><circle cx="35" cy="11.5" r="2.6" fill="#e6824c" stroke="currentColor" stroke-width="1.5"/></svg><span>Comp <mark>Astro</mark></span></a>
   <nav class="tabs"><a class="tab on" data-view="learn" href="./index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 5.5C5 4 8.5 4 12 6c3.5-2 7-2 10-.5V19c-3-1.5-6.5-1.5-10 .5-3.5-2-7-2-10-.5z"/><path d="M12 6v13.5"/></svg><span>Learn</span></a><a class="tab" data-view="practice" href="./index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg><span>Practice</span></a><a class="tab" data-view="code" href="./index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2.5" y="4" width="19" height="16" rx="2"/><path d="M2.5 8.5h19M7 13l-2 2 2 2M11 17h5"/></svg><span>Code Lab</span></a><a class="tab" data-view="sheet" href="./index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 17.5h7M17.5 14v7"/></svg><span>Cheatsheet</span></a></nav>
   <div class="search" data-act="search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><span>Search lessons &amp; formulas…</span><kbd>Ctrl K</kbd></div>
+  <div class="topkeys"><span class="stepk"><span class="kbd">←</span><span class="kbd">→</span> step ·</span> hover symbols</div>
   <button class="iconbtn" data-act="theme" aria-label="dark mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg></button>
   <div class="credit"><div class="av">∑</div><div>open study guide<b>numerical methods</b></div></div>
 </header>
@@ -24,7 +25,7 @@
   <div class="hero">
     <div>
       <div class="titlebar"><h1>Computational Methods in Astrophysics</h1></div>
-      <p class="subtitle">An open, interactive study guide to the numerical methods of astrophysics: linear systems and their solvers, signals and spectra, Fourier transforms, convolution, spectral estimation, Bayesian inference and Monte Carlo. Every formula is hoverable (name, meaning, Python, Fortran), every idea has a widget to play with, and every unit ends with tested code. A hyperspectral-imaging project applies all of it to real data.</p>
+      <p class="subtitle">An open, interactive study guide to the numerical methods of astrophysics: linear systems and their solvers, signals and spectra, Fourier transforms, convolution, spectral estimation, signals on the sphere, Bayesian inference and Monte Carlo. Every formula is hoverable (name, meaning, Python, Fortran), every idea has a widget to play with, and every unit ends with tested code. A hyperspectral-imaging project applies all of it to real data.</p>
       <div class="badges" style="justify-content:flex-start">
         <span class="badge y">maths &amp; concepts</span><span class="badge b">Python + Fortran</span><span class="badge p">labs on real data</span><span class="badge g">hyperspectral project</span>
       </div>
@@ -52,6 +53,7 @@
       <tr><td>Linear algebra</td><td>04 → 05 → 06</td><td>solve Ax = b reliably: LU and Cholesky, condition numbers and digits lost, SVD and least squares, sparse matrices and (preconditioned) conjugate gradients</td></tr>
       <tr><td>Signals</td><td>07 → 08 → 09 → 10</td><td>sample and digitise a signal, compute its spectrum fast, filter and deconvolve it, estimate a power spectrum with error bars</td></tr>
       <tr><td>Laboratory</td><td>Lab 1</td><td>analyse two real noisy recordings end to end: spectra, spectrograms, band-pass, comb and Wiener filters, a noise fit</td></tr>
+      <tr><td>The sky</td><td>11 → Lab 2</td><td>spherical harmonics, HEALPix, beams and masks; then recover the CMB acoustic peaks from real Planck 70 and 100 GHz maps</td></tr>
       <tr><td>Inference</td><td>12 → 13</td><td>turn data into parameters with error bars: likelihoods, priors, posteriors, and the Monte Carlo integrals behind them</td></tr>
       <tr><td>Project</td><td>Hyperspectral</td><td>apply every method to images with hundreds of spectral bands</td></tr>
     </table>

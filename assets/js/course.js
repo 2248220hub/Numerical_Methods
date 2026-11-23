@@ -68,7 +68,20 @@ window.COURSE = {
       subs: ["Objective & data", "Read, listen, look", "Periodogram & Welch", "Stationarity: STFT", "Band-pass & comb",
              "Fitting the noise", "Wiener filters", "Whittle fit", "Recording 2: the beat", "Results & conclusions"]
     },
-    { id: "11", name: "Sampling on the sphere", part: "Signals", color: "#5b6a82", status: "soon" },
+    {
+      id: "11", name: "Sampling on the Sphere", part: "Signals", color: "#5b6a82", status: "ready",
+      folder: "11. Sampling on the Sphere",
+      blurb: "Signals on the sky: spherical harmonics, C_ℓ and cosmic variance, HEALPix and its ring FFT, beams and pixel windows, masks — and a mind map of Lab 2.",
+      subs: ["No perfect grid", "Circle → sphere", "Spherical harmonics", "C_ℓ & cosmic variance", "HEALPix",
+             "Fast transform on rings", "Beams, pixels, N_side", "Recovering C_ℓ, cut sky", "Lab 2 mind map", "Exercises & code lab"]
+    },
+    {
+      id: "L2", label: "Lab 2 ·", name: "Planck power spectrum", part: "Laboratory", color: "#e6824c", status: "ready",
+      folder: "Lab 2",
+      blurb: "Real Planck 70 and 100 GHz maps: mask the Galaxy, remove the noise bias, correct beam and pixels, recover the CMB acoustic peaks.",
+      subs: ["Objective & data", "Step 0: look at the sky", "Step 1: full-sky spectrum", "Step 2: cut the Galaxy",
+             "Step 3: noise bias", "Step 4: beam & pixels", "Extensions A–C", "Results & significance"]
+    },
     {
       id: "12", name: "Bayesian Inference", part: "Inference", color: "#7a61cc", status: "ready",
       folder: "12. Bayesian Inference",

@@ -1,0 +1,343 @@
+<!-- ================================================================== 1 -->
+<section class="lesson" data-title="Objective, data and method" data-short="Objective & data" data-badge="CONCEPT" data-time="20 min" data-level="Beginner"
+  data-sub="Real Planck maps, with our Galaxy in the way, instrument noise and a measured beam: how much of the true CMB power spectrum can we recover?">
+  <div class="stage" data-widget="overview"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>Lesson 11 simulated skies with known beams. This laboratory does the same analysis on the real 70 GHz map of Planck (core) and the 100 GHz map (extensions).</p><p>The analysis is in one notebook, <code>Lab2_Planck_power_spectrum.ipynb</code>, that follows the professor's code block by block. Each section of this page explains one or two blocks: what they do, why, and what the numbers mean.</p></div>
+    <div class="s-key">The whole lab is the measurement equation read backwards: mask the Galaxy (f<sub>sky</sub>), subtract the noise (N), divide by beam and pixels (B²W²), bin, and compare with the model.</div>
+    <ul class="s-learn"><li>The question and the measurement equation</li><li>The five data files</li><li>The astrophysics you need</li><li>The workflow and the notebook blocks</li><li>How to run it (Colab or local)</li></ul>
+  </aside>
+  <div class="prose">
+    <h2><span class="lv basic">OBJECTIVE</span>What we want to find out</h2>
+    <p>Start from a raw sky dominated by the Galaxy and end with a measured CMB spectrum that matches the Planck model to 1–15% up to ℓ ≈ 800 (70 GHz) and ≈ 1000 (100 GHz), recovering the first three acoustic peaks — and explain why it fails beyond that.</p>
+    <x-f name="The measurement equation" tag="MODEL">
+      a^{\rm obs}_{\ell m}=\h{Bl}{B_\ell}\h{Wl}{W_\ell}\,a^{\rm sky}_{\ell m}+n_{\ell m},\qquad \langle\hat C_\ell\rangle=B_\ell^2W_\ell^2\,C^{\rm sky}_\ell+\h{Nn}{N}
+      <note>The observed map is the sky blurred by the beam (B<sub>ℓ</sub>) and by the pixels (W<sub>ℓ</sub>), plus noise. C<sup>sky</sup><sub>ℓ</sub> = CMB + Galaxy + extragalactic sources; only the CMB is in the model we compare with. We plot \(D_\ell=\ell(\ell+1)C_\ell/2\pi\) in µK².</note>
+    </x-f>
+    <h2><span class="lv basic">DATA</span>The files (folder <code>data/</code>, 113 MB)</h2>
+    <table><tr><th>file</th><th>content</th></tr>
+      <tr><td><code>planck_T070_n1024_uK.fits</code></td><td>temperature at 70 GHz (Planck LFI), N<sub>side</sub> = 1024, RING, µK<sub>CMB</sub></td></tr>
+      <tr><td><code>planck_T100_n1024_uK.fits</code></td><td>the same at 100 GHz (Planck HFI), for the extensions</td></tr>
+      <tr><td><code>mask_UT78_n1024.fits</code></td><td>Planck common temperature mask: 1 = keep, 0 = cut</td></tr>
+      <tr><td><code>COM_PowerSpect_CMB-base-plikHM-…-theory_R3.01.txt</code></td><td>best-fit Planck model D<sub>ℓ</sub>, ℓ = 2–2508, µK²</td></tr>
+      <tr><td><code>pixel_window_n1024.fits</code></td><td>pixel window W<sub>ℓ</sub> for N<sub>side</sub> = 1024</td></tr>
+      <tr><td><code>COM_PowerSpect_CMB-TT-full_R3.01.txt</code></td><td>Planck's own measured TT spectrum (used in the last block for comparison)</td></tr></table>
+    <p>The maps come from the Planck 2018 release (PR3), reduced for the lab: temperature only, 100 GHz map and mask degraded from 2048 to 1024, K → µK, NESTED → RING. The degrading adds small systematics (some aliasing above ℓ ≈ 2048 at 100 GHz; mask edges move by a pixel) that the lab does not treat.</p>
+    <h2><span class="lv basic">ASTRO</span>What you need to know</h2>
+    <table><tr><th>concept</th><th>in one line</th></tr>
+      <tr><td>CMB</td><td>Light released 380 000 years after the Big Bang; today a 2.725 K glow with differences of ~100 µK (1 part in 30 000) — the seeds of galaxies.</td></tr>
+      <tr><td>Planck</td><td>ESA satellite (2009–2013), 9 bands from 30 to 857 GHz. LFI: 30, 44, 70 GHz; HFI: 100–857 GHz. Final release 2018 (PR3).</td></tr>
+      <tr><td>Two frequencies</td><td>In µK<sub>CMB</sub> the CMB is the same at every frequency; the Galaxy is not (synchrotron, free-free at low ν, dust at high ν). Around 70–100 GHz the Galaxy is faintest.</td></tr>
+      <tr><td>Galactic coordinates</td><td>The map's equator is the Milky Way plane, the centre points to the Galactic centre; Mollweide is an equal-area view of the whole sphere.</td></tr>
+      <tr><td>Monopole, dipole</td><td>ℓ = 0 (2.725 K) and the ~3 mK dipole from our 370 km/s motion were removed by Planck; what is left at ℓ = 0, 1 is Galaxy and offsets.</td></tr>
+      <tr><td>Acoustic peaks</td><td>Sound waves in the early plasma: peaks in D<sub>ℓ</sub> at ℓ ≈ 220 (~1°), 540, 810. They measure geometry, matter and dark matter.</td></tr>
+      <tr><td>Beam, FWHM</td><td>70 GHz: 13.08′; 100 GHz: 9.66′. The beam removes power at high ℓ by B<sub>ℓ</sub>².</td></tr>
+      <tr><td>Noise, foregrounds</td><td>Detector noise is white (flat N<sub>ℓ</sub>) and not blurred by the beam; foregrounds are real non-CMB sky (Galaxy, faint radio galaxies).</td></tr>
+      <tr><td>Units µK² sr</td><td>C<sub>ℓ</sub> is temperature² × solid angle; D<sub>220</sub> ≈ 5730 µK² ↔ C<sub>220</sub> = 0.74 µK² sr.</td></tr></table>
+    <h2><span class="lv core">METHOD</span>The workflow and the notebook</h2>
+    <table><tr><th>notebook block</th><th>step</th><th>method</th><th>theory</th></tr>
+      <tr><td>0–1</td><td>setup, settings</td><td>Colab or local; FREQ, CROSS, FWHM</td><td>—</td></tr>
+      <tr><td>2</td><td>Step 0 · read and look</td><td>read_map, UNSEEN test, f<sub>sky</sub>, mollview</td><td><a href="../11.%20Sampling%20on%20the%20Sphere/index.html#s5">L11 HEALPix</a></td></tr>
+      <tr><td>3</td><td>Step 1 · full-sky spectrum</td><td>anafast, D<sub>ℓ</sub>, model</td><td><a href="../11.%20Sampling%20on%20the%20Sphere/index.html#s4">L11 C<sub>ℓ</sub></a></td></tr>
+      <tr><td>4</td><td>Step 2 · cut the Galaxy</td><td>fit/remove monopole + dipole, mask, ÷ f<sub>sky</sub></td><td><a href="../11.%20Sampling%20on%20the%20Sphere/index.html#s8">L11 cut sky</a></td></tr>
+      <tr><td>5</td><td>Step 3 · noise bias</td><td>mean C<sub>ℓ</sub> at ℓ = 2000–2500, whiteness test</td><td><a href="../10.%20Spectral%20Estimation/index.html#s6">L10 noise</a></td></tr>
+      <tr><td>6, 8</td><td>Step 4 · beam and pixels</td><td>(C − N)/B²W², bins of 30, Knox errors</td><td><a href="../11.%20Sampling%20on%20the%20Sphere/index.html#s7">L11 beams</a></td></tr>
+      <tr><td>7, 9, 10</td><td>Extensions B, C, A</td><td>weighted fit of A, cross-spectrum, 100 GHz</td><td><a href="../12.%20Bayesian%20Inference/index.html#s3">L12 least squares</a></td></tr>
+      <tr><td>11</td><td>new: both channels</td><td>summary plots and results table</td><td>—</td></tr></table>
+    <h2><span class="lv code">RUN</span>How to run the notebook</h2>
+    <ul>
+      <li><b>Google Colab</b> (easiest, any OS): upload <a href="Lab2_Planck_power_spectrum.ipynb" download>Lab2_Planck_power_spectrum.ipynb</a> (File → Upload notebook), put the <code>data/</code> folder in your Google Drive and set <code>DATA</code> in block 0 to its path. Block 0 installs healpy and mounts Drive by itself.</li>
+      <li><b>Locally</b> (Linux, macOS or WSL — healpy does not install on native Windows): <code>pip install healpy numpy matplotlib pandas</code>, keep <code>data/</code> next to the notebook, run the blocks in order.</li>
+      <li>Each <code>anafast</code> at ℓ<sub>max</sub> = 3071 takes 10–20 s. Run each block once and keep the variables in memory. The whole notebook runs in about 2 minutes.</li>
+    </ul>
+    <x-back href="../11.%20Sampling%20on%20the%20Sphere/index.html#s9">Lesson 11 · the interactive mind map of this laboratory</x-back>
+  </div>
+</section>
+
+<!-- ================================================================== 2 -->
+<section class="lesson" data-title="Step 0 · Read the map and look at it" data-short="Step 0: look at the sky" data-badge="CODE" data-time="20 min" data-level="Beginner"
+  data-sub="Load the 70 GHz map and the mask, check resolution, missing pixels and the sky fraction, and see the sky.">
+  <div class="stage" data-widget="sky"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>A HEALPix map is just a 1D numpy array with one value per pixel: 12 582 912 numbers in RING order. Everything else — the sphere, the projection — is in the pixel index.</p></div>
+    <div class="s-key">The Galaxy reaches 1.5×10⁵ µK; the CMB is ~100 µK. Without cutting the colour scale at ±300 µK the CMB is invisible — and without cutting the Galaxy from the sky, its spectrum is too.</div>
+    <ul class="s-learn"><li>hp.read_map and float64</li><li>N<sub>side</sub> and pixel size</li><li>UNSEEN pixels: test &lt; −1e30</li><li>f<sub>sky</sub> = mean of the mask</li><li>Mollweide views</li></ul>
+  </aside>
+  <div class="prose">
+    <div class="nbcell"><h3>Block 2 — Step 0: read the map and the mask, and look at them</h3>
+      <p><b>What it does.</b> Reads map and mask as float64, finds N<sub>side</sub> from the number of pixels, flags unobserved pixels, prints mean, rms and maximum of the observed pixels and the sky fraction, and draws the map with and without the mask.</p>
+      <x-code><py>
+        m = hp.read_map(path(f"planck_T{FREQ:03d}_n1024_uK.fits")).astype(np.float64)
+        mask = hp.read_map(path("mask_UT78_n1024.fits")).astype(np.float64)
+        nside = hp.npix2nside(m.size)               # Npix = 12 Nside^2  ->  Nside
+        bad = m < -1e30                             # UNSEEN pixels (test with < -1e30, not ==)
+        if bad.any():
+            mask[bad] = 0.0; m[bad] = 0.0
+        fsky = mask.mean()
+        hp.mollview(m, min=-300, max=300, unit=r"$\mu$K", cmap="RdBu_r")
+      </py></x-code>
+      <table><tr><th>printed</th><th>70 GHz</th><th>meaning</th></tr>
+        <tr><td>N<sub>side</sub>, N<sub>pix</sub>, pixel side</td><td>1024, 12 582 912, 3.44′</td><td>√(4π/N<sub>pix</sub>) rad: 3.8 pixels per beam FWHM</td></tr>
+        <tr><td>unobserved pixels</td><td>0 (100 GHz: 1)</td><td>stored as hp.UNSEEN = −1.6375×10³⁰; in single precision it is not exactly UNSEEN, so test &lt; −1e30</td></tr>
+        <tr><td>mean, rms</td><td>86.5 µK, 435.7 µK</td><td>the rms is dominated by the Galaxy, not the CMB</td></tr>
+        <tr><td>max</td><td>1.5×10⁵ µK</td><td>at (l, b) = (15.1°, −0.7°): M17, the Omega Nebula</td></tr>
+        <tr><td>f<sub>sky</sub></td><td>0.7780</td><td>22% of the sky is cut</td></tr></table>
+      <figure class="fig"><img src="figures/step0_maps_70.png" alt="Planck 70 GHz map"><figcaption>Left: the 70 GHz sky, colour range ±300 µK — CMB speckles everywhere and a saturated band along the Milky Way. Right: with the UT78 mask (grey) only the CMB-dominated sky is left.</figcaption></figure>
+      <p><b>Significance.</b> The Galaxy is hundreds of times brighter than the CMB and occupies the equatorial band. Any spectrum of the full sky will be its spectrum. The mask is the first and most important cleaning step.</p>
+    </div>
+    <x-ex id="l2-0a" ans="0.778" tol="0.005" lvl="Basic">mask = [1, 1, 0, 1, …]: the mean of the UT78 mask is the kept fraction. Value printed by Step 0?
+      <hint>fsky = mask.mean().</hint><sol>0.778.</sol></x-ex>
+    <x-ex id="l2-0b" ans="3.44" tol="0.02" lvl="Basic">Pixel side in arcmin at N<sub>side</sub> = 1024?
+      <hint>√(4π/(12·1024²)) rad × (180/π) × 60.</hint><sol>0.000999 rad = 3.44′.</sol></x-ex>
+    <div class="oral">The CMB dipole from our motion is ~3 mK. Is it in this map? How would you check, and what do you expect at ℓ = 1 after masking?</div>
+  </div>
+</section>
+
+<!-- ================================================================== 3 -->
+<section class="lesson" data-title="Step 1 · The full-sky power spectrum" data-short="Step 1: full-sky spectrum" data-badge="CODE" data-time="20 min" data-level="Beginner"
+  data-sub="anafast on the whole map and a comparison with the Planck model. It will not match — understanding why is the point.">
+  <div class="stage" data-widget="fullsky"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>anafast = map2alm (the ring transform of Lesson 11) followed by Ĉ<sub>ℓ</sub> = Σ|a<sub>ℓm</sub>|²/(2ℓ+1). At N<sub>side</sub> = 1024 it returns 3072 numbers, ℓ = 0 … 3071.</p></div>
+    <div class="s-key">On the full sky D<sub>ℓ</sub> is ten times the model at the first peak: the Galaxy dominates the large scales and the noise (D ∝ ℓ²) the small ones.</div>
+    <ul class="s-learn"><li>ℓ<sub>max</sub> = 3N<sub>side</sub> − 1</li><li>D<sub>ℓ</sub> = ℓ(ℓ+1)C<sub>ℓ</sub>/2π</li><li>Placing the model on the ℓ grid</li><li>Reading a log plot of D<sub>ℓ</sub></li></ul>
+  </aside>
+  <div class="prose">
+    <div class="nbcell"><h3>Block 3 — Step 1: the power spectrum of the whole sky</h3>
+      <x-code><py>
+        lmax = 3 * nside - 1
+        ell = np.arange(lmax + 1)
+        def Dl(cl):
+            return ell * (ell + 1) * cl / (2 * np.pi)
+        cl_full = hp.anafast(m, lmax=lmax)
+        th = np.loadtxt(path("COM_PowerSpect_CMB-base-plikHM-TTTEEE-lowl-lowE-lensing-minimum-theory_R3.01.txt"))
+        Dth = np.zeros(lmax + 1)
+        Dth[2:2 + len(th)] = th[:, 1]               # the file starts at l = 2 and stops at 2508
+      </py></x-code>
+      <p><b>Line by line.</b> <code>ell</code> = 0, 1, …, 3071 so that index = ℓ in every spectrum array. <code>Dl</code> uses the global <code>ell</code>: it works only on arrays of length ℓ<sub>max</sub> + 1. The model's row 0 is ℓ = 2, so it goes to index 2; <code>Dth</code> is zero beyond 2508.</p>
+      <table><tr><th>ℓ</th><th>D<sub>ℓ</sub> full sky [µK²]</th><th>model [µK²]</th><th>ratio</th><th>what dominates</th></tr>
+        <tr><td>10</td><td>22 520</td><td>817</td><td>28</td><td>Galaxy</td></tr>
+        <tr><td>220</td><td>51 600</td><td>5 730</td><td>9.0</td><td>Galaxy (no peak visible)</td></tr>
+        <tr><td>800</td><td>32 620</td><td>2 526</td><td>12.9</td><td>Galaxy + noise</td></tr>
+        <tr><td>2000</td><td>2 064</td><td>231</td><td>8.9</td><td>white noise, D ∝ ℓ²</td></tr></table>
+      <p><b>Significance.</b> A spectrum is only as clean as the sky it is computed on. Both ends are contaminated, by two different things: the Galaxy at low and intermediate ℓ, the instrument at high ℓ. Steps 2 and 3 remove them one at a time.</p>
+    </div>
+    <x-ex id="l2-1a" ans="3071" tol="0.001" lvl="Basic">ℓ<sub>max</sub> for N<sub>side</sub> = 1024?
+      <hint>3N<sub>side</sub> − 1.</hint><sol>3071.</sol></x-ex>
+    <x-ex id="l2-1b" ans="2507" tol="0.001" lvl="Basic">How many rows does the model file have (ℓ = 2 … 2508)?
+      <hint>2508 − 2 + 1.</hint><sol>2507: they fill indices 2 … 2508 of <code>Dth</code>.</sol></x-ex>
+  </div>
+</section>
+
+<!-- ================================================================== 4 -->
+<section class="lesson" data-title="Step 2 · Cut the Galaxy with the mask" data-short="Step 2: cut the Galaxy" data-badge="MATH" data-time="25 min" data-level="Intermediate"
+  data-sub="Fit and remove monopole and dipole on the kept sky, zero the cut, divide by f_sky: the pseudo-C_ℓ. The acoustic peaks appear.">
+  <div class="stage" data-widget="masking"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>A mask is a window on the sky (Lesson 11, section 8). It lowers the power by f<sub>sky</sub> on average, couples neighbouring ℓ, and turns any large-scale offset into power at every multipole of the mask's shape.</p></div>
+    <div class="s-key">Remove monopole and dipole <i>before</i> masking, fitting them on the kept sky only: a constant times the mask is no longer a pure ℓ = 0.</div>
+    <ul class="s-learn"><li>hp.UNSEEN to hide pixels from the fit</li><li>fit_dipole / remove_dipole</li><li>Leakage from ℓ = 0, 1</li><li>Pseudo-C<sub>ℓ</sub> and 1/f<sub>sky</sub></li><li>The low quadrupole</li></ul>
+  </aside>
+  <div class="prose">
+    <div class="nbcell"><h3>Block 4 — Step 2: cut the Galaxy with the mask</h3>
+      <x-code><py>
+        mm = m.copy()
+        mm[mask == 0] = hp.UNSEEN                   # fit only on the kept sky
+        mono, dip = hp.fit_dipole(mm)
+        mm = hp.remove_dipole(mm)                   # removes monopole and dipole
+        mm[mask == 0] = 0.0                         # anafast must see numbers, not UNSEEN
+        cl_mask = hp.anafast(mm, lmax=lmax)
+        cl_mask /= fsky                             # pseudo-C_l, corrected on average
+      </py></x-code>
+      <p><b>Line by line.</b> <code>m.copy()</code> is a real copy (<code>mm = m</code> would be two names for one array). healpy functions skip UNSEEN pixels, so the fit T(n̂) ≈ M + D·n̂ uses only the kept 78%. <code>np.linalg.norm(dip)</code> is |D|. After the removal the cut pixels become 0 ("no signal").</p>
+      <x-f name="Pseudo-C_ℓ with the 1/f_sky correction" tag="ESTIMATOR">
+        \hat C_\ell^{\rm mask}=\frac{1}{\h{fsky}{f_{\rm sky}}}\,\frac{1}{2\ell+1}\sum_m\big|a_{\ell m}[\,(m-M-\vec D\cdot\hat n)\,w\,]\big|^2
+        <note>Exact only on average and for ℓ much larger than the scale of the mask; the coupling between neighbouring ℓ is neglected (MASTER would invert it).</note>
+      </x-f>
+      <table><tr><th>quantity</th><th>value</th><th>meaning</th></tr>
+        <tr><td>monopole, |dipole| on the kept sky</td><td>35.9 µK, 4.7 µK</td><td>full sky they would be 86.5 and 54.3 µK: mostly Galaxy</td></tr>
+        <tr><td>D<sub>220</sub> masked / model</td><td>5166 / 5730</td><td>the peak appears (10× drop); still low: the beam (Step 4)</td></tr>
+        <tr><td>D<sub>800</sub> masked / model</td><td>853 / 2526</td><td>only 34%: B<sub>800</sub>² = 0.19</td></tr>
+        <tr><td>D<sub>2000</sub> masked / model</td><td>2065 / 231</td><td>noise, unchanged by the mask</td></tr>
+        <tr><td>raw (no dipole removal) / clean, ℓ = 2, 10, 100</td><td>1.13, 1.42, 1.02</td><td>leakage of the monopole and dipole through the mask</td></tr>
+        <tr><td>D<sub>2</sub> masked / model</td><td>150 / 1017</td><td>the low quadrupole of our sky; cosmic variance ≥ 63%</td></tr></table>
+      <p><b>Significance.</b> One line of masking changes the spectrum by a factor 10 at the first peak and reveals the acoustic structure. But the details matter: skipping the dipole removal biases ℓ = 10 by 42%, and forgetting 1/f<sub>sky</sub> lowers everything by 22%.</p>
+    </div>
+    <x-ex id="l2-2a" ans="1.285" tol="0.01" lvl="Basic">By what factor is the whole spectrum too low if you forget to divide by f<sub>sky</sub> = 0.778? Give the factor to multiply by.
+      <hint>1/f<sub>sky</sub>.</hint><sol>1/0.778 = 1.285 (22% low).</sol></x-ex>
+    <div class="oral">At ℓ = 2 you get D<sub>2</sub> = 150 µK², the model says 1017. Is the analysis wrong? Use cosmic variance and the cut sky in your answer.</div>
+  </div>
+</section>
+
+<!-- ================================================================== 5 -->
+<section class="lesson" data-title="Step 3 · The noise bias" data-short="Step 3: noise bias" data-badge="MATH" data-time="20 min" data-level="Intermediate"
+  data-sub="At very high ℓ the beam has erased the sky. What is left is the detector noise: measure its level N and check that it is white.">
+  <div class="stage" data-widget="noise"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>White, uncorrelated noise has a flat spectrum N<sub>ℓ</sub> = N, and it is not seen through the beam. In D<sub>ℓ</sub> it becomes a parabola ℓ(ℓ+1)N/2π: 26 µK² at ℓ = 220, 526 at ℓ = 1000, 2100 at ℓ = 2000.</p></div>
+    <div class="s-key">The noise is a bias, not just a scatter: ⟨Ĉ<sub>ℓ</sub>⟩ = sky + N. It must be subtracted, and its level must be known to better than a per cent where the beam is small.</div>
+    <ul class="s-learn"><li>Choosing a sky-free ℓ band</li><li>N as a mean of Ĉ<sub>ℓ</sub></li><li>The whiteness test Ĉ/N ≈ 1</li><li>Boolean selectors with &amp;</li></ul>
+  </aside>
+  <div class="prose">
+    <div class="nbcell"><h3>Block 5 — Step 3: the noise bias</h3>
+      <x-code><py>
+        hi = (ell >= 2000) & (ell <= 2500) if FREQ == 70 else (ell >= 2600) & (ell <= 3000)
+        N = cl_mask[hi].mean()                      # muK^2 sr
+        for a, b in [(1200, 1500), (1500, 2000), (2000, 2500), (2500, 3000)]:
+            print(a, b, cl_mask[a:b].mean() / N)
+      </py></x-code>
+      <p><b>Line by line.</b> <code>(ell &gt;= 2000) &amp; (ell &lt;= 2500)</code> combines two boolean arrays element by element; the parentheses are needed because <code>&amp;</code> binds tighter than <code>&gt;=</code>. <code>cl_mask[a:b]</code> is ℓ = a … b − 1 because index = ℓ.</p>
+      <table><tr><th>band ℓ</th><th>mean Ĉ<sub>ℓ</sub>/N (70 GHz)</th><th>reading</th></tr>
+        <tr><td>1200–1500</td><td>1.059</td><td>6% of sky still left (B² ≈ 0.01–0.002)</td></tr>
+        <tr><td>1500–2000</td><td>1.027</td><td>almost pure noise</td></tr>
+        <tr><td>2000–2500</td><td>1.000</td><td>the band used to define N</td></tr>
+        <tr><td>2500–3000</td><td>0.946</td><td>5% below: the noise is not perfectly white (and the pixel window starts to act)</td></tr></table>
+      <p><b>Result.</b> N = 3.27×10⁻³ µK² sr at 70 GHz; 5.14×10⁻⁴ at 100 GHz (band 2600–3000), six times lower.</p>
+      <p><b>Significance.</b> The noise level sets the ℓ where the measurement ends: once N/B<sub>ℓ</sub>² exceeds the CMB C<sub>ℓ</sub>, subtracting a slightly wrong N leaves an error larger than the signal. The 5% departure from white in the last band is a warning: a single constant N is a model, not a fact.</p>
+    </div>
+    <x-ex id="l2-3a" ans="526" tol="0.02" lvl="Basic">White noise N = 3.3×10⁻³ µK² sr. Its D<sub>ℓ</sub> at ℓ = 1000 in µK²?
+      <hint>ℓ(ℓ+1)N/2π.</hint><sol>1000·1001·0.0033/6.283 ≈ 526 µK².</sol></x-ex>
+  </div>
+</section>
+
+<!-- ================================================================== 6 -->
+<section class="lesson" data-title="Step 4 · The beam and the pixels" data-short="Step 4: beam & pixels" data-badge="MATH" data-time="35 min" data-level="Advanced"
+  data-sub="Subtract the noise, divide by B_ℓ²W_ℓ², bin in Δℓ = 30 with Knox error bars: the first three acoustic peaks come back — up to where the beam lets them.">
+  <div class="stage" data-widget="recover"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>The map is the sky seen through the beam (B<sub>ℓ</sub>) and averaged over the pixels (W<sub>ℓ</sub>). Correcting for them is a deconvolution: where B<sub>ℓ</sub>² is small, any error left after subtracting N is amplified enormously.</p></div>
+    <div class="s-key">Compare with a model before and after every correction: the forward model D<sub>th</sub>B²W² + D<sub>N</sub> already follows the raw data to a few per cent — the measurement is understood before it is corrected.</div>
+    <ul class="s-learn"><li>hp.gauss_beam wants radians</li><li>Reading W<sub>ℓ</sub> from a FITS table</li><li>Forward model vs correction</li><li>Binning and Knox errors</li><li>Where and why it fails</li></ul>
+  </aside>
+  <div class="prose">
+    <div class="nbcell"><h3>Block 6 — Step 4: the beam and the pixels</h3>
+      <x-code><py>
+        B = hp.gauss_beam(np.radians(FWHM_ARCMIN[FREQ] / 60.0), lmax=lmax)
+        W = np.atleast_2d(hp.read_cl(path("pixel_window_n1024.fits")))[0][:lmax + 1]
+        BW2 = (B * W) ** 2
+        model_seen = Dth * BW2 + Dl(np.full(lmax + 1, N))      # forward model
+        cl_cmb = (cl_mask - N) / BW2                            # deconvolution
+        D_cmb = Dl(cl_cmb)
+        dl = 30
+        edges = np.arange(2, lmax + 1, dl)
+        lc = 0.5 * (edges[:-1] + edges[1:] - 1)
+        Db = np.array([D_cmb[a:b].mean() for a, b in zip(edges[:-1], edges[1:])])
+        err = np.sqrt(2.0 / ((2 * lc + 1) * fsky * dl)) * (Dthb + DNb)
+      </py></x-code>
+      <x-f name="Recovered spectrum and its error" tag="ESTIMATOR">
+        \hat C^{\rm CMB}_\ell=\frac{\hat C^{\rm mask}_\ell-N}{\h{Bl}{B_\ell}^2\h{Wl}{W_\ell}^2},\qquad \Delta\hat D_b=\sqrt{\frac{2}{(2\ell_b+1)f_{\rm sky}\Delta\ell}}\Big(D^{\rm th}_b+D^{N}_b\Big),\quad D^N=\frac{\ell(\ell+1)}{2\pi}\frac{N}{B_\ell^2W_\ell^2}
+        <note>Knox (1995): cosmic variance on f<sub>sky</sub> of the sky in bins of Δℓ, plus the noise amplified by the deconvolution, evaluated on the model.</note>
+      </x-f>
+      <table><tr><th>quantity</th><th>70 GHz</th><th>100 GHz</th></tr>
+        <tr><td>ℓ where B<sub>ℓ</sub>² = 0.5 / 0.1 / 0.01</td><td>515 / 939 / 1328</td><td>698 / — / 1798</td></tr>
+        <tr><td>recovered / model, ℓ = 30–300</td><td>0.99</td><td>1.01</td></tr>
+        <tr><td>ℓ = 300–600</td><td>1.05</td><td>1.07</td></tr>
+        <tr><td>ℓ = 600–800</td><td>1.15</td><td>1.11</td></tr>
+        <tr><td>ℓ = 800–1000</td><td>1.42</td><td>1.17</td></tr>
+        <tr><td>ℓ = 1000–1200</td><td>2.43</td><td>—</td></tr></table>
+      <figure class="fig"><img src="figures/steps1-4_spectra_70.png" alt="steps 1-4"><figcaption>Left: full sky (grey), masked/f<sub>sky</sub> (blue), model (black) and the forward model B²W²·model + noise (dashed) — it follows the data. Right: the corrected spectrum in bins of 30 with Knox errors; the dashed line adds the white residual A of extension B.</figcaption></figure>
+      <p><b>Reading the plot.</b> Up to ℓ ≈ 600 the recovered points sit on the model, three peaks included. Beyond, they climb above it more and more: B² is small there and the correction amplifies whatever is left (other sky components, the beam shape, the noise colour).</p>
+      <p><b>Significance.</b> This is the central lesson of the laboratory: <i>the beam, not the data, decides how far in ℓ you can go</i>. Before dividing by B<sub>ℓ</sub>² look at how small it is.</p>
+    </div>
+    <div class="nbcell"><h3>Block 8 — Figures of steps 1–4</h3>
+      <p>The professor's two-panel figure: left, the raw spectra on a log scale against model and forward model; right, the corrected binned spectrum against the model, with the extension-B curve. It is the figure above.</p>
+    </div>
+    <x-ex id="l2-4a" ans="0.5" tol="0.02" lvl="Intermediate">Planck 70 GHz, FWHM 13.08′: B<sub>ℓ</sub>² at ℓ = 515?
+      <hint>σ = FWHM/2.355 in rad, B² = exp(−ℓ(ℓ+1)σ²).</hint><sol>exp(−0.694) = 0.50.</sol></x-ex>
+  </div>
+</section>
+
+<!-- ================================================================== 7 -->
+<section class="lesson" data-title="Extensions A–C: 100 GHz, the leftover excess, the cross-spectrum" data-short="Extensions A–C" data-badge="MATH" data-time="35 min" data-level="Advanced"
+  data-sub="Another channel, a white component that passed through the beam, and a spectrum with no noise bias at all.">
+  <div class="stage" data-widget="excess"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>Extension B is a weighted least-squares fit of one parameter (Lesson 12). Extension C uses the fact that the noise of two instruments is independent while the sky is the same.</p></div>
+    <div class="s-key">A constant excess in C<sub>ℓ</sub> that is seen <i>through</i> the beam must be on the sky: point-like objects at random positions — unresolved radio sources. But at 100 GHz a 3% narrower beam explains the data almost as well: the data alone cannot always separate a sky component from a beam model.</div>
+    <ul class="s-learn"><li>The same pipeline at 100 GHz</li><li>Fitting a white sky component A</li><li>χ² with and without A</li><li>Beam width as an alternative</li><li>Cross-spectra: no noise bias</li></ul>
+  </aside>
+  <div class="prose">
+    <div class="nbcell"><h3>Block 10 — Extension A: the same analysis at 100 GHz</h3>
+      <p>Set <code>FREQ = 100</code> in block 1 and rerun blocks 2–8 (block 11 does both channels automatically). The noise band moves to ℓ = 2600–3000 because the sky survives to higher ℓ. One pixel is unobserved inside the kept sky: Step 0 removes it from the mask. N = 5.14×10⁻⁴ µK² sr, B² = 0.5 at ℓ = 698: the spectrum is good to ~17% up to ℓ = 1000.</p>
+    </div>
+    <div class="nbcell"><h3>Block 7 — Extension B: what is left after the correction?</h3>
+      <x-code><py>
+        Cth[2:] = 2 * np.pi * Dth[2:] / (ell[2:] * (ell[2:] + 1))
+        s = slice(30, 1200)
+        y = cl_mask[s] - N - Cth[s] * BW2[s]        # excess, as the instrument sees it
+        x = BW2[s]                                  # shape of a white sky after the beam
+        var = 2 * (Cth[s] * BW2[s] + N) ** 2 / ((2 * ell[s] + 1) * fsky)
+        A = (x * y / var).sum() / (x * x / var).sum()
+      </py></x-code>
+      <x-f name="White sky component and its weighted fit" tag="MODEL">
+        \hat C_\ell-N=\big(C^{\rm th}_\ell+A\big)B_\ell^2W_\ell^2,\qquad \hat A=\frac{\sum x_\ell y_\ell/\sigma_\ell^2}{\sum x_\ell^2/\sigma_\ell^2},\quad x_\ell=B_\ell^2W_\ell^2
+        <note>Weighted least squares with one parameter; σ<sub>ℓ</sub>² is the cosmic + noise variance of each Ĉ<sub>ℓ</sub>. The alternative model has no A and a free Gaussian beam width.</note>
+      </x-f>
+      <table><tr><th>channel</th><th>A [µK² sr]</th><th>χ² without → with A (1170 ℓ)</th><th>best χ² with free FWHM, no A</th></tr>
+        <tr><td>70 GHz</td><td>4.77×10⁻³</td><td>5722 → 1532</td><td>2162 at 12.23′ — A wins clearly</td></tr>
+        <tr><td>100 GHz</td><td>1.84×10⁻³</td><td>11 558 → 1722</td><td>about as good with a narrower beam</td></tr></table>
+    </div>
+    <div class="nbcell"><h3>Block 9 — Extension C: the cross-spectrum 70 × 100</h3>
+      <x-code><py>
+        m70, mask_c = masked_map(70, mask0)
+        m100, mask_c = masked_map(100, mask_c)      # common mask: both cuts applied
+        m70[mask_c == 0] = 0.0
+        cl_x = hp.anafast(m70, map2=m100, lmax=lmax) / fsky_c
+        D_x = Dl(cl_x / (B70 * B100 * W ** 2))      # no noise to subtract
+      </py></x-code>
+      <x-f name="Cross-spectrum" tag="ESTIMATOR">
+        \hat C^{70\times100}_\ell=\frac{1}{2\ell+1}\sum_m a^{70}_{\ell m}a^{100*}_{\ell m},\qquad \langle\hat C^{70\times100}_\ell\rangle=B^{70}_\ell B^{100}_\ell W_\ell^2\,C^{\rm sky}_\ell
+      </x-f>
+      <table><tr><th>ℓ ≈</th><th>106</th><th>226</th><th>526</th><th>796</th><th>1006</th></tr>
+        <tr><td>cross / model</td><td>1.02</td><td>1.00</td><td>1.04</td><td>1.13</td><td>1.59</td></tr></table>
+      <figure class="fig"><img src="figures/extC_cross.png" alt="cross spectrum" style="max-width:620px;margin:auto"><figcaption>70 GHz auto-spectrum (corrected) and the 70×100 cross-spectrum against the model: the cross-spectrum stays closer at high ℓ, but rises too.</figcaption></figure>
+      <p><b>Significance.</b> The cross-spectrum removes the noise bias — no N to estimate, no error from a wrong N — but not the foregrounds: everything on the sky (Galaxy residuals, sources) is in both maps and survives. This is why real analyses (Planck) use cross-spectra between half-missions or detector sets.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================== 8 -->
+<section class="lesson" data-title="Results and significance of the laboratory" data-short="Results & significance" data-badge="RESULTS" data-time="25 min" data-level="Intermediate"
+  data-sub="Both channels side by side, the numbers to check against, what we neglected, and what the laboratory teaches.">
+  <div class="stage"><figure class="fig"><img src="figures/new_summary.png" alt="summary"><figcaption>Block 11 (new). (a) B<sub>ℓ</sub>²W<sub>ℓ</sub>² for both channels; dotted: where N/B²W² exceeds the CMB. (b) Recovered spectra against the model and Planck's own measured TT spectrum. (c) Ratio to the model with the expected error band. (d) The excess in C<sub>ℓ</sub>: flat, as for a white sky component.</figcaption></figure></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>Block 11 runs the core pipeline and extension B for both channels with one function, and collects every number of the laboratory in one table.</p></div>
+    <div class="s-key">From a Galaxy-dominated sky to the first three acoustic peaks within 1–15% (70 GHz, ℓ ≲ 800) — and a clear reason why it stops: the beam.</div>
+    <ul class="s-learn"><li>Reading the four summary panels</li><li>The results table</li><li>What we neglected and how it is done for real</li><li>Why this laboratory matters</li></ul>
+  </aside>
+  <div class="prose">
+    <div class="nbcell"><h3>Block 11 — New: both channels side by side</h3>
+      <table><tr><th>quantity</th><th>70 GHz</th><th>100 GHz</th></tr>
+        <tr><td>unobserved pixels</td><td>0</td><td>1</td></tr>
+        <tr><td>mean / rms [µK]</td><td>86.5 / 436</td><td>108.4 / 497</td></tr>
+        <tr><td>f<sub>sky</sub></td><td>0.778</td><td>0.778</td></tr>
+        <tr><td>monopole / |dipole| on the kept sky [µK]</td><td>35.9 / 4.7</td><td>32.9 / 3.7</td></tr>
+        <tr><td>noise N [µK² sr]</td><td>3.27×10⁻³</td><td>5.14×10⁻⁴</td></tr>
+        <tr><td>ℓ where B² = 0.5 / 0.01</td><td>515 / 1328</td><td>698 / 1798</td></tr>
+        <tr><td>ℓ where noise/B²W² &gt; CMB (reach)</td><td>≈ 856</td><td>≈ 1216</td></tr>
+        <tr><td>recovered/model, ℓ = 30–300 · 300–600 · 600–800 · 800–1000</td><td>0.99 · 1.05 · 1.15 · 1.42</td><td>1.01 · 1.07 · 1.11 · 1.17</td></tr>
+        <tr><td>white residual A [µK² sr]</td><td>4.77×10⁻³</td><td>1.84×10⁻³</td></tr>
+        <tr><td>χ² without → with A</td><td>5722 → 1532</td><td>11 558 → 1722</td></tr>
+        <tr><td>cross/model at ℓ ≈ 106, 226, 526, 796, 1006</td><td colspan="2">1.02, 1.00, 1.04, 1.13, 1.59</td></tr></table>
+      <p><b>Reading the panels.</b> (a) the 100 GHz transfer function is seven times larger at ℓ = 1300, and its noise is six times lower: its reach is ~1200 instead of ~860. (b) Up to ℓ ≈ 600 our points lie on Planck's own measurement — a home-made analysis of two maps reproduces the published spectrum; beyond, they drift above it, more at 70 GHz. (c) The ratio departs from 1 well before the error band opens: a <i>bias</i>, not noise. (d) That bias is flat in C<sub>ℓ</sub>, 2–5×10⁻³ µK² sr: the white component of extension B, about 2.6 times larger at 70 GHz than at 100 GHz, as expected for radio sources that are brighter at lower frequency.</p>
+    </div>
+    <h2><span class="lv core">LIMITS</span>What we neglected, and how it is done for real</h2>
+    <table><tr><th>neglected</th><th>effect</th><th>in a real analysis</th></tr>
+      <tr><td>mode coupling of the mask</td><td>Ĉ<sub>ℓ</sub> mixes neighbouring ℓ; 1/f<sub>sky</sub> exact only on average</td><td>MASTER: invert the coupling matrix (NaMaster)</td></tr>
+      <tr><td>Gaussian beam</td><td>B<sub>ℓ</sub> wrong by per cents where B<sub>ℓ</sub>² ≪ 1</td><td>measured beam windows (Planck RIMO)</td></tr>
+      <tr><td>white, uniform noise</td><td>N<sub>ℓ</sub> estimated at high ℓ and extrapolated</td><td>noise simulations; half-mission cross-spectra</td></tr>
+      <tr><td>foreground residuals</td><td>dust, synchrotron, sources inside the mask</td><td>masks per frequency, source masks, component separation</td></tr>
+      <tr><td>degrading to N<sub>side</sub> 1024</td><td>aliasing above ℓ ≈ 2048, mask edges</td><td>native resolution</td></tr>
+      <tr><td>errors from the model</td><td>our error bars assume the model is right</td><td>simulations of the full pipeline</td></tr></table>
+    <h2><span class="lv basic">SIGNIFICANCE</span>What this laboratory teaches</h2>
+    <ul>
+      <li><b>Every correction is a model.</b> f<sub>sky</sub>, N, B<sub>ℓ</sub>, W<sub>ℓ</sub> each encode an assumption; the residuals of Step 4 and extension B are where those assumptions fail.</li>
+      <li><b>Deconvolution has a horizon.</b> Dividing by B² is safe only where the beam leaves signal; the reach (~860 at 70 GHz, ~1200 at 100 GHz) is set by the instrument, not by the number of pixels.</li>
+      <li><b>Compare with a model at every step.</b> The forward model D<sub>th</sub>B²W² + D<sub>N</sub> explains the raw data before any correction: that is how you know the pipeline is right.</li>
+      <li><b>Independent data remove biases.</b> Cross-spectra kill the noise bias, two frequencies separate sky components: the same ideas behind the published Planck spectrum, which our points reproduce up to ℓ ≈ 600.</li>
+      <li><b>The same tools work elsewhere.</b> Masks as windows, noise bias, transfer functions and deconvolution appear in every spectrum of Lessons 07–10: on the sphere they are just written with ℓ instead of f.</li>
+    </ul>
+    <p><b>Project ideas</b> (search terms): pseudo-C<sub>ℓ</sub> with NaMaster and an apodised mask · half-mission cross-spectra · a point-source mask and the change of A · component separation with 70 and 100 GHz · a Gibbs sampler for the low-ℓ spectrum (Lesson 14).</p>
+    <x-back href="../11.%20Sampling%20on%20the%20Sphere/index.html#s9">Lesson 11 · the mind map of the whole process</x-back>
+  </div>
+</section>

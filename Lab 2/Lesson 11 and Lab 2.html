@@ -1,0 +1,1597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sampling on the Sphere: Lecture 11 and Lab 2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;600&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap" rel="stylesheet">
+<script>
+window.MathJax = {
+  tex: { inlineMath: [['\\(', '\\)']], displayMath: [['\\[', '\\]']] },
+  svg: { fontCache: 'global' },
+  options: { skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'] }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js" async></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<style>
+/* Plan: a study notebook. Sky-map blue for theory and structure, CMB "hot spot" orange for worked numbers and answers.
+   Layout: sticky table of contents on the left, one reading column on the right. */
+:root {
+  --bg: #f3f5f8;
+  --surface: #ffffff;
+  --ink: #17202d;
+  --muted: #586579;
+  --line: #d8dee8;
+  --accent: #1c5aa3;
+  --accent-soft: #e6eef9;
+  --warm: #b9480f;
+  --warm-soft: #fbeee6;
+  --good: #1f7a4d;
+  --good-soft: #e5f4ec;
+  --code-bg: #121a26;
+  --code-ink: #dbe4f0;
+  --font-display: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d121a; --surface: #151c27; --ink: #e3e9f2; --muted: #9ba8bb; --line: #283345;
+    --accent: #7cb1ff; --accent-soft: #1a2940; --warm: #ff9a62; --warm-soft: #2e2018;
+    --good: #6fd3a0; --good-soft: #15291f; --code-bg: #0a0f16; --code-ink: #dbe4f0;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d121a; --surface: #151c27; --ink: #e3e9f2; --muted: #9ba8bb; --line: #283345;
+  --accent: #7cb1ff; --accent-soft: #1a2940; --warm: #ff9a62; --warm-soft: #2e2018;
+  --good: #6fd3a0; --good-soft: #15291f; --code-bg: #0a0f16; --code-ink: #dbe4f0;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: var(--font-body); font-size: 16.5px; line-height: 1.62;
+}
+a { color: var(--accent); }
+a:focus-visible, button:focus-visible, summary:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 2px solid var(--warm); outline-offset: 2px;
+}
+h1, h2, h3, h4 { font-family: var(--font-display); line-height: 1.22; text-wrap: balance; margin: 0; }
+h1 { font-size: 2.1rem; }
+h2 { font-size: 1.65rem; }
+h3 { font-size: 1.22rem; }
+h4 { font-size: 1.02rem; font-family: var(--font-body); font-weight: 600; }
+p { margin: 0; }
+code { font-family: var(--font-mono); font-size: .88em; background: var(--accent-soft); padding: .08em .32em; border-radius: 4px; }
+.tnum { font-variant-numeric: tabular-nums; }
+
+/* ---------- header ---------- */
+header.top {
+  background: var(--surface); border-bottom: 1px solid var(--line);
+  padding: 28px 20px 22px;
+}
+header.top .inner { max-width: 1180px; margin: 0 auto; display: grid; gap: 12px; }
+.eyebrow { font-size: .82rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.lede { color: var(--muted); max-width: 72ch; }
+.partnav { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
+.partnav a {
+  text-decoration: none; padding: 8px 14px; border-radius: 8px; font-weight: 600;
+  border: 1px solid var(--line); color: var(--ink); background: var(--bg);
+}
+.partnav a.theory { border-color: var(--accent); color: var(--accent); }
+.partnav a.lab { border-color: var(--warm); color: var(--warm); }
+
+/* ---------- layout ---------- */
+.layout { max-width: 1180px; margin: 0 auto; padding: 24px 20px 80px; display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 36px; }
+nav.toc { position: sticky; top: 16px; align-self: start; max-height: calc(100vh - 32px); overflow-y: auto; font-size: .9rem; }
+nav.toc h4 { margin: 14px 0 6px; font-size: .78rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+nav.toc ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+nav.toc a { display: block; text-decoration: none; color: var(--ink); padding: 3px 8px; border-radius: 6px; border-left: 2px solid transparent; }
+nav.toc a:hover { background: var(--accent-soft); }
+nav.toc .lab-links a:hover { background: var(--warm-soft); }
+nav.toc .tools { display: grid; gap: 6px; margin-top: 16px; }
+main { min-width: 0; display: grid; gap: 28px; }
+@media (max-width: 960px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  nav.toc { position: static; max-height: none; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 8px 14px 14px; }
+}
+
+/* ---------- parts & sections ---------- */
+.part-banner {
+  border-radius: 12px; padding: 22px 24px; display: grid; gap: 8px;
+  background: var(--surface); border: 1px solid var(--line);
+}
+.part-banner.theory { border-top: 5px solid var(--accent); }
+.part-banner.lab { border-top: 5px solid var(--warm); }
+.part-banner .tag { font-weight: 700; font-size: .82rem; letter-spacing: .08em; text-transform: uppercase; }
+.part-banner.theory .tag { color: var(--accent); }
+.part-banner.lab .tag { color: var(--warm); }
+section.card {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+  padding: 24px 26px; display: grid; gap: 14px; scroll-margin-top: 14px;
+}
+section.card > * { max-width: 78ch; }
+section.card > pre, section.card > .codewrap, section.card > .tablewrap, section.card > details, section.card > .calc, section.card > .pipeline, section.card > .grid2, section.card > canvas, section.card > .chartbox { max-width: none; }
+.secnum { font-family: var(--font-mono); font-size: .8rem; color: var(--muted); }
+ul, ol { margin: 0; padding-left: 1.3em; display: grid; gap: 4px; }
+
+/* ---------- boxes ---------- */
+.box { border-radius: 10px; padding: 14px 16px; display: grid; gap: 8px; border: 1px solid var(--line); }
+.box .boxtitle { font-weight: 700; font-size: .84rem; letter-spacing: .05em; text-transform: uppercase; }
+.box.num { background: var(--warm-soft); border-left: 4px solid var(--warm); }
+.box.num .boxtitle { color: var(--warm); }
+.box.concept { background: var(--accent-soft); border-left: 4px solid var(--accent); }
+.box.concept .boxtitle { color: var(--accent); }
+.box.py { background: var(--good-soft); border-left: 4px solid var(--good); }
+.box.py .boxtitle { color: var(--good); }
+.box.key { background: var(--surface); border: 2px solid var(--accent); }
+.box.key .boxtitle { color: var(--accent); }
+.box.task { background: var(--surface); border: 2px dashed var(--warm); }
+.box.task .boxtitle { color: var(--warm); }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+
+/* ---------- details / toggles ---------- */
+details { border: 1px solid var(--line); border-radius: 10px; background: var(--bg); }
+details > summary {
+  cursor: pointer; padding: 10px 14px; font-weight: 600; list-style: none;
+  display: flex; align-items: center; gap: 10px;
+}
+details > summary::-webkit-details-marker { display: none; }
+details > summary::before { content: "▸"; color: var(--muted); transition: transform .15s; }
+details[open] > summary::before { transform: rotate(90deg); }
+details > .dbody { padding: 4px 16px 16px; display: grid; gap: 12px; }
+details.solution > summary { color: var(--warm); }
+details.answer > summary { color: var(--accent); }
+details.explain > summary { color: var(--good); }
+.pill { font-size: .72rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; padding: 2px 8px; border-radius: 99px; border: 1px solid currentColor; }
+
+/* ---------- questions ---------- */
+.qlist { display: grid; gap: 10px; }
+.q { display: grid; gap: 6px; }
+.q > p:first-child { font-weight: 600; }
+
+/* ---------- code ---------- */
+.codewrap { position: relative; display: grid; gap: 0; }
+.codelabel {
+  font-family: var(--font-mono); font-size: .76rem; font-weight: 600; letter-spacing: .03em;
+  padding: 6px 12px; border-radius: 8px 8px 0 0; display: flex; justify-content: space-between; align-items: center; gap: 8px;
+  background: #1e2a3b; color: #c5d3e6;
+}
+.codelabel.prof { background: #2a1d14; color: #ffb48a; }
+.codelabel.extra { background: #13291f; color: #8fe0b5; }
+.codelabel.mine { background: #1c2340; color: #a9bcff; }
+pre { margin: 0; overflow-x: auto; background: var(--code-bg); color: var(--code-ink); border-radius: 0 0 8px 8px; padding: 14px 16px; font-family: var(--font-mono); font-size: .84rem; line-height: 1.55; }
+pre code { background: none; padding: 0; font-size: inherit; color: inherit; }
+pre.out { border-radius: 8px; background: transparent; color: var(--ink); border: 1px dashed var(--line); }
+.copybtn {
+  font-family: var(--font-body); font-size: .76rem; font-weight: 600; cursor: pointer;
+  border: 1px solid currentColor; background: transparent; color: inherit; border-radius: 6px; padding: 2px 10px;
+}
+.hljs-keyword, .hljs-built_in, .hljs-literal { color: #ff9e64; }
+.hljs-string { color: #9ece6a; }
+.hljs-comment { color: #7f8ea6; font-style: italic; }
+.hljs-number { color: #e0af68; }
+.hljs-title, .hljs-title.function_ { color: #7dcfff; }
+.hljs-params { color: #c0caf5; }
+
+/* ---------- tables ---------- */
+.tablewrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: .92rem; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 600; color: var(--muted); font-size: .82rem; letter-spacing: .03em; }
+td code { white-space: nowrap; }
+
+/* ---------- pipeline ---------- */
+.pipeline { display: flex; flex-wrap: wrap; gap: 8px; align-items: stretch; counter-reset: p; }
+.pipeline .stage {
+  flex: 1 1 150px; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px;
+  display: grid; gap: 4px; align-content: start; position: relative;
+}
+.pipeline .stage b { font-size: .9rem; }
+.pipeline .stage span { font-size: .82rem; color: var(--muted); }
+.pipeline .stage .sn { font-family: var(--font-mono); font-size: .74rem; color: var(--warm); font-weight: 600; }
+
+/* ---------- calculator ---------- */
+.calc { display: grid; gap: 14px; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+.calc .inputs { display: flex; flex-wrap: wrap; gap: 14px; }
+.calc label { display: grid; gap: 4px; font-size: .85rem; font-weight: 600; color: var(--muted); }
+.calc input, .calc select {
+  font: inherit; font-size: .95rem; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--line);
+  background: var(--surface); color: var(--ink); width: 130px;
+}
+.calc .outs { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; }
+.calc .o { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; display: grid; gap: 2px; }
+.calc .o span { font-size: .78rem; color: var(--muted); }
+.calc .o b { font-variant-numeric: tabular-nums; font-size: 1.05rem; }
+.verdict { font-weight: 600; padding: 8px 12px; border-radius: 8px; }
+.verdict.ok { background: var(--good-soft); color: var(--good); }
+.verdict.warn { background: var(--warm-soft); color: var(--warm); }
+.chartbox { display: grid; gap: 6px; }
+.chartbox canvas { width: 100%; height: 300px; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: .84rem; color: var(--muted); }
+.legend i { display: inline-block; width: 18px; height: 3px; vertical-align: middle; margin-right: 6px; border-radius: 2px; }
+
+.btn {
+  font: inherit; font-size: .85rem; font-weight: 600; cursor: pointer; padding: 6px 10px; border-radius: 8px;
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink); text-align: left;
+}
+.btn:hover { border-color: var(--accent); }
+.small { font-size: .88rem; color: var(--muted); }
+mjx-container[display="true"] { overflow-x: auto; overflow-y: hidden; padding: 4px 0; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="inner">
+    <div class="eyebrow">Computing Methods for Astrophysics · Sapienza · de Gasperis &amp; Graziani · A.A. 2026/27</div>
+    <h1>Sampling on the Sphere: Lecture 11 and Lab 2</h1>
+    <p class="lede">A beginner's guide in two parts. Part A explains the theory of Lecture 11 with a small hand calculation next to every formula. Part B walks you through Laboratory 2 (the angular power spectrum of real Planck maps) block by block, so you can code along in the lab and open the professor's code only when you are stuck.</p>
+    <div class="partnav">
+      <a class="theory" href="#theory">Part A · Theory (Lecture 11)</a>
+      <a class="lab" href="#lab">Part B · Lab 2 (Planck maps)</a>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="Contents">
+  <h4>Part A · Theory</h4>
+  <ol>
+    <li><a href="#t-map">A0 · Where this fits</a></li>
+    <li><a href="#t-sphere">A1 · Why the sphere is hard</a></li>
+    <li><a href="#t-circle">A2 · From circle to sphere</a></li>
+    <li><a href="#t-ylm">A3 · Spherical harmonics</a></li>
+    <li><a href="#t-cl">A4 · Power spectrum \(C_\ell\)</a></li>
+    <li><a href="#t-discrete">A5 · Synthesis vs analysis</a></li>
+    <li><a href="#t-healpix">A6 · HEALPix</a></li>
+    <li><a href="#t-rings">A7 · Fast transform on rings</a></li>
+    <li><a href="#t-beam">A8 · Beams and pixels</a></li>
+    <li><a href="#t-nside">A9 · Choosing \(N_{\rm side}\)</a></li>
+    <li><a href="#t-udgrade">A10 · Changing resolution</a></li>
+    <li><a href="#t-recover">A11 · Recovering the sky \(C_\ell\)</a></li>
+    <li><a href="#t-mask">A12 · The cut sky</a></li>
+    <li><a href="#t-summary">A13 · Summary and oral questions</a></li>
+    <li><a href="#t-homework">A14 · Homework exercises</a></li>
+  </ol>
+  <h4>Part B · Lab 2</h4>
+  <ol class="lab-links">
+    <li><a href="#l-overview">B0 · Objective and pipeline</a></li>
+    <li><a href="#l-astro">B1 · Astro concepts you need</a></li>
+    <li><a href="#l-tools">B2 · Libraries and setup</a></li>
+    <li><a href="#l-step0">Step 0 · Read and look</a></li>
+    <li><a href="#l-step1">Step 1 · Full-sky spectrum</a></li>
+    <li><a href="#l-step2">Step 2 · Cut the Galaxy</a></li>
+    <li><a href="#l-step3">Step 3 · Noise bias</a></li>
+    <li><a href="#l-step4">Step 4 · Beam and pixels</a></li>
+    <li><a href="#l-extA">Ext A · 100 GHz map</a></li>
+    <li><a href="#l-extB">Ext B · The leftover excess</a></li>
+    <li><a href="#l-extC">Ext C · Cross-spectrum</a></li>
+    <li><a href="#l-script">Full core script</a></li>
+    <li><a href="#l-wrap">What we neglected, results</a></li>
+  </ol>
+  <div class="tools">
+    <button class="btn" type="button" id="openAll">Open all answers and code</button>
+    <button class="btn" type="button" id="closeAll">Close all</button>
+  </div>
+</nav>
+
+<main>
+
+<!-- =============================== PART A =============================== -->
+<div class="part-banner theory" id="theory">
+  <div class="tag">Part A · Theory</div>
+  <h2>Lecture 11: signals on the sphere</h2>
+  <p>By the end of the lecture you should be able to: explain why the sphere has no regular grid that can be refined; expand a sky map in spherical harmonics and read its power spectrum \(C_\ell\) with cosmic variance; explain why going from coefficients to a map is exact but the way back is not; describe HEALPix and its fast ring transform; pick \(N_{\rm side}\) from the beam; and recover the sky spectrum from a pixelised, beam-smoothed map.</p>
+</div>
+
+<section class="card" id="t-map">
+  <div class="secnum">A0</div>
+  <h3>Where this lecture fits</h3>
+  <p>Lectures 7 to 11 form one story: take a continuous signal, turn it into a list of numbers, and learn what you can compute from those numbers. Until Lecture 10 the signal lived on a line (time). Lecture 11 moves the same ideas onto the surface of a sphere, because the sky is a sphere around us.</p>
+  <div class="tablewrap"><table>
+    <tr><th>On a line (Lectures 7–10)</th><th>On the sphere (Lecture 11)</th></tr>
+    <tr><td>Sample every \(\Delta t\) seconds</td><td>Pixelise the sky (HEALPix pixels)</td></tr>
+    <tr><td>Fourier modes \(e^{i\omega t}\)</td><td>Spherical harmonics \(Y_{\ell m}(\theta,\varphi)\)</td></tr>
+    <tr><td>Frequency \(f\)</td><td>Multipole \(\ell\) (angular scale \(\approx 180^\circ/\ell\))</td></tr>
+    <tr><td>FFT, cost \(N\log N\)</td><td>FFT on each ring + Legendre sum, cost \(L^3\)</td></tr>
+    <tr><td>Power spectrum / periodogram</td><td>Angular power spectrum \(C_\ell\)</td></tr>
+    <tr><td>Nyquist: sample at \(\geq 2\times\) the top frequency</td><td>Use \(\ell_{\max}\leq 2N_{\rm side}\); 2–3 pixels per beam FWHM</td></tr>
+    <tr><td>Anti-aliasing filter before sampling</td><td>The telescope beam smooths before pixelising</td></tr>
+    <tr><td>Finite record = window (leakage)</td><td>Galaxy mask = window on the sky</td></tr>
+  </table></div>
+  <div class="box concept">
+    <div class="boxtitle">Astro idea: why maps of the sky?</div>
+    <p>Many astrophysical data are a value for each direction in the sky: the temperature of the Cosmic Microwave Background (CMB), all-sky radio, X-ray or gamma-ray surveys, galaxy counts. Each direction is a point on a unit sphere, given by two angles: colatitude \(\theta\in[0,\pi]\) (0 at the north pole) and longitude \(\varphi\in[0,2\pi)\).</p>
+  </div>
+</section>
+
+<section class="card" id="t-sphere">
+  <div class="secnum">A1</div>
+  <h3>Why the sphere is hard: there is no perfect grid</h3>
+  <p>On a flat sheet you can draw squares of equal size, and split each square into 4 smaller squares forever. On a sphere you cannot. The obvious grid, equal steps in latitude and longitude (like a world map), crowds the poles: the cells near the pole become tiny slivers.</p>
+  <p>The reason is curvature. On a sphere, the angles of a polygon add up to more than on a plane, and the extra angle equals the area (on a unit sphere). So the shape of a regular cell fixes its size: you cannot shrink it and keep its shape. Only the 5 Platonic solids tile the sphere with identical regular cells; the finest has 20 faces (icosahedron), each about 41° across, which is useless as a map.</p>
+  <p>Every refinable grid therefore breaks something. Euler's formula \(V-E+F=2\) forces defects: a sphere covered with hexagons always needs exactly 12 pentagons (look at a football). So every pixelisation has to choose what to keep: equal areas, equal shapes, or points aligned on rings of constant latitude.</p>
+  <div class="box num">
+    <div class="boxtitle">Worked numbers: polar crowding</div>
+    <p>On a latitude–longitude grid, a cell's area is proportional to \(\sin\theta\).</p>
+    <ul>
+      <li>At the equator \(\theta=90^\circ\): \(\sin 90^\circ = 1\).</li>
+      <li>At \(\theta=10^\circ\) from the pole: \(\sin 10^\circ = 0.17\). The cell is about 6 times smaller than at the equator.</li>
+      <li>At \(\theta=2^\circ\): \(\sin 2^\circ = 0.035\), about 29 times smaller.</li>
+    </ul>
+    <p>So you spend many samples near the poles where they add little information. The appendix measured an area ratio of 25 between the biggest and smallest cells of an equiangular grid of 3200 points.</p>
+  </div>
+</section>
+
+<section class="card" id="t-circle">
+  <div class="secnum">A2</div>
+  <h3>From the circle to the sphere</h3>
+  <p>Start with a circle (one angle \(\varphi\)). Any smooth function on it is a Fourier series:</p>
+  \[ f(\varphi)=\sum_k \hat f_k\, e^{ik\varphi}. \]
+  <p>It is <b>band-limited</b> if \(\hat f_k=0\) for \(|k|&gt;B\). The sampling theorem on the circle says: \(N\geq 2B+1\) equally spaced samples \(\varphi_n=2\pi n/N\) determine \(f\) exactly, and the DFT gives back the coefficients exactly:</p>
+  \[ \hat f_k=\frac1N\sum_{n=0}^{N-1} f(\varphi_n)\,e^{-ik\varphi_n}. \]
+  <p>That is the Nyquist theorem on a circle. On a torus (a doughnut, two circles) the grid is a product of two 1D grids and the 2D DFT is exact too. The sphere is <i>not</i> two circles: the \(\varphi\)-circles shrink to points at the poles, so the number of samples you need on each ring changes with latitude.</p>
+  <div class="box num">
+    <div class="boxtitle">Worked numbers: Nyquist on a circle</div>
+    <p>Take \(f(\varphi)=\cos 3\varphi\). Its highest mode is \(k=3\), so \(B=3\). You need \(N\geq 2\cdot3+1=7\) samples, spaced \(360^\circ/7\approx 51.4^\circ\). With 7 samples the DFT returns \(\hat f_{\pm3}=0.5\) and zero for all other \(k\), to machine precision. With only 5 samples, the mode \(k=3\) looks identical to \(k=3-5=-2\): that is aliasing.</p>
+  </div>
+</section>
+
+<section class="card" id="t-ylm">
+  <div class="secnum">A3</div>
+  <h3>Spherical harmonics: the "Fourier modes" of the sphere</h3>
+  <p>On the sphere the role of \(e^{ik\varphi}\) is played by the spherical harmonics \(Y_{\ell m}(\theta,\varphi)\). They are the natural vibration patterns of a sphere (eigenfunctions of the Laplacian on the sphere, \(\nabla^2_{S^2}Y_{\ell m}=-\ell(\ell+1)Y_{\ell m}\)).</p>
+  \[ Y_{\ell m}(\theta,\varphi)=\underbrace{\sqrt{\frac{2\ell+1}{4\pi}\frac{(\ell-m)!}{(\ell+m)!}}\;P_\ell^m(\cos\theta)}_{\lambda_{\ell m}(\theta)\ \text{depends on }\theta\text{ only}}\;\; e^{im\varphi} \]
+  <ul>
+    <li>\(\ell\geq 0\) is the <b>multipole</b>: it sets the size of the pattern. Angular scale \(\theta\simeq\pi/\ell\), i.e. \(\approx 180^\circ/\ell\).</li>
+    <li>\(m\) runs from \(-\ell\) to \(+\ell\): \(2\ell+1\) patterns for each \(\ell\). It sets how the pattern is oriented in longitude.</li>
+    <li>\(m=0\): <i>zonal</i>, bands of latitude. \(|m|=\ell\): <i>sectoral</i>, segments like orange slices. In between: <i>tesseral</i>, a checkerboard.</li>
+  </ul>
+  <p><b>Synthesis</b> builds a map from coefficients; <b>analysis</b> gets the coefficients from a map:</p>
+  \[ f(\theta,\varphi)=\sum_{\ell=0}^{\infty}\sum_{m=-\ell}^{\ell}a_{\ell m}Y_{\ell m}(\theta,\varphi),\qquad a_{\ell m}=\int_{S^2}f\,Y^*_{\ell m}\,d\Omega,\quad d\Omega=\sin\theta\,d\theta\,d\varphi. \]
+  <div class="box key">
+    <div class="boxtitle">Key structure to remember for the oral</div>
+    <p>\(Y_{\ell m}\) is a function of \(\theta\) times a pure Fourier wave \(e^{im\varphi}\). Along any ring of constant latitude, a spherical harmonic is just \(e^{im\varphi}\). So an FFT is hidden inside the spherical transform. This is what makes HEALPix fast (A7).</p>
+  </div>
+  <div class="box num">
+    <div class="boxtitle">Worked numbers: counting and scales</div>
+    <ul>
+      <li>Band limit \(\ell_{\max}=2\): \(\ell=0\) gives 1 coefficient, \(\ell=1\) gives 3, \(\ell=2\) gives 5. Total \(1+3+5=9=L^2\) with \(L=\ell_{\max}+1=3\).</li>
+      <li>\(\ell_{\max}=2048\): \(L^2\approx 4.2\) million numbers describe the map.</li>
+      <li>\(\ell=2\) (quadrupole): scale \(180^\circ/2=90^\circ\), patterns as big as a quarter of the sky.</li>
+      <li>\(\ell=220\): \(180^\circ/220\approx 0.8^\circ\). This is the first acoustic peak of the CMB, spots about one degree across (twice the Moon's diameter).</li>
+    </ul>
+  </div>
+</section>
+
+<section class="card" id="t-cl">
+  <div class="secnum">A4</div>
+  <h3>The angular power spectrum \(C_\ell\) and cosmic variance</h3>
+  <p>For a random sky that looks the same in all directions (statistically isotropic, like the CMB), all the information is in how much power each multipole has:</p>
+  \[ \langle a_{\ell m}a^*_{\ell' m'}\rangle=C_\ell\,\delta_{\ell\ell'}\delta_{mm'}. \]
+  <p>In words: coefficients are uncorrelated, and the average of \(|a_{\ell m}|^2\) depends only on \(\ell\). We estimate it from our one sky by averaging over the \(2\ell+1\) values of \(m\):</p>
+  \[ \hat C_\ell=\frac{1}{2\ell+1}\sum_{m=-\ell}^{\ell}|a_{\ell m}|^2. \]
+  <p>That average uses only \(2\ell+1\) numbers, so it has an unavoidable scatter. For Gaussian \(a_{\ell m}\) on the full sky:</p>
+  \[ \frac{(2\ell+1)\hat C_\ell}{C_\ell}\sim\chi^2_{2\ell+1},\qquad \frac{\Delta\hat C_\ell}{C_\ell}=\sqrt{\frac{2}{2\ell+1}}. \]
+  <p>This is <b>cosmic variance</b>. On a time series you can reduce the scatter by averaging more segments (Welch, Lecture 10). On the sky you cannot: we have only one universe to observe.</p>
+  <div class="box num">
+    <div class="boxtitle">Worked numbers: estimating \(\hat C_1\) by hand</div>
+    <p>Suppose a map has \(a_{1,0}=2\), \(a_{1,1}=1+i\), \(a_{1,-1}=-(1-i)\) (for a real map \(a_{\ell,-m}=(-1)^m a^*_{\ell m}\)).</p>
+    <ul>
+      <li>\(|a_{1,0}|^2=4\), \(|a_{1,1}|^2=1^2+1^2=2\), \(|a_{1,-1}|^2=2\).</li>
+      <li>\(\hat C_1=(4+2+2)/3=8/3\approx 2.67\).</li>
+    </ul>
+    <p>Cosmic variance: at \(\ell=2\), \(\sqrt{2/5}=0.63\): a 63% uncertainty from the sky itself. At \(\ell=1000\), \(\sqrt{2/2001}=0.032\): 3%. Large scales are always poorly known.</p>
+  </div>
+  <div class="box concept">
+    <div class="boxtitle">Why \(2\ell+1\) degrees of freedom</div>
+    <p>\(a_{\ell 0}\) is real (1 number). For \(m&gt;0\), \(a_{\ell m}\) is complex (2 numbers) and \(a_{\ell,-m}\) is fixed by it. So: \(1+2\ell\) independent real numbers.</p>
+  </div>
+</section>
+
+<section class="card" id="t-discrete">
+  <div class="secnum">A5</div>
+  <h3>Discretising the transform: synthesis is exact, analysis is not</h3>
+  <p>On a grid of \(N\) points \(\hat n_p\) with weights \(w_p\):</p>
+  \[ \underbrace{f_p=\sum_{\ell m}a_{\ell m}Y_{\ell m}(\hat n_p)}_{\text{synthesis }S\text{: just evaluate a sum, exact}}\qquad \underbrace{\hat a_{\ell m}=\sum_p w_p f_p Y^*_{\ell m}(\hat n_p)}_{\text{analysis }A\text{: approximates an integral}} \]
+  <p>The round trip \(a\to\) map \(\to\hat a\) gives back the input (\(AS=I\)) only if the sum is an exact quadrature for every product \(Y_{\ell m}Y^*_{\ell'm'}\) up to band limit \(2\ell_{\max}\). On a circle the equispaced grid does this for free. On the sphere only special grids do:</p>
+  <div class="tablewrap"><table>
+    <tr><th>Exact scheme</th><th>Points needed</th><th>Weak point</th></tr>
+    <tr><td>Driscoll &amp; Healy (1994), equiangular</td><td class="tnum">\(4L^2\)</td><td>polar crowding</td></tr>
+    <tr><td>Gauss–Legendre (rings at roots of \(P_L\))</td><td class="tnum">\(\approx 2L^2\)</td><td>unequal areas, no hierarchy</td></tr>
+    <tr><td>McEwen &amp; Wiaux (2011)</td><td class="tnum">\(\approx 2L^2\)</td><td>unequal areas</td></tr>
+    <tr><td>HEALPix with \(\ell_{\max}=3N_{\rm side}-1\) (not exact)</td><td class="tnum">\(\approx 1.33L^2\)</td><td>approximate quadrature</td></tr>
+  </table></div>
+  <p>For observational data we still prefer equal-area pixels with a fast approximate transform. Detectors average over an area (they make pixels, not point samples), noise per pixel is simpler with equal areas, and we want a hierarchy to change resolution.</p>
+  <div class="box num">
+    <div class="boxtitle">Worked numbers: how many samples for \(L=100\)?</div>
+    <p>Driscoll–Healy: \(4\times100^2=40\,000\). Gauss–Legendre: \(100\times(2\cdot100-1)=19\,900\). HEALPix at the same band limit: \(\approx 1.33\times 10^4=13\,300\). Fewer samples, but the round trip is no longer exact.</p>
+  </div>
+</section>
+
+<section class="card" id="t-healpix">
+  <div class="secnum">A6</div>
+  <h3>HEALPix: Hierarchical Equal Area isoLatitude Pixelisation</h3>
+  <p>HEALPix (Górski et al. 2005) is the standard for WMAP, Planck and most all-sky surveys. It keeps three properties at once:</p>
+  <ol>
+    <li><b>Equal area.</b> Every pixel covers \(\Omega_{\rm pix}=4\pi/N_{\rm pix}\). Integrals become plain sums, and uniform white noise has the same variance in every pixel.</li>
+    <li><b>Hierarchy.</b> Each pixel splits into 4 children. Good for changing resolution and finding neighbours.</li>
+    <li><b>Iso-latitude.</b> Pixel centres sit on rings of constant \(\theta\), equally spaced in \(\varphi\). One FFT per ring (A7).</li>
+  </ol>
+  <p>What it gives up: an exact quadrature (the round trip is not the identity) and uniform shapes (pixels are near-squares in some places and stretched rhombi in others).</p>
+  <div class="box key">
+    <div class="boxtitle">Formulas to memorise</div>
+    \[ N_{\rm pix}=12\,N_{\rm side}^2,\qquad N_{\rm side}=2^k,\qquad \Omega_{\rm pix}=\frac{\pi}{3N_{\rm side}^2},\qquad \theta_{\rm pix}=\sqrt{\Omega_{\rm pix}}\simeq\frac{58.6^\circ}{N_{\rm side}} \]
+    <p>Number of rings: \(4N_{\rm side}-1\). Start: 12 base pixels (4 around each pole, 4 on the equator), each split into \(N_{\rm side}\times N_{\rm side}\).</p>
+  </div>
+  <div class="box num">
+    <div class="boxtitle">Worked numbers: HEALPix by hand</div>
+    <ul>
+      <li>\(N_{\rm side}=1\): 12 pixels, \(58.6^\circ\) each. \(N_{\rm side}=2\): 48 pixels.</li>
+      <li>\(N_{\rm side}=1024\) (the Lab 2 maps): \(12\times1024^2=12\,582\,912\) pixels. \(\theta_{\rm pix}=58.6^\circ/1024=0.0572^\circ=3.44'\) (arcminutes).</li>
+      <li>\(N_{\rm side}=2\) has \(4\cdot2-1=7\) rings. Polar cap ring \(i=1\) has \(4i=4\) pixels at \(z=\cos\theta=1-\frac{i^2}{3N_{\rm side}^2}=1-\frac{1}{12}=0.917\), so \(\theta=23.6^\circ\). The equatorial rings \(i=2\ldots6\) have \(4N_{\rm side}=8\) pixels each. Check: \(2\times4+5\times8=48\). ✓</li>
+    </ul>
+  </div>
+  <h4>RING and NESTED ordering</h4>
+  <p>The same pixels can be numbered in two ways. <b>RING</b>: ring by ring from north to south; each ring is a contiguous block, which is what the transform wants. <b>NESTED</b>: a quad-tree inside each base pixel; the children of pixel \(p\) are \(4p,4p+1,4p+2,4p+3\). Good for neighbours and changing resolution. Planck archive files are NESTED; the lab files were converted to RING.</p>
+  <div class="box num">
+    <div class="boxtitle">Worked numbers: NESTED children</div>
+    <p>Pixel 5 at \(N_{\rm side}=1\) has children 20, 21, 22, 23 at \(N_{\rm side}=2\). Their children are 80–95 at \(N_{\rm side}=4\). Upgrading or degrading a NESTED map is just regrouping blocks of 4.</p>
+  </div>
+</section>
+
+<section class="card" id="t-rings">
+  <div class="secnum">A7</div>
+  <h3>The fast spherical harmonic transform on rings</h3>
+  <p>Because \(Y_{\ell m}=\lambda_{\ell m}(\theta)\,e^{im\varphi}\), and pixel \(j\) of ring \(r\) is at \(\varphi_{rj}=\varphi_{r0}+2\pi j/n_r\), the analysis splits into two steps:</p>
+  \[ \text{1. FFT on each ring:}\quad F_m(r)=e^{-im\varphi_{r0}}\sum_{j=0}^{n_r-1}f_{rj}\,e^{-2\pi i\,mj/n_r} \]
+  \[ \text{2. Legendre sum over rings:}\quad \hat a_{\ell m}=\Omega_{\rm pix}\sum_r\lambda_{\ell m}(\theta_r)\,F_m(r) \]
+  <p>Synthesis is the same two steps in reverse. Rings are independent, so the work is trivially parallel.</p>
+  <div class="box num">
+    <div class="boxtitle">Worked numbers: why this saves so much time</div>
+    <p>Direct sum: every pixel times every \((\ell,m)\): \(N_{\rm pix}\times L^2\). With \(N_{\rm pix}\approx 1.33L^2\) that is \(\sim L^4\).<br>Ring algorithm: \(N_{\rm ring}\times L^2\sim L^3\).<br>For \(L=2048\): \(L^4\approx1.8\times10^{13}\) versus \(L^3\approx8.6\times10^{9}\), about 2000 times less work. Measured with healpy on one core: \(N_{\rm side}=1024,\ \ell_{\max}=2048\) takes about 2 s. Doubling \(\ell_{\max}\) costs 6–7 times more (slope 2.6, heading to 3).</p>
+  </div>
+  <div class="box concept">
+    <div class="boxtitle">Aliasing in azimuth</div>
+    <p>A ring of \(n_r\) pixels cannot tell \(m\) from \(m\pm n_r\). The first polar ring has only 4 pixels, so \(e^{5i\varphi}\) looks like \(e^{i\varphi}\) there. This is one reason the HEALPix round trip is not exact.</p>
+  </div>
+  <h4>How accurate is the round trip, and how to improve it</h4>
+  <p>Measured at \(N_{\rm side}=64\): with \(\ell_{\max}=2N_{\rm side}\) the plain quadrature has rms error \(2\times10^{-3}\). The best \(a_{\ell m}\) solves a least-squares problem, and since \(AS\simeq I\) a simple Jacobi iteration converges fast:</p>
+  \[ a^{(k+1)}=a^{(k)}+A\big(f-Sa^{(k)}\big). \]
+  <p>Error: \(2.2\times10^{-3}\) (iter=0), \(2.3\times10^{-4}\) (1), \(3.3\times10^{-6}\) (3, healpy's default <code>map2alm(iter=3)</code>). At \(\ell_{\max}=3N_{\rm side}-1\) it stays at 0.15 whatever you do.</p>
+  <div class="box key">
+    <div class="boxtitle">Practical rule</div>
+    <p>\(\ell_{\max}\leq 2N_{\rm side}\): accurate. \(2N_{\rm side}&lt;\ell_{\max}\leq3N_{\rm side}-1\): quick looks only. \(\ell_{\max}&gt;3N_{\rm side}\): not resolved by the grid.</p>
+  </div>
+</section>
+
+<section class="card" id="t-beam">
+  <div class="secnum">A8</div>
+  <h3>Beams and pixels: two low-pass filters</h3>
+  <p><b>The pixel.</b> A map pixel is the average of the sky over the pixel area, not the value at one point. Averaging is a convolution with a small top-hat, i.e. a low-pass filter. On average over the sphere it acts as</p>
+  \[ a^{\rm map}_{\ell m}\simeq W_\ell\,a^{\rm sky}_{\ell m},\qquad C^{\rm map}_\ell\simeq W_\ell^2\,C^{\rm sky}_\ell, \]
+  <p>with \(W_\ell\) the <b>pixel window function</b> (<code>hp.pixwin</code>). \(W_\ell\approx1\) for \(\ell\ll N_{\rm side}\); at \(N_{\rm side}=64\) it is 0.96 at \(\ell=N_{\rm side}\), 0.83 at \(2N_{\rm side}\), 0.64 at \(3N_{\rm side}\).</p>
+  <p><b>The beam.</b> A telescope does not see a point: it sees a blurred spot, the beam, described by its FWHM (full width at half maximum). Smoothing a sky with a circular beam is a convolution on the sphere, and (Funk–Hecke theorem) it is <i>diagonal</i> in harmonic space: each \(a_{\ell m}\) is just multiplied by a number \(B_\ell\).</p>
+  \[ a^{\rm out}_{\ell m}=B_\ell\,a_{\ell m},\qquad \text{Gaussian beam: } B_\ell=\exp\!\Big(-\tfrac12\ell(\ell+1)\sigma^2\Big),\quad \sigma=\frac{\rm FWHM}{\sqrt{8\ln2}}=\frac{\rm FWHM}{2.355}. \]
+  <p>This is the convolution theorem on the sphere. <code>hp.smoothing</code> does exactly: map2alm → multiply by \(B_\ell\) → alm2map. An asymmetric beam is not diagonal (it mixes different \(m\)).</p>
+  <div class="box num">
+    <div class="boxtitle">Worked numbers: the Planck 70 GHz beam (you will use this tomorrow)</div>
+    <ul>
+      <li>FWHM \(=13.08'\). In radians: \(13.08/60=0.218^\circ\), \(\times\pi/180=0.003805\) rad.</li>
+      <li>\(\sigma=0.003805/2.355=0.001616\) rad, so \(\sigma^2=2.61\times10^{-6}\).</li>
+      <li>\(\ell=515\): \(\ell(\ell+1)\sigma^2=515\cdot516\cdot2.61\times10^{-6}=0.694\). \(B_\ell^2=e^{-0.694}=0.50\). Half the power is gone.</li>
+      <li>\(\ell=800\) (third acoustic peak): \(B_\ell^2=e^{-1.67}=0.19\). Only 19% of the power survives.</li>
+      <li>\(\ell=1328\): \(B_\ell^2=0.01\). 99% gone.</li>
+    </ul>
+    <p>Note we square: \(C_\ell\) is a power, so it is multiplied by \(B_\ell^2\).</p>
+  </div>
+  <div class="chartbox">
+    <canvas id="beamChart" aria-label="Beam and pixel window squared versus multipole"></canvas>
+    <div class="legend">
+      <span><i style="background:var(--accent)"></i>\(B_\ell^2\), 70 GHz (13.08′)</span>
+      <span><i style="background:var(--warm)"></i>\(B_\ell^2\), 100 GHz (9.66′)</span>
+      <span><i style="background:var(--good)"></i>\(W_\ell^2\), \(N_{\rm side}=1024\) (top-hat approx.)</span>
+    </div>
+    <p class="small">Log scale. Where a curve drops below about 0.01, the map holds almost no sky signal at that \(\ell\). The narrower 100 GHz beam keeps signal to higher \(\ell\).</p>
+  </div>
+</section>
+
+<section class="card" id="t-nside">
+  <div class="secnum">A9</div>
+  <h3>Aliasing on the sphere and choosing \(N_{\rm side}\) from the beam</h3>
+  <p>If the sky has power at scales smaller than the pixels and you sample it at pixel centres, that power folds back onto lower \(\ell\) and biases \(\hat C_\ell\) upwards: aliasing, as in Lecture 7. The cure is to smooth before pixelising. A telescope does this automatically: the beam is the anti-aliasing filter of the sphere, provided the pixels are small enough compared with the beam.</p>
+  <div class="tablewrap"><table>
+    <tr><th>FWHM in pixels</th><th>1</th><th>1.5</th><th>2</th><th>2.5</th><th>3</th><th>4</th></tr>
+    <tr><td>aliased power, \(2N_{\rm side}\leq\ell&lt;3N_{\rm side}\)</td><td>16%</td><td>4.7%</td><td>1.8%</td><td>0.7%</td><td>0.2%</td><td>&lt;10⁻⁵</td></tr>
+    <tr><td>aliased power, \(N_{\rm side}\leq\ell&lt;2N_{\rm side}\)</td><td>1.3%</td><td>0.06%</td><td>&lt;10⁻⁵</td><td>&lt;10⁻⁵</td><td>&lt;10⁻⁵</td><td>&lt;10⁻⁵</td></tr>
+  </table></div>
+  <div class="box key">
+    <div class="boxtitle">Rule</div>
+    <p>Choose the smallest \(N_{\rm side}=2^k\) that gives FWHM ≳ 2–3 pixels. Then the analysis is clean up to \(\ell_{\max}\simeq2N_{\rm side}\). Do not oversample: each factor 2 in \(N_{\rm side}\) means 4 times the pixels and memory and about 8 times the transform cost.</p>
+  </div>
+  <div class="box num">
+    <div class="boxtitle">Worked numbers: a 1° beam (Exercise 1, question 1)</div>
+    <p>FWHM \(=60'\). Pixels per FWHM \(=60'/\theta_{\rm pix}\):</p>
+    <ul>
+      <li>\(N_{\rm side}=64\): \(\theta_{\rm pix}=55'\) → 1.1 px. Too coarse, aliasing.</li>
+      <li>\(N_{\rm side}=128\): \(27.5'\) → 2.2 px. Good: the choice.</li>
+      <li>\(N_{\rm side}=256\): \(13.7'\) → 4.4 px. Fine but wasteful.</li>
+      <li>\(N_{\rm side}=512\): \(6.9'\) → 8.7 px. Oversampled.</li>
+    </ul>
+    <p>Planck 70 GHz: \(13.08'/3.44'=3.8\) pixels per FWHM at \(N_{\rm side}=1024\). WMAP and Planck are distributed at \(N_{\rm side}=512\) and \(2048\), about 2–3 pixels per FWHM.</p>
+  </div>
+  <h4>Try it: beam and pixel calculator</h4>
+  <div class="calc" id="calc">
+    <div class="inputs">
+      <label for="cFwhm">Beam FWHM [arcmin]<input id="cFwhm" type="number" value="13.08" min="0.1" step="0.1"></label>
+      <label for="cNside">\(N_{\rm side}\)<select id="cNside">
+        <option>16</option><option>32</option><option>64</option><option>128</option><option>256</option><option>512</option><option selected>1024</option><option>2048</option><option>4096</option>
+      </select></label>
+      <label for="cEll">Multipole \(\ell\)<input id="cEll" type="number" value="800" min="1" step="1"></label>
+    </div>
+    <div class="outs">
+      <div class="o"><span>Pixels \(12N_{\rm side}^2\)</span><b id="oNpix">–</b></div>
+      <div class="o"><span>Pixel size \(\theta_{\rm pix}\)</span><b id="oRes">–</b></div>
+      <div class="o"><span>Pixels per FWHM</span><b id="oPpf">–</b></div>
+      <div class="o"><span>\(B_\ell^2\) at this \(\ell\)</span><b id="oB2">–</b></div>
+      <div class="o"><span>\(W_\ell^2\) (approx.)</span><b id="oW2">–</b></div>
+      <div class="o"><span>\(B_\ell^2W_\ell^2\)</span><b id="oBW2">–</b></div>
+      <div class="o"><span>Cosmic variance \(\sqrt{2/(2\ell+1)}\)</span><b id="oCV">–</b></div>
+      <div class="o"><span>Angular scale \(180^\circ/\ell\)</span><b id="oScale">–</b></div>
+    </div>
+    <div class="verdict ok" id="oVerdict">–</div>
+    <p class="small">\(W_\ell\) here uses the appendix approximation \(W=\sin x/x\), \(x=\ell\theta_{\rm pix}/2\) (within about 1% of the real window up to \(2N_{\rm side}\)). Try FWHM 60 with \(N_{\rm side}\) 64 and 128, or ℓ = 515 and 1328 at 13.08′.</p>
+  </div>
+</section>
+
+<section class="card" id="t-udgrade">
+  <div class="secnum">A10</div>
+  <h3>Changing the resolution of a map: <code>ud_grade</code></h3>
+  <p><b>Degrading</b> (going to a smaller \(N_{\rm side}\)) with <code>hp.ud_grade</code> makes each new pixel the mean of its children. That mean is a top-hat of one new pixel, i.e. about 1 pixel per FWHM, which aliases badly. The fix: <b>smooth first</b> to a beam of about 3 new pixels, then degrade.</p>
+  <p><b>Upgrading</b> copies each pixel into its 4 children. You get more pixels but no new information, and the sharp block edges add fake power at high \(\ell\).</p>
+  <div class="box num">
+    <div class="boxtitle">Worked numbers: 512 → 64</div>
+    <p>Each new pixel is the mean of \((512/64)^2=64\) old pixels. Measured aliased power, directly degraded: 2.7% for \(N_{\rm side}\leq\ell&lt;2N_{\rm side}\) and 25% for \(2N_{\rm side}\leq\ell&lt;3N_{\rm side}\). Smoothed first to \(3\times55'=2.75^\circ\), then degraded: 0.00% and 0.03%. Upgrading back keeps only \(12\times64^2=49\,152\) independent values.</p>
+  </div>
+  <div class="box key"><div class="boxtitle">Slogan</div><p>Smooth before you degrade. Upgrading adds pixels, not information.</p></div>
+  <div class="codewrap">
+    <div class="codelabel"><span>From the lecture appendix: smooth, then degrade</span></div>
+    <pre><code class="language-python">m_lo = hp.ud_grade(hp.smoothing(m, fwhm=np.radians(3*0.92*2)), 32)   # smooth, then degrade</code></pre>
+  </div>
+  <p class="small">Here \(0.92^\circ\) is the pixel size at \(N_{\rm side}=64\); the target \(N_{\rm side}=32\) has pixels twice as big, so the beam is 3 × (2 × 0.92°).</p>
+</section>
+
+<section class="card" id="t-recover">
+  <div class="secnum">A11</div>
+  <h3>Recovering the sky power spectrum (this is the whole Lab 2)</h3>
+  <p>What the map gives you is the sky multiplied by the beam and the pixel window, plus noise. Solve for the sky:</p>
+  \[ \hat C_\ell^{\rm map}=B_\ell^2W_\ell^2\,C_\ell^{\rm sky}+N_\ell\qquad\Longrightarrow\qquad \hat C_\ell^{\rm sky}=\frac{\hat C_\ell^{\rm map}-N_\ell}{W_\ell^2B_\ell^2}. \]
+  <ul>
+    <li>\(N_\ell\): the noise power spectrum (from noise simulations, from half-difference maps, or, in the lab, from the high-\(\ell\) tail).</li>
+    <li>\(W_\ell\) must match how the map was really made; a wrong window is a bias of several per cent at \(\ell\gtrsim N_{\rm side}\).</li>
+    <li>Dividing by \(W_\ell^2B_\ell^2\) is a <b>deconvolution</b>. Where \(B_\ell^2\) is tiny, any small error is blown up. Stop where \(B_\ell^2\) falls below the noise.</li>
+    <li>Error bars, full sky: \(\Delta\hat C_\ell=\sqrt{\tfrac{2}{2\ell+1}}\big(C_\ell+N_\ell/(W_\ell^2B_\ell^2)\big)\): cosmic variance plus amplified noise.</li>
+  </ul>
+  <div class="box num">
+    <div class="boxtitle">Worked numbers: why deconvolution fails at high \(\ell\)</div>
+    <p>70 GHz noise: \(N=3.3\times10^{-3}\ \mu{\rm K}^2\,{\rm sr}\). At \(\ell=1500\), \(B_\ell^2=0.0028\).</p>
+    <ul>
+      <li>A 1% mistake in \(N\): \(3.3\times10^{-5}\).</li>
+      <li>After dividing by \(B_\ell^2\): \(3.3\times10^{-5}/0.0028=0.0118\ \mu{\rm K}^2\,{\rm sr}\).</li>
+      <li>In \(D_\ell=\ell(\ell+1)C_\ell/2\pi\): \(1500\cdot1501\cdot0.0118/6.283\approx4\times10^3\ \mu{\rm K}^2\). The CMB itself there is under \(10^3\ \mu{\rm K}^2\). The error is bigger than the signal.</li>
+    </ul>
+  </div>
+  <div class="box concept">
+    <div class="boxtitle">Wiener filter on the sphere (for display)</div>
+    <p>\(a^{\rm WF}_{\ell m}=\dfrac{C_\ell B_\ell W_\ell}{C_\ell B_\ell^2W_\ell^2+N_\ell}\,a^{\rm map}_{\ell m}\). The same filter as on a line (Lecture 10), now one number per \(\ell\). It gives the most probable sky for a Gaussian field: used to make pretty maps, not to measure \(C_\ell\).</p>
+  </div>
+</section>
+
+<section class="card" id="t-mask">
+  <div class="secnum">A12</div>
+  <h3>The cut sky: a mask is a window</h3>
+  <p>Real maps are masked: we cut the Galaxy and bright sources, and keep a fraction \(f_{\rm sky}&lt;1\) of the sphere. The mask is a window, exactly like a finite time record:</p>
+  <ul>
+    <li>On a partial sky the \(Y_{\ell m}\) are no longer orthogonal: power from one \(\ell\) leaks into its neighbours. The measured "pseudo-\(C_\ell\)" is the true one blurred by a coupling matrix, \(\langle\tilde C_\ell\rangle=\sum_{\ell'}M_{\ell\ell'}C_{\ell'}\).</li>
+    <li>Simplest correction (used in the lab): divide by \(f_{\rm sky}\), because a masked sky keeps on average a fraction \(f_{\rm sky}\) of the power. Exact only on average and for \(\ell\) much larger than the mask's scale.</li>
+    <li>A patch of size \(\Theta\) cannot separate multipoles closer than \(\Delta\ell\sim2\pi/\Theta\), so we average in bins of width \(\Delta\ell\).</li>
+    <li>Error bars grow (Knox 1995): \(\Delta\hat C_\ell/C_\ell\simeq\sqrt{2/[(2\ell+1)f_{\rm sky}\Delta\ell]}\).</li>
+    <li>Sharp mask edges leak power from large scales into small ones; apodising (smoothing) the edges reduces it. Proper tools: MASTER (Hivon et al. 2002), NaMaster.</li>
+  </ul>
+  <div class="box num">
+    <div class="boxtitle">Worked numbers: the lab's Knox error at the first peak</div>
+    <p>\(\ell=220\), \(f_{\rm sky}=0.778\), \(\Delta\ell=30\): \(\sqrt{2/(441\times0.778\times30)}=\sqrt{2/10293}=0.014\). About 1.4% (before noise). Compare 9.5% for a single \(\ell\) on the full sky: binning and big \(\ell\) help a lot.</p>
+  </div>
+</section>
+
+<section class="card" id="t-summary">
+  <div class="secnum">A13</div>
+  <h3>Summary and oral-exam questions</h3>
+  <ol>
+    <li>The sphere has no regular grid that can be refined; HEALPix keeps equal areas, hierarchy and rings.</li>
+    <li>Spherical harmonics = Legendre function × Fourier mode: transform on rings = FFT per ring + Legendre sum, \(O(L^3)\).</li>
+    <li>Synthesis is exact, analysis is a quadrature: exact grids reach \(10^{-14}\); HEALPix \(2\times10^{-3}\), \(3\times10^{-6}\) after 3 iterations for \(\ell_{\max}\leq2N_{\rm side}\).</li>
+    <li>The beam sets \(N_{\rm side}\): 2–3 pixels per FWHM. A 5′ beam needs \(N_{\rm side}=2048\).</li>
+    <li>Smooth before you degrade. Upgrading adds pixels, not information.</li>
+    <li>Recovering \(C_\ell\) is a deconvolution by \(W_\ell^2B_\ell^2\): right pixel window, a noise estimate, and a stop where the beam has killed the signal.</li>
+  </ol>
+  <h4>Test yourself (answers hidden)</h4>
+  <div class="qlist">
+    <div class="q"><p>1. Why can a square grid on a plane be refined forever, but a regular grid on the sphere cannot?</p>
+      <details class="answer"><summary>Show answer</summary><div class="dbody"><p>On a plane the condition for a regular tiling involves only angles, so a tile can be shrunk and still fit (a square splits into 4 squares). On a sphere, by Gauss–Bonnet, the angle excess of a polygon equals its area, so shape and size are tied: a regular cell cannot shrink while keeping its shape. Only the 5 Platonic solids work, the finest with 20 cells.</p></div></details></div>
+    <div class="q"><p>2. Why is the HEALPix transform \(O(L^3)\) and not \(O(L^4)\)?</p>
+      <details class="answer"><summary>Show answer</summary><div class="dbody"><p>Pixels lie on \(\sim\sqrt{N_{\rm pix}}\) rings of constant latitude, equispaced in \(\varphi\). Since \(Y_{\ell m}=\lambda_{\ell m}(\theta)e^{im\varphi}\), the \(\varphi\) part is an FFT on each ring (cheap, \(N\log N\)) and the \(\theta\) part is a Legendre sum costing \(N_{\rm ring}\times L^2\sim L^3\), instead of \(N_{\rm pix}\times L^2\sim L^4\).</p></div></details></div>
+    <div class="q"><p>3. Why does map2alm(alm2map(a)) not return exactly a?</p>
+      <details class="answer"><summary>Show answer</summary><div class="dbody"><p>alm2map evaluates a finite sum (exact). map2alm approximates an integral with a sum over pixels; equal areas do not make an exact quadrature, and the short polar rings alias high \(m\). Iterating (Jacobi) reduces the error from \(2\times10^{-3}\) to \(3\times10^{-6}\) if \(\ell_{\max}\leq2N_{\rm side}\).</p></div></details></div>
+    <div class="q"><p>4. Which \(N_{\rm side}\) for a 5′ beam, and why not more?</p>
+      <details class="answer"><summary>Show answer</summary><div class="dbody"><p>\(\theta_{\rm pix}=58.6^\circ/2048=1.72'\), so 5′ is 2.9 pixels per FWHM: \(N_{\rm side}=2048\). Going to 4096 would cost 4× memory and ~8× transform time for no gain, since the beam already kills the signal by \(\ell\sim1.6\)–\(2.5N_{\rm side}\).</p></div></details></div>
+    <div class="q"><p>5. What is cosmic variance, and how big is it at \(\ell=2\)?</p>
+      <details class="answer"><summary>Show answer</summary><div class="dbody"><p>The scatter of \(\hat C_\ell\) because we average only \(2\ell+1\) modes of our one sky: \(\Delta C/C=\sqrt{2/(2\ell+1)}\). At \(\ell=2\): \(\sqrt{2/5}=63\%\). It cannot be reduced by better instruments.</p></div></details></div>
+    <div class="q"><p>6. What is the pixel window \(W_\ell\), and why does it appear explicitly on the sphere?</p>
+      <details class="answer"><summary>Show answer</summary><div class="dbody"><p>The low-pass effect of averaging the sky over a pixel. On the sphere pixel shapes vary, so it holds only on average; and the CMB beam is measured in time-ordered data (planet transits), before map-making, so \(B_\ell\) does not contain the pixel. The pixel average is therefore a separate factor \(W_\ell^2\).</p></div></details></div>
+    <div class="q"><p>7. Why smooth before <code>ud_grade</code>?</p>
+      <details class="answer"><summary>Show answer</summary><div class="dbody"><p>Degrading averages over one new pixel: about 1 pixel per FWHM, which lets small-scale power alias into \(\ell&lt;3N_{\rm side}\) (25% in the example). Smoothing to ~3 new pixels first removes that power, like an anti-aliasing filter before sampling (0.03%).</p></div></details></div>
+    <div class="q"><p>8. What does a mask do to the power spectrum?</p>
+      <details class="answer"><summary>Show answer</summary><div class="dbody"><p>It lowers the power by about \(f_{\rm sky}\), couples neighbouring multipoles (pseudo-\(C_\ell\), coupling matrix), lowers spectral resolution (bins of \(\Delta\ell\sim2\pi/\Theta\)), increases the variance by \(1/f_{\rm sky}\), and sharp edges leak power from low to high \(\ell\).</p></div></details></div>
+  </div>
+</section>
+
+<section class="card" id="t-homework">
+  <div class="secnum">A14</div>
+  <h3>Homework exercises from the lecture (optional, not graded)</h3>
+  <p>Good practice for the weekend, and a possible seed for your exam project.</p>
+  <ul>
+    <li><b>Exercise 1</b>, from a beam to a map: sky \(C_\ell=1/(\ell(\ell+1))\), 1° beam, generated at \(N_{\rm side}=512\). Choose \(N_{\rm side}\); degrade to 128 and 256 with and without pre-smoothing and measure the aliased power; recover \(C_\ell\) at 256 dividing by \(B_\ell^2W_\ell^2\); find where it breaks; Fortran part: split an \(N_{\rm side}=16\) RING map into rings and FFT each one with FFTW.</li>
+    <li><b>Exercise 2</b>, cosmic variance: 500 skies at \(N_{\rm side}=64\) with <code>hp.synfast(..., new=True)</code>; plot mean and scatter of \(\hat C_\ell/C_\ell\) against \(\sqrt{2/(2\ell+1)}\); histogram \(5\hat C_2/C_2\) against \(\chi^2_5\) (<code>scipy.stats.chi2</code>); add a \(|b|&lt;20^\circ\) mask.</li>
+    <li><b>Exercise 3</b>, a mask is a window: binary versus apodised mask, leakage on a steep spectrum, \(f_{\rm sky}\) and \(\langle w^2\rangle^2/\langle w^4\rangle\).</li>
+  </ul>
+  <div class="codewrap">
+    <div class="codelabel"><span>Lecture appendix: healpy harmonic transforms (a good warm-up before the lab)</span></div>
+    <pre><code class="language-python">import numpy as np
+import healpy as hp
+
+nside, lmax = 128, 2 * 128                       # lmax &lt;= 2 Nside: accurate
+ell = np.arange(lmax + 1)
+cl = np.zeros(lmax + 1); cl[2:] = 1.0 / (ell[2:] * (ell[2:] + 1.0))
+
+alm = hp.synalm(cl, lmax=lmax)                   # random a_lm with spectrum C_l
+m = hp.alm2map(alm, nside, lmax=lmax)            # synthesis: exact
+alm_back = hp.map2alm(m, lmax=lmax, iter=3)      # analysis: approximate, iterated
+print(np.abs(alm_back - alm).max() / np.abs(alm).max())   # ~1e-6, not 1e-15
+
+fwhm = np.radians(1.0)
+m_s = hp.smoothing(m, fwhm=fwhm)                 # = alm * B_l, back to map
+bl, wl = hp.gauss_beam(fwhm, lmax=lmax), hp.pixwin(nside, lmax=lmax)
+cl_map = hp.anafast(m_s, lmax=lmax)              # pseudo-C_l of the smoothed map
+cl_sky = cl_map / bl**2                          # (no noise here; W_l not applied by alm2map)
+m_pw = hp.alm2map(alm, nside, lmax=lmax, pixwin=True)   # APPLIES W_l (simulates pixel averaging)</code></pre>
+  </div>
+</section>
+
+<!-- =============================== PART B =============================== -->
+<div class="part-banner lab" id="lab">
+  <div class="tag">Part B · Laboratory 2</div>
+  <h2>The angular power spectrum of Planck maps</h2>
+  <p>How to use this part in the lab: read the "Your turn" box, try to write the block yourself, run it, and compare with the expected output. Open <span style="color:var(--warm);font-weight:600">Professor's code</span> only when stuck, copy it, and then open <span style="color:var(--good);font-weight:600">Line by line</span> to understand it. Green "Try it" blocks are optional extra lines: they only print or plot and never change a variable the next step needs.</p>
+</div>
+
+<section class="card" id="l-overview">
+  <div class="secnum">B0</div>
+  <h3>The project at a glance</h3>
+  <div class="box key">
+    <div class="boxtitle">The question</div>
+    <p>So far the skies were simulated and the beams known. On a <b>real</b> map, with our Galaxy in the way, instrument noise and a measured beam, how much of the true CMB power spectrum can we recover? We answer it with the Planck 70 GHz map (core) and the 100 GHz map (extensions).</p>
+  </div>
+  <h4>The measurement equation (the math behind everything)</h4>
+  \[ a^{\rm obs}_{\ell m}=B_\ell W_\ell\,a^{\rm sky}_{\ell m}+n_{\ell m},\qquad \hat C_\ell=\frac{1}{2\ell+1}\sum_m|a_{\ell m}|^2,\qquad \langle\hat C_\ell\rangle=B_\ell^2W_\ell^2\,C^{\rm sky}_\ell+N_\ell \]
+  <p>In words: the observed map = sky blurred by the beam (\(B_\ell\)) and by the pixels (\(W_\ell\)), plus noise. Its power spectrum = blurred sky power + a noise floor. \(C^{\rm sky}_\ell\) = CMB + Galaxy + extragalactic sources; only the CMB is in the model you compare with. We plot \(D_\ell=\ell(\ell+1)C_\ell/2\pi\) in \(\mu{\rm K}^2\), the standard way to show CMB spectra (it makes the peaks visible; a flat \(C_\ell\) becomes \(D_\ell\propto\ell^2\)).</p>
+  <h4>The pipeline</h4>
+  <div class="pipeline">
+    <div class="stage"><span class="sn">STEP 0</span><b>Read and look</b><span>Load map and mask, check units, pixels, \(f_{\rm sky}\); Mollweide plots</span></div>
+    <div class="stage"><span class="sn">STEP 1</span><b>Full-sky \(\hat C_\ell\)</b><span>anafast on everything: the Galaxy dominates</span></div>
+    <div class="stage"><span class="sn">STEP 2</span><b>Mask the Galaxy</b><span>Remove monopole + dipole, zero the cut, divide by \(f_{\rm sky}\)</span></div>
+    <div class="stage"><span class="sn">STEP 3</span><b>Noise bias \(N\)</b><span>Mean of \(\hat C_\ell\) at \(\ell=2000\)–2500</span></div>
+    <div class="stage"><span class="sn">STEP 4</span><b>Correct and bin</b><span>\((\hat C_\ell-N)/B_\ell^2W_\ell^2\), bins of 30, compare with the model</span></div>
+    <div class="stage"><span class="sn">EXT A–C</span><b>Extensions</b><span>100 GHz, the leftover excess, the 70×100 cross-spectrum</span></div>
+  </div>
+  <h4>Data files (put them in a folder <code>data/</code> next to your script)</h4>
+  <div class="tablewrap"><table>
+    <tr><th>File</th><th>Content</th></tr>
+    <tr><td><code>planck_T070_n1024_uK.fits</code></td><td>Temperature at 70 GHz (Planck LFI), \(N_{\rm side}=1024\), RING, \(\mu{\rm K}_{\rm CMB}\)</td></tr>
+    <tr><td><code>planck_T100_n1024_uK.fits</code></td><td>Temperature at 100 GHz (Planck HFI), same format (extensions)</td></tr>
+    <tr><td><code>mask_UT78_n1024.fits</code></td><td>Planck common temperature mask: 1 = keep, 0 = cut</td></tr>
+    <tr><td><code>COM_PowerSpect_CMB-base-plikHM-...-theory_R3.01.txt</code></td><td>Best-fit Planck model \(D_\ell\), \(\ell=2\)–2508, in \(\mu{\rm K}^2\)</td></tr>
+    <tr><td><code>pixel_window_n1024.fits</code></td><td>Pixel window \(W_\ell\) for \(N_{\rm side}=1024\)</td></tr>
+  </table></div>
+  <p class="small">The files come from the Planck 2018 release (PR3), reduced for the lab: temperature only, 100 GHz map and mask degraded from 2048 to 1024, K → µK, NESTED → RING. The degrading adds small systematics (some aliasing above \(\ell\approx2048\) at 100 GHz; mask edges move by a pixel) that the lab does not treat. The data are in the course's Google Drive folder (113 MB).</p>
+  <h4>Plots you will make, and what each one tells you</h4>
+  <div class="tablewrap"><table>
+    <tr><th>Plot</th><th>What you should see</th><th>Why it matters</th></tr>
+    <tr><td>Step 0: full-sky Mollweide map</td><td>Speckles of ~100 µK (CMB) and a saturated band along the equator (Milky Way)</td><td>The Galaxy is far brighter than the CMB: it must be cut</td></tr>
+    <tr><td>Step 0: masked map</td><td>A grey band (22% of the sky removed); the speckles remain</td><td>What is left is mostly CMB</td></tr>
+    <tr><td>Step 1: full-sky \(D_\ell\) vs model</td><td>Data ~10× above the model up to \(\ell\sim800\), no peaks; rise as \(\ell^2\) above ~1500</td><td>Galaxy dominates large scales; noise dominates small scales</td></tr>
+    <tr><td>Step 3: masked \(D_\ell\) + noise line</td><td>Peaks now visible; at high \(\ell\) the data sit on a straight \(\ell^2\) line</td><td>Gives the noise level \(N\) to subtract</td></tr>
+    <tr><td>Step 4: data vs model·\(B^2W^2\)+noise</td><td>The forward model follows the data to a few per cent</td><td>Confirms our model of the measurement</td></tr>
+    <tr><td>Step 4: corrected, binned \(D_\ell\) vs model</td><td>First three acoustic peaks recovered up to \(\ell\sim800\); points scatter wildly above ~1000</td><td>The beam sets how far in \(\ell\) you can go</td></tr>
+    <tr><td>Ext B: \(\hat C^{\rm CMB}_\ell-C^{\rm th}_\ell\)</td><td>A roughly flat excess</td><td>Unresolved point sources (shot noise)</td></tr>
+    <tr><td>Ext C: cross vs autos</td><td>Cross-spectrum closer to the model at high \(\ell\)</td><td>Cross-spectra remove noise bias, not foregrounds</td></tr>
+  </table></div>
+  <div class="box key">
+    <div class="boxtitle">What we aim to achieve</div>
+    <p>Start from a raw sky dominated by the Galaxy and end with a measured CMB spectrum that matches the Planck model to 1–15% up to \(\ell\sim800\) (70 GHz) and \(\sim1000\) (100 GHz), recovering the first three acoustic peaks, and be able to explain why it fails beyond that.</p>
+  </div>
+</section>
+
+<section class="card" id="l-astro">
+  <div class="secnum">B1</div>
+  <h3>Astrophysics concepts you need for this lab</h3>
+  <div class="grid2">
+    <div class="box concept"><div class="boxtitle">CMB</div><p>The Cosmic Microwave Background is light released about 380 000 years after the Big Bang, when the universe became transparent. Today it is a 2.725 K glow from every direction. Its tiny temperature differences, about 100 µK (1 part in ~30 000), are the seeds of all galaxies.</p></div>
+    <div class="box concept"><div class="boxtitle">Planck</div><p>ESA satellite (2009–2013) that mapped the whole sky in 9 frequency bands from 30 to 857 GHz. LFI (Low Frequency Instrument): 30, 44, 70 GHz. HFI (High Frequency Instrument): 100 to 857 GHz. Final release: 2018 (PR3).</p></div>
+    <div class="box concept"><div class="boxtitle">Why two frequencies</div><p>In \(\mu{\rm K}_{\rm CMB}\) units the CMB looks identical at every frequency. The Galaxy does not: synchrotron and free-free emission (bright at low frequency) and dust (bright at high frequency). Around 70–100 GHz the Galaxy is faintest. Comparing channels separates sky components.</p></div>
+    <div class="box concept"><div class="boxtitle">Galactic coordinates, Mollweide</div><p>Planck maps use Galactic longitude \(l\) and latitude \(b\): the map's equator is the plane of the Milky Way, the centre is towards the Galactic centre. The Mollweide projection draws the whole sphere as an ellipse with equal areas.</p></div>
+    <div class="box concept"><div class="boxtitle">Monopole and dipole</div><p>\(\ell=0\) (monopole) is the sky average: the 2.725 K is removed. \(\ell=1\) (dipole) is a hot/cold pair of halves caused by our motion (~370 km/s) relative to the CMB: about 3 mK, also removed by Planck. What remains in the map at \(\ell=0,1\) comes from the Galaxy and offsets.</p></div>
+    <div class="box concept"><div class="boxtitle">Acoustic peaks</div><p>Before the CMB was released, the hot plasma rang with sound waves. They imprint peaks in \(D_\ell\): the first at \(\ell\approx220\) (≈1°), then near 540 and 810. Their positions and heights measure the geometry, matter and dark-matter content of the universe.</p></div>
+    <div class="box concept"><div class="boxtitle">Beam and FWHM</div><p>A telescope's resolution: a point source looks like a blob of width FWHM. 70 GHz: 13.08′; 100 GHz: 9.66′. 1′ (arcminute) = 1/60 of a degree. The beam removes power at high \(\ell\) by \(B_\ell^2\).</p></div>
+    <div class="box concept"><div class="boxtitle">Noise and foregrounds</div><p>Detector noise is random in each pixel ("white"): its spectrum is flat, \(N_\ell\) = constant, and it is not blurred by the beam. Foregrounds are real sky signals that are not CMB: Galaxy, and distant radio galaxies too faint to mask (point sources).</p></div>
+    <div class="box concept"><div class="boxtitle">Units: µK² sr</div><p>\(C_\ell\) has units of temperature² × solid angle (steradians). \(D_\ell=\ell(\ell+1)C_\ell/2\pi\) is in \(\mu{\rm K}^2\). The model peak is \(D_{220}\approx5730\ \mu{\rm K}^2\), i.e. \(C_{220}=5730\cdot2\pi/(220\cdot221)=0.74\ \mu{\rm K}^2\,{\rm sr}\).</p></div>
+  </div>
+</section>
+
+<section class="card" id="l-tools">
+  <div class="secnum">B2</div>
+  <h3>Libraries, tools and setup</h3>
+  <div class="tablewrap"><table>
+    <tr><th>Tool</th><th>What it is</th><th>What we use it for</th></tr>
+    <tr><td><b>NumPy</b> (<code>np</code>)</td><td>Fast arrays and math in Python</td><td>Every map is a NumPy array of 12.6 million numbers; masks, slicing, means</td></tr>
+    <tr><td><b>Matplotlib</b> (<code>plt</code>)</td><td>Plotting library</td><td><code>semilogy</code>, <code>plot</code>, <code>errorbar</code> for spectra</td></tr>
+    <tr><td><b>HEALPix</b></td><td>The pixelisation scheme and its C++/Fortran 90 library (Górski et al.)</td><td>Behind the scenes: geometry, transforms, FITS I/O</td></tr>
+    <tr><td><b>healpy</b> (<code>hp</code>)</td><td>Python wrapper around the HEALPix C++ library (uses ducc for transforms)</td><td>Read maps, Mollweide views, <code>anafast</code>, beams, pixel windows, dipole removal</td></tr>
+    <tr><td><b>FITS</b></td><td>Standard astronomy file format: header + data tables or images</td><td>The maps and mask are FITS tables; <code>hp.read_map</code> reads column 0</td></tr>
+    <tr><td>SciPy / Astropy</td><td>Scientific routines / astronomy utilities</td><td>Not needed tomorrow; SciPy's <code>stats.chi2</code> is used in homework Exercise 2</td></tr>
+  </table></div>
+  <h4>healpy calls in this lab</h4>
+  <div class="tablewrap"><table>
+    <tr><th>Call</th><th>What it does</th></tr>
+    <tr><td><code>m = hp.read_map(name)</code></td><td>Reads column 0 of a FITS map; returns RING ordering</td></tr>
+    <tr><td><code>hp.npix2nside(m.size)</code></td><td>\(N_{\rm side}\) from the number of pixels (inverts \(12N_{\rm side}^2\))</td></tr>
+    <tr><td><code>hp.nside2resol(n, arcmin=True)</code></td><td>Pixel size in arcmin</td></tr>
+    <tr><td><code>hp.mollview(m, min=, max=, unit=)</code></td><td>Mollweide projection of the whole sky</td></tr>
+    <tr><td><code>hp.UNSEEN</code></td><td>\(-1.6375\times10^{30}\): the value of an unobserved or masked pixel</td></tr>
+    <tr><td><code>hp.fit_dipole(m)</code>, <code>hp.remove_dipole(m)</code></td><td>Fit / remove monopole and dipole, ignoring UNSEEN pixels</td></tr>
+    <tr><td><code>hp.anafast(m, lmax=)</code></td><td>\(\hat C_\ell\) for \(\ell=0\ldots\ell_{\max}\) (default \(3N_{\rm side}-1\))</td></tr>
+    <tr><td><code>hp.anafast(m1, map2=m2)</code></td><td>Cross-spectrum \(\frac{1}{2\ell+1}\sum_m a^{(1)}_{\ell m}a^{(2)*}_{\ell m}\)</td></tr>
+    <tr><td><code>hp.gauss_beam(fwhm_rad, lmax=)</code></td><td>Gaussian \(B_\ell\) (FWHM in radians!)</td></tr>
+    <tr><td><code>hp.pixwin(nside)</code></td><td>\(W_\ell\) (downloads a table; if blocked, read <code>pixel_window_n1024.fits</code>)</td></tr>
+    <tr><td><code>hp.read_cl(name)</code></td><td>Reads a spectrum or window from a FITS table</td></tr>
+    <tr><td><code>np.loadtxt(name)</code></td><td>Reads the text model: columns \(\ell\), \(D^{TT}_\ell\), …</td></tr>
+  </table></div>
+  <div class="box task">
+    <div class="boxtitle">Setup before the lab (you are on Windows)</div>
+    <ul>
+      <li><code>pip install healpy</code> works on Linux and macOS, <b>not native Windows</b>. Options: a Linux machine in the lab; WSL (<code>wsl --install</code> in an admin PowerShell, then inside Ubuntu: <code>pip install healpy numpy matplotlib</code>); or Google Colab (<code>!pip install healpy</code>, upload the <code>data/</code> folder).</li>
+      <li>Use Jupyter (or VS Code cells): <code>anafast</code> on 12.6 M pixels takes ~20 s, so you want to run each block once and keep the variables in memory.</li>
+      <li>Folder layout: <code>lab2/lab2.py</code> (or <code>.ipynb</code>) and <code>lab2/data/*.fits</code>.</li>
+      <li>In Jupyter add <code>%matplotlib inline</code> at the top. <code>hp.mollview</code> opens its own figure; call <code>plt.figure()</code> before each new spectrum plot so curves don't pile up.</li>
+    </ul>
+  </div>
+  <div class="box py">
+    <div class="boxtitle">Python crash card for this lab</div>
+    <ul>
+      <li><code>a[2:]</code> slice from index 2 to the end. <code>a[2:2509]</code> indices 2…2508. Because <code>ell = np.arange(lmax+1)</code>, index = \(\ell\).</li>
+      <li><code>bad = m &lt; -1e30</code> makes a boolean array (True/False per pixel). <code>bad.sum()</code> counts the Trues. <code>~bad</code> flips them. <code>m[~bad]</code> keeps only good pixels.</li>
+      <li><code>mm[mask == 0] = 0.0</code> sets every cut pixel in one line (no loop).</li>
+      <li><code>m.copy()</code> makes a real copy. <code>mm = m</code> would be the same array with two names: changing <code>mm</code> would change <code>m</code>.</li>
+      <li><code>f = lambda c: ...</code> a one-line function. <code>x, y = func()</code> unpacks two return values.</li>
+      <li><code>(a &gt;= 1) &amp; (a &lt;= 5)</code>: element-wise AND for arrays. The parentheses are required.</li>
+      <li><code>[g(a, b) for a, b in zip(A, B)]</code>: list comprehension over pairs.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ---------------- STEP 0 ---------------- -->
+<section class="card" id="l-step0">
+  <div class="secnum">STEP 0 · core</div>
+  <h3>Read the map and look at it</h3>
+  <p><b>Goal:</b> load the 70 GHz map and the mask, check the basic numbers (resolution, mean, rms, missing pixels, sky fraction), and see the sky.</p>
+  <div class="box num">
+    <div class="boxtitle">Mini math</div>
+    <p>The mask is 1 (keep) or 0 (cut). Its mean is the kept fraction: mask = [1, 1, 0, 1] → mean = 3/4 = 0.75. So <code>fsky = mask.mean()</code>. Pixel size: \(\sqrt{4\pi/(12\cdot1024^2)}\) rad \(=0.000999\) rad \(=3.44'\).</p>
+  </div>
+  <div class="box task">
+    <div class="boxtitle">Your turn</div>
+    <ol>
+      <li>Import <code>numpy as np</code>, <code>healpy as hp</code>, <code>matplotlib.pyplot as plt</code>.</li>
+      <li>Read <code>data/planck_T070_n1024_uK.fits</code> into <code>m</code> and <code>data/mask_UT78_n1024.fits</code> into <code>mask</code> with <code>hp.read_map</code>. Convert both to 64-bit floats with <code>.astype(float)</code>.</li>
+      <li>Get <code>nside</code> from <code>m.size</code> with <code>hp.npix2nside</code>, and print it with the pixel size in arcmin.</li>
+      <li>Build a boolean array <code>bad</code> that is True where <code>m &lt; -1e30</code> (UNSEEN). Print how many, and the mean and std of the good pixels.</li>
+      <li>Compute <code>fsky</code> as the mean of the mask.</li>
+      <li>Mollweide plot of <code>m</code> with colour range −300…300 µK. Then make a copy <code>mm</code>, set cut pixels to <code>hp.UNSEEN</code>, and plot it the same way. <code>plt.show()</code>.</li>
+    </ol>
+  </div>
+  <details class="solution"><summary><span class="pill">Code</span> Professor's code, Step 0</summary><div class="dbody">
+    <div class="codewrap"><div class="codelabel prof"><span>Professor · Step 0</span></div>
+<pre><code class="language-python">import numpy as np, healpy as hp
+import matplotlib.pyplot as plt
+
+m = hp.read_map('data/planck_T070_n1024_uK.fits')
+mask = hp.read_map('data/mask_UT78_n1024.fits')
+m, mask = m.astype(float), mask.astype(float)
+nside = hp.npix2nside(m.size)
+print(nside, hp.nside2resol(nside, arcmin=True))
+bad = m &lt; -1e30            # UNSEEN pixels
+print(bad.sum(), m[~bad].mean(), m[~bad].std())
+fsky = mask.mean()
+
+hp.mollview(m, min=-300, max=300, unit='muK')
+mm = m.copy(); mm[mask == 0] = hp.UNSEEN
+hp.mollview(mm, min=-300, max=300, unit='muK')
+plt.show()</code></pre></div>
+  </div></details>
+  <details class="explain"><summary><span class="pill">Explain</span> Line by line</summary><div class="dbody">
+    <ul>
+      <li><code>import numpy as np, healpy as hp</code>: load two libraries with short nicknames.</li>
+      <li><code>hp.read_map(...)</code>: opens the FITS file and returns a 1D array with one value per pixel (12 582 912 values), in RING order.</li>
+      <li><code>m.astype(float)</code>: the file stores 32-bit floats; we convert to 64-bit for precise sums over millions of pixels. The tuple assignment converts both at once.</li>
+      <li><code>hp.npix2nside(m.size)</code>: solves \(12N_{\rm side}^2=\) number of pixels → 1024.</li>
+      <li><code>bad = m &lt; -1e30</code>: True where a pixel holds the UNSEEN value \(-1.6\times10^{30}\). Any real temperature is far above that.</li>
+      <li><code>bad.sum()</code>: True counts as 1, so this counts missing pixels. <code>m[~bad].mean()</code>, <code>.std()</code>: mean and rms of observed pixels only.</li>
+      <li><code>fsky = mask.mean()</code>: fraction of sky kept.</li>
+      <li><code>hp.mollview(m, min=-300, max=300, unit='muK')</code>: whole-sky picture; values outside ±300 are drawn at the end colours.</li>
+      <li><code>mm = m.copy(); mm[mask == 0] = hp.UNSEEN</code>: a separate copy where cut pixels become UNSEEN, drawn in grey.</li>
+      <li><code>plt.show()</code>: displays the figures (needed in a script; automatic in Jupyter).</li>
+    </ul>
+  </div></details>
+  <div class="codewrap"><div class="codelabel extra"><span>Try it (optional, changes nothing)</span></div>
+<pre><code class="language-python">print(m.dtype, m.shape, m.min(), m.max())          # float64, (12582912,), max ~1.5e5 µK
+print(hp.nside2npix(nside), 12 * nside**2)          # same number, two ways
+ipix = np.argmax(m)                                 # index of the brightest pixel
+print(hp.pix2ang(nside, ipix, lonlat=True))         # its (l, b) in degrees: ~ (15.1, -0.7) = M17
+hp.gnomview(m, rot=(15.1, -0.7), xsize=400, reso=3, min=-300, max=3000, title='zoom on M17')
+hp.mollview(mask, title='the mask: 1 keep, 0 cut')
+plt.show()</code></pre></div>
+  <div class="box py"><div class="boxtitle">Expected output</div>
+<pre class="out"><code>1024 3.435486411817406
+0 86.5... 436...</code></pre>
+  <p>\(N_{\rm side}=1024\), 3.44′ pixels, no unobserved pixels, mean 86.5 µK, rms 436 µK, \(f_{\rm sky}=0.778\).</p></div>
+  <h4>Questions</h4>
+  <div class="qlist">
+    <div class="q"><p>What do you see? What is the maximum?</p><details class="answer"><summary>Show answer</summary><div class="dbody"><p>CMB spots of ~100 µK everywhere, and the Galaxy along the equator. The maximum, \(1.5\times10^5\) µK, is at Galactic \((l,b)=(15.1^\circ,-0.7^\circ)\): the star-forming region M17 (Omega Nebula).</p></div></details></div>
+    <div class="q"><p>Why is the colour scale cut at ±300 µK?</p><details class="answer"><summary>Show answer</summary><div class="dbody"><p>With the full range (up to 150 000 µK) the Galaxy uses all the colours and the CMB, at ~100 µK, would look uniform and invisible.</p></div></details></div>
+    <div class="q"><p>The CMB dipole from our motion is ~3 mK. Is it in the map?</p><details class="answer"><summary>Show answer</summary><div class="dbody"><p>No, Planck removed it. Only 54 µK of dipole remain, coming from the Galaxy (you measure it in Step 2).</p></div></details></div>
+  </div>
+</section>
+
+<!-- ---------------- STEP 1 ---------------- -->
+<section class="card" id="l-step1">
+  <div class="secnum">STEP 1 · core</div>
+  <h3>The full-sky power spectrum</h3>
+  <p><b>Goal:</b> compute \(\hat C_\ell\) of the whole map and compare it with the Planck model. Spoiler: it won't match, and understanding why is the point.</p>
+  <div class="box num">
+    <div class="boxtitle">Mini math</div>
+    <p>\(\ell_{\max}=3N_{\rm side}-1=3\cdot1024-1=3071\). <code>ell</code> = [0, 1, …, 3071] (3072 values).<br>
+    \(D_\ell=\ell(\ell+1)C_\ell/2\pi\). Example: if \(C_{220}=0.74\ \mu{\rm K}^2\,{\rm sr}\) then \(D_{220}=220\cdot221\cdot0.74/6.283=5727\ \mu{\rm K}^2\) (the model's first peak). The model file starts at \(\ell=2\), so its row 0 goes to index 2 of our array.</p>
+  </div>
+  <div class="box task">
+    <div class="boxtitle">Your turn</div>
+    <ol>
+      <li>Set <code>lmax = 3*nside - 1</code> and <code>ell = np.arange(lmax + 1)</code>.</li>
+      <li>Write a one-line function <code>Dl</code> (lambda) that converts a \(C_\ell\) array to \(D_\ell\).</li>
+      <li><code>cl_full = hp.anafast(m, lmax=lmax)</code> (wait ~20 s).</li>
+      <li>Load the model text file with <code>np.loadtxt</code>. Make <code>Dth = np.zeros(lmax+1)</code> and fill indices 2 onward with column 1 of the file.</li>
+      <li>Plot \(D_\ell\) of the data (from \(\ell=2\)) and of the model (\(\ell=2\)…2508, black) with <code>plt.semilogy</code>.</li>
+    </ol>
+  </div>
+  <details class="solution"><summary><span class="pill">Code</span> Professor's code, Step 1</summary><div class="dbody">
+    <div class="codewrap"><div class="codelabel prof"><span>Professor · Step 1</span></div>
+<pre><code class="language-python">lmax = 3 * nside - 1
+ell = np.arange(lmax + 1)
+Dl = lambda c: ell * (ell + 1) * c / (2 * np.pi)
+
+cl_full = hp.anafast(m, lmax=lmax)
+
+th = np.loadtxt('data/COM_PowerSpect_CMB-base-'
+                'plikHM-TTTEEE-lowl-lowE-lensing-minimum-'
+                'theory_R3.01.txt')       # l, D_TT, ...
+Dth = np.zeros(lmax + 1)
+Dth[2:2 + len(th)] = th[:, 1] # up to l = 2508
+
+plt.semilogy(ell[2:], Dl(cl_full)[2:])
+plt.semilogy(ell[2:2509], Dth[2:2509], 'k')</code></pre></div>
+  </div></details>
+  <details class="explain"><summary><span class="pill">Explain</span> Line by line</summary><div class="dbody">
+    <ul>
+      <li><code>lmax = 3*nside - 1</code>: the highest multipole the HEALPix grid can represent at all (A7).</li>
+      <li><code>ell = np.arange(lmax+1)</code>: 0, 1, …, 3071. Index \(i\) of every spectrum array corresponds to \(\ell=i\).</li>
+      <li><code>Dl = lambda c: ...</code>: a tiny function. It uses the global <code>ell</code>, so it only works on arrays of length <code>lmax+1</code>.</li>
+      <li><code>hp.anafast(m, lmax=lmax)</code>: map → \(a_{\ell m}\) (map2alm) → \(\hat C_\ell=\frac{1}{2\ell+1}\sum_m|a_{\ell m}|^2\). Returns 3072 numbers.</li>
+      <li>The file name is split over three lines: Python glues adjacent strings automatically.</li>
+      <li><code>th[:, 1]</code>: all rows, column 1 (\(D^{TT}_\ell\)). Column 0 is \(\ell\), starting at 2. <code>len(th)</code> = 2507 rows → fills indices 2…2508.</li>
+      <li><code>ell[2:]</code>: skip \(\ell=0,1\) (monopole and dipole, not part of the CMB spectrum).</li>
+      <li><code>plt.semilogy</code>: linear x, logarithmic y; needed because values span many orders of magnitude. <code>'k'</code> = black line.</li>
+    </ul>
+  </div></details>
+  <div class="codewrap"><div class="codelabel extra"><span>Try it (optional, changes nothing)</span></div>
+<pre><code class="language-python">print(th.shape, th[:3, :2])                       # first rows: l = 2, 3, 4 and D_TT
+print(cl_full.shape, Dl(cl_full)[220], Dth[220])  # data vs model at the first peak (~5e4 vs 5730)
+plt.xlabel(r'$\ell$'); plt.ylabel(r'$D_\ell\ [\mu K^2]$')
+plt.legend(['70 GHz full sky', 'Planck model']); plt.title('Step 1')
+plt.show()</code></pre></div>
+  <div class="box concept"><div class="boxtitle">Reading the plot</div><p>The blue data curve sits around \(2\)–\(6\times10^4\ \mu{\rm K}^2\), far above the black model, and shows no clear bumps up to \(\ell\sim800\): Galactic emission dominates. Above \(\ell\sim1500\) it rises like a straight line on this plot, growing as \(\ell^2\): a flat \(C_\ell\), the noise.</p></div>
+  <h4>Questions</h4>
+  <div class="qlist">
+    <div class="q"><p>Do you see the acoustic peaks?</p><details class="answer"><summary>Show answer</summary><div class="dbody"><p>No. \(D_\ell\) is \(2\)–\(6\times10^4\ \mu{\rm K}^2\) up to \(\ell\sim800\), about 10 times the model at the first peak (5730 at \(\ell=220\)). The Galaxy dominates.</p></div></details></div>
+    <div class="q"><p>What happens above \(\ell\sim1500\)?</p><details class="answer"><summary>Show answer</summary><div class="dbody"><p>\(D_\ell\) grows as \(\ell^2\): that is a flat \(C_\ell\), the instrument noise.</p></div></details></div>
+  </div>
+</section>
+
+<!-- ---------------- STEP 2 ---------------- -->
+<section class="card" id="l-step2">
+  <div class="secnum">STEP 2 · core</div>
+  <h3>Cut the Galaxy with the mask</h3>
+  <p><b>Goal:</b> remove the Galaxy, but do it carefully: (1) fit and remove the monopole and dipole using only the kept sky, (2) set cut pixels to 0, (3) compute the spectrum and divide by \(f_{\rm sky}\). This is the <b>pseudo-\(C_\ell\)</b>; we ignore the coupling between neighbouring \(\ell\) (A12).</p>
+  <div class="box num">
+    <div class="boxtitle">Mini math</div>
+    <ul>
+      <li><b>Why divide by \(f_{\rm sky}\):</b> if a map has variance 100 µK² and you set 22% of pixels to zero, the average power over the whole sphere becomes about \(0.778\times100=77.8\). Dividing by 0.778 restores 100.</li>
+      <li><b>Why remove the monopole first:</b> a constant 86.5 µK is pure \(\ell=0\) on the full sky. Multiplied by the mask, it becomes "86.5 inside, 0 outside", which has power at every multipole of the mask's shape. It leaks into \(\ell\geq1\).</li>
+    </ul>
+  </div>
+  <div class="box task">
+    <div class="boxtitle">Your turn</div>
+    <ol>
+      <li>Copy <code>m</code> into <code>mm</code> and set cut pixels to <code>hp.UNSEEN</code> (so the fit ignores them).</li>
+      <li>Fit monopole and dipole with <code>hp.fit_dipole</code>; print the monopole and the length of the dipole vector (<code>np.linalg.norm</code>).</li>
+      <li>Remove both with <code>hp.remove_dipole</code>, then set cut pixels to 0.0.</li>
+      <li><code>cl_mask</code> = anafast of <code>mm</code> divided by <code>fsky</code>.</li>
+      <li>For comparison: <code>raw = m * mask</code> (no dipole removal) and <code>cl_raw</code> the same way.</li>
+    </ol>
+  </div>
+  <details class="solution"><summary><span class="pill">Code</span> Professor's code, Step 2</summary><div class="dbody">
+    <div class="codewrap"><div class="codelabel prof"><span>Professor · Step 2</span></div>
+<pre><code class="language-python">mm = m.copy()
+mm[mask == 0] = hp.UNSEEN # ignored by fit
+mono, dip = hp.fit_dipole(mm)
+print(mono, np.linalg.norm(dip))
+mm = hp.remove_dipole(mm) # both
+mm[mask == 0] = 0.0
+
+cl_mask = hp.anafast(mm, lmax=lmax) / fsky
+
+# for question 2
+raw = m * mask
+cl_raw = hp.anafast(raw, lmax=lmax) / fsky</code></pre></div>
+  </div></details>
+  <details class="explain"><summary><span class="pill">Explain</span> Line by line</summary><div class="dbody">
+    <ul>
+      <li><code>mm = m.copy()</code>: fresh copy; <code>m</code> stays untouched for later.</li>
+      <li><code>mm[mask == 0] = hp.UNSEEN</code>: healpy functions skip UNSEEN pixels, so the fit uses only the kept 78% of the sky.</li>
+      <li><code>mono, dip = hp.fit_dipole(mm)</code>: least-squares fit of \(T(\hat n)\approx M+\vec D\cdot\hat n\). Returns a number \(M\) and a 3-vector \(\vec D\) (x, y, z).</li>
+      <li><code>np.linalg.norm(dip)</code>: the dipole amplitude \(|\vec D|=\sqrt{D_x^2+D_y^2+D_z^2}\).</li>
+      <li><code>hp.remove_dipole(mm)</code>: refits and subtracts both monopole and dipole; UNSEEN pixels stay UNSEEN.</li>
+      <li><code>mm[mask == 0] = 0.0</code>: anafast needs numbers, not UNSEEN; zero means "no signal" there.</li>
+      <li><code>/ fsky</code>: compensates the lost power on average.</li>
+      <li><code>raw = m * mask</code>: masking without removing monopole/dipole; used to see the leakage.</li>
+    </ul>
+  </div></details>
+  <div class="codewrap"><div class="codelabel extra"><span>Try it (optional, changes nothing)</span></div>
+<pre><code class="language-python">print('dipole vector [µK]:', dip)
+for L in [2, 10, 100, 220]:
+    print(L, Dl(cl_mask)[L], Dl(cl_raw)[L] / Dl(cl_mask)[L])   # leakage ratio raw/clean
+hp.mollview(mm, min=-300, max=300, unit='muK', title='cleaned and masked')
+plt.figure()
+plt.semilogy(ell[2:], Dl(cl_full)[2:], label='full sky')
+plt.semilogy(ell[2:], Dl(cl_mask)[2:], label='masked')
+plt.semilogy(ell[2:2509], Dth[2:2509], 'k', label='model')
+plt.xlabel(r'$\ell$'); plt.ylabel(r'$D_\ell\ [\mu K^2]$'); plt.legend(); plt.show()</code></pre></div>
+  <div class="box py"><div class="boxtitle">Expected output</div><p>Monopole and dipole on the kept sky: about 35.9 µK and 4.7 µK (full sky they would be 86.5 and 54.3 µK). The leakage ratio raw/clean is about 1.13 at \(\ell=2\), 1.42 at \(\ell=10\), 1.02 at \(\ell=100\).</p></div>
+  <div class="box concept"><div class="boxtitle">Reading the plot</div><p>The masked curve drops by a factor ~10 at \(\ell=220\) and now has the bumpy shape of the model: the acoustic peaks appear. At high \(\ell\) it lies below the model (the beam, Step 4) and then rises (noise, Step 3).</p></div>
+  <h4>Questions</h4>
+  <div class="qlist">
+    <div class="q"><p>How much does the spectrum change with the mask?</p><details class="answer"><summary>Show answer</summary><div class="dbody"><p>At \(\ell=220\), from \(5.2\times10^4\) to \(5.2\times10^3\ \mu{\rm K}^2\). The masked spectrum has the model's shape and lies below it at high \(\ell\). Monopole and dipole: 86.5 and 54.3 µK on the full sky, 35.9 and 4.7 µK on the kept sky.</p></div></details></div>
+    <div class="q"><p>Why remove the monopole and dipole before masking?</p><details class="answer"><summary>Show answer</summary><div class="dbody"><p>A constant (or a dipole) multiplied by the mask is no longer pure \(\ell=0\) (or 1): it leaks into the multipoles of the mask. Without removal \(D_\ell\) is 13% higher at \(\ell=2\), 42% at \(\ell=10\), 2% at \(\ell=100\).</p></div></details></div>
+    <div class="q"><p>And without dividing by \(f_{\rm sky}\)?</p><details class="answer"><summary>Show answer</summary><div class="dbody"><p>The whole spectrum is 22% low (\(f_{\rm sky}=0.778\)).</p></div></details></div>
+    <div class="q"><p>At \(\ell=2\) you get \(D_2=150\ \mu{\rm K}^2\); the model has 1017. Is it wrong?</p><details class="answer"><summary>Show answer</summary><div class="dbody"><p>Not necessarily. \(C_2\) is estimated from \(2\ell+1=5\) modes: cosmic variance is \(\sqrt{2/5}=63\%\) on the full sky, more on 78% of it. The low quadrupole of our sky is a known feature (Planck 2018 I).</p></div></details></div>
+  </div>
+</section>
+
+<!-- ---------------- STEP 3 ---------------- -->
+<section class="card" id="l-step3">
+  <div class="secnum">STEP 3 · core</div>
+  <h3>The noise bias</h3>
+  <p><b>Goal:</b> at very high \(\ell\) the beam has erased the sky (\(B_\ell^2\approx0\)), so whatever power remains is noise. Measure its level \(N\) and check that it is white (flat).</p>
+  <div class="box num">
+    <div class="boxtitle">Mini math</div>
+    <p>White noise: \(N_\ell=N\) for all \(\ell\). In \(D_\ell\) units it is \(\ell(\ell+1)N/2\pi\), a parabola. With \(N=3.3\times10^{-3}\ \mu{\rm K}^2\,{\rm sr}\):</p>
+    <ul>
+      <li>\(\ell=220\): \(220\cdot221\cdot0.0033/6.283=26\ \mu{\rm K}^2\) (tiny next to 5730).</li>
+      <li>\(\ell=1000\): 526 µK². \(\ell=2000\): 2100 µK² (dominant).</li>
+    </ul>
+    <p>Whiteness test: if \(\hat C_\ell/N\approx1\) in every high-\(\ell\) band, the noise is flat.</p>
+  </div>
+  <div class="box task">
+    <div class="boxtitle">Your turn</div>
+    <ol>
+      <li>Make a boolean selector <code>hi</code> for \(2000\leq\ell\leq2500\).</li>
+      <li><code>N</code> = mean of <code>cl_mask[hi]</code>. Print it.</li>
+      <li>For the bands (1200,1500), (1500,2000), (2000,2500), (2500,3000) print the mean of <code>cl_mask[a:b]</code> divided by N.</li>
+      <li>Plot \(D_\ell\) of the masked data and \(D_\ell\) of a constant N array (<code>np.full</code>).</li>
+    </ol>
+  </div>
+  <details class="solution"><summary><span class="pill">Code</span> Professor's code, Step 3</summary><div class="dbody">
+    <div class="codewrap"><div class="codelabel prof"><span>Professor · Step 3</span></div>
+<pre><code class="language-python">hi = (ell &gt;= 2000) &amp; (ell &lt;= 2500)
+N = cl_mask[hi].mean()          # muK^2 sr
+print(N)
+for a, b in [(1200, 1500), (1500, 2000),
+             (2000, 2500), (2500, 3000)]:
+    print(a, b, cl_mask[a:b].mean() / N)
+
+plt.semilogy(ell[2:], Dl(cl_mask)[2:])
+plt.semilogy(ell[2:], Dl(np.full(lmax+1, N))[2:])</code></pre></div>
+  </div></details>
+  <details class="explain"><summary><span class="pill">Explain</span> Line by line</summary><div class="dbody">
+    <ul>
+      <li><code>(ell &gt;= 2000) &amp; (ell &lt;= 2500)</code>: two boolean arrays combined with element-wise AND. Parentheses are required because <code>&amp;</code> binds tighter than <code>&gt;=</code>.</li>
+      <li><code>cl_mask[hi].mean()</code>: average of the 501 values with \(2000\leq\ell\leq2500\). Units µK² sr.</li>
+      <li><code>for a, b in [...]</code>: loop over pairs; each tuple is unpacked into <code>a</code> and <code>b</code>.</li>
+      <li><code>cl_mask[a:b]</code>: slice of \(\ell=a\ldots b-1\) (works because index = \(\ell\)).</li>
+      <li><code>np.full(lmax+1, N)</code>: an array of 3072 copies of N, so <code>Dl</code> can convert it.</li>
+    </ul>
+  </div></details>
+  <div class="codewrap"><div class="codelabel extra"><span>Try it (optional, changes nothing)</span></div>
+<pre><code class="language-python">print('D(N) at l=220, 1000, 2000:', Dl(np.full(lmax+1, N))[[220, 1000, 2000]])
+print('scatter of C_l/N for l=2000-2500:', (cl_mask[hi] / N).std())   # ~ sqrt(2/((2l+1) fsky)) ~ 0.03
+plt.xlabel(r'$\ell$'); plt.ylabel(r'$D_\ell\ [\mu K^2]$')
+plt.legend(['masked data', 'white noise N']); plt.title('Step 3'); plt.show()</code></pre></div>
+  <div class="box py"><div class="boxtitle">Expected output</div>
+<pre class="out"><code>0.0033...
+1200 1500 1.06
+1500 2000 1.03
+2000 2500 1.00
+2500 3000 0.95</code></pre></div>
+  <div class="box concept"><div class="boxtitle">Reading the plot</div><p>The noise curve is a smooth parabola (\(\propto\ell^2\)) on the log plot. The data join it from \(\ell\sim1500\) on: above that, the map is basically noise.</p></div>
+  <h4>Questions</h4>
+  <div class="qlist">
+    <div class="q"><p>How much sky is left at \(\ell=2000\)–2500?</p><details class="answer"><summary>Show answer</summary><div class="dbody"><p>Model × \(B_\ell^2W_\ell^2\) is about \(10^{-9}\ \mu{\rm K}^2\,{\rm sr}\), against \(N=3.3\times10^{-3}\): none.</p></div></details></div>
+    <div class="q"><p>Is the noise white?</p><details class="answer"><summary>Show answer</summary><div class="dbody"><p>Nearly: \(\hat C_\ell/N=1.06\) for \(\ell=1200\)–1500 (some sky still there), 1.03, 1.00, and 0.95 above 2500. Within a few per cent.</p></div></details></div>
+  </div>
+</section>
+
+<!-- ---------------- STEP 4 ---------------- -->
+<section class="card" id="l-step4">
+  <div class="secnum">STEP 4 · core</div>
+  <h3>Correct for the beam and the pixels</h3>
+  <p><b>Goal:</b> (1) build \(B_\ell\) and \(W_\ell\) and check that model × \(B_\ell^2W_\ell^2\) + noise describes the data; (2) correct the data: \(\hat C^{\rm CMB}_\ell=(\hat C_\ell-N)/(B_\ell^2W_\ell^2)\); (3) average in bins of \(\Delta\ell=30\) and compare with the model.</p>
+  <div class="box num">
+    <div class="boxtitle">Mini math</div>
+    <ul>
+      <li>FWHM \(13.08'\) → radians: <code>np.radians(13.08/60)</code> = 0.003805.</li>
+      <li>\(B_\ell^2\): 0.50 at \(\ell=515\), 0.19 at 800, 0.10 at 939, 0.01 at 1328. \(W_\ell^2\): 0.945 at 800, 0.70 at 2000.</li>
+      <li>Binning: <code>edges = np.arange(2, 3072, 30)</code> = 2, 32, 62, … The first bin is \(\ell=2\ldots31\), centre <code>0.5*(2+32-1)</code> = 16.5. Next centres: 46.5, 76.5, …</li>
+      <li>Knox error of a bin: \(\sigma(D_b)\simeq\sqrt{\frac{2}{(2\ell+1)f_{\rm sky}\Delta\ell}}\Big(D^{\rm th}_\ell+\frac{D(N)}{B_\ell^2W_\ell^2}\Big)\). At \(\ell=220\): \(0.014\times(5730+26/0.88/0.99)\approx81\ \mu{\rm K}^2\), about 1.4%.</li>
+    </ul>
+  </div>
+  <div class="box task">
+    <div class="boxtitle">Your turn</div>
+    <ol>
+      <li><code>fwhm</code> in radians for 13.08′; <code>B = hp.gauss_beam(fwhm, lmax=lmax)</code>.</li>
+      <li>Pixel window: read <code>data/pixel_window_n1024.fits</code> with <code>hp.read_cl</code>, take the first row and the first <code>lmax+1</code> values (or try <code>hp.pixwin(nside)</code>).</li>
+      <li><code>BW2 = (B*W)**2</code>; <code>model</code> = Dth·BW2 + D(N).</li>
+      <li><code>rec</code> = \(D_\ell\) of <code>(cl_mask - N)/BW2</code>.</li>
+      <li>Bin <code>rec</code> in bins of 30 starting at \(\ell=2\): edges, centres <code>lc</code>, binned values <code>Db</code>.</li>
+      <li>Plot <code>Db</code> as points and the model as a black line.</li>
+    </ol>
+  </div>
+  <details class="solution"><summary><span class="pill">Code</span> Professor's code, Step 4</summary><div class="dbody">
+    <div class="codewrap"><div class="codelabel prof"><span>Professor · Step 4</span></div>
+<pre><code class="language-python">fwhm = np.radians(13.08 / 60)    # 70 GHz
+B = hp.gauss_beam(fwhm, lmax=lmax)
+# W = hp.pixwin(nside), or the file:
+W = hp.read_cl('data/pixel_window_n1024.fits')
+W = np.atleast_2d(W)[0][:lmax + 1]
+BW2 = (B * W)**2
+model = Dth * BW2 + Dl(np.full(lmax + 1, N))
+
+rec = Dl((cl_mask - N) / BW2)     # CMB D_l
+edges = np.arange(2, lmax + 1, 30)
+lc = 0.5 * (edges[:-1] + edges[1:] - 1)
+Db = [rec[a:b].mean() for a, b in
+      zip(edges[:-1], edges[1:])]
+plt.plot(lc, Db, 'o'); plt.plot(ell, Dth, 'k')</code></pre></div>
+  </div></details>
+  <details class="explain"><summary><span class="pill">Explain</span> Line by line</summary><div class="dbody">
+    <ul>
+      <li><code>np.radians(13.08/60)</code>: arcmin → degrees (÷60) → radians.</li>
+      <li><code>hp.gauss_beam(fwhm, lmax=lmax)</code>: returns \(B_\ell=\exp(-\frac12\ell(\ell+1)\sigma^2)\) for \(\ell=0\ldots\)lmax.</li>
+      <li><code>hp.read_cl(...)</code>: the FITS window may come back as a 1D array or as a 2D array (one row per column of the table, e.g. T and polarisation).</li>
+      <li><code>np.atleast_2d(W)[0]</code>: makes it 2D if it was 1D, then takes row 0 (temperature) either way. <code>[:lmax+1]</code> cuts it to 3072 values to match our arrays.</li>
+      <li><code>BW2 = (B*W)**2</code>: the total power transfer \(B_\ell^2W_\ell^2\).</li>
+      <li><code>model</code>: what the data should look like if only CMB + noise were in the map (forward model, used to compare).</li>
+      <li><code>rec = Dl((cl_mask - N)/BW2)</code>: subtract noise, undo beam and pixel: the recovered CMB \(D_\ell\).</li>
+      <li><code>edges[:-1]</code> = all edges but the last (bin starts); <code>edges[1:]</code> = all but the first (bin ends). <code>zip</code> pairs them.</li>
+      <li><code>lc</code>: bin centres; \(-1\) because the bin \([a,b)\) ends at \(b-1\).</li>
+      <li><code>[rec[a:b].mean() for a, b in zip(...)]</code>: list comprehension, one mean per bin.</li>
+      <li><code>'o'</code> = circle markers, no line.</li>
+    </ul>
+  </div></details>
+  <div class="codewrap"><div class="codelabel extra"><span>Try it (optional, adds new names only)</span></div>
+<pre><code class="language-python"># (a) where does the beam matter?
+print('B^2 at 515, 800, 939, 1328:', (B**2)[[515, 800, 939, 1328]])
+print('W^2 at 800, 2000:', (W**2)[[800, 2000]])
+
+# (b) forward model vs data, before correcting
+plt.figure()
+plt.semilogy(ell[2:2509], Dl(cl_mask)[2:2509], label='masked data')
+plt.semilogy(ell[2:2509], model[2:2509], 'k', label='model x B^2 W^2 + noise')
+plt.xlabel(r'$\ell$'); plt.legend(); plt.show()
+
+# (c) ratio recovered / model in bands
+for a, b in [(30, 300), (300, 600), (600, 800), (800, 1000)]:
+    print(a, b, (rec[a:b] / Dth[a:b]).mean())
+
+# (d) Knox error bars on the binned points
+Db_arr = np.array(Db)
+DN = Dl(np.full(lmax + 1, N))
+sig = np.sqrt(2 / ((2*lc + 1) * fsky * 30)) * (np.interp(lc, ell, Dth) + np.interp(lc, ell, DN / BW2))
+plt.figure()
+plt.errorbar(lc, Db_arr, yerr=sig, fmt='o', ms=3, label='70 GHz recovered')
+plt.plot(ell, Dth, 'k', label='Planck model')
+plt.xlim(0, 1500); plt.ylim(-1000, 8000)
+plt.xlabel(r'$\ell$'); plt.ylabel(r'$D_\ell\ [\mu K^2]$'); plt.legend(); plt.show()</code></pre></div>
+  <div class="box concept"><div class="boxtitle">Reading the final plot</div><p>The points follow the black model through the first peak (\(\ell\approx220\)), the second (\(\approx540\)) and the third (\(\approx810\)). Above \(\ell\sim1000\) they climb away and scatter, and the error bars explode. This is the main result of the lab: three peaks recovered from raw Planck data, and a clear limit set by the beam.</p></div>
+  <h4>Questions</h4>
+  <div class="qlist">
+    <div class="q"><p>Where does the beam matter?</p><details class="answer"><summary>Show answer</summary><div class="dbody"><p>\(B_\ell^2=0.5\) at \(\ell=515\), 0.1 at 939, 0.01 at 1328. At the third peak (\(\ell=800\)) \(B_\ell^2=0.19\): the masked spectrum has 853 µK², the model 2526. The pixel window is a smaller effect: \(W_\ell^2=0.945\) at 800, 0.70 at 2000.</p></div></details></div>
+    <div class="q"><p>Does model × \(B_\ell^2W_\ell^2\) + noise describe the data?</p><details class="answer"><summary>Show answer</summary><div class="dbody"><p>Yes, within a few per cent at the peaks and at the per-cent level at high \(\ell\) (noise). At \(\ell=800\): 853 measured, 781 model. The difference is studied in Extension B.</p></div></details></div>
+    <div class="q"><p>After the correction, up to which \(\ell\) do you recover the model?</p><details class="answer"><summary>Show answer</summary><div class="dbody"><p>Mean ratio recovered/model: 0.99 for \(\ell=30\)–300, 1.05 for 300–600, 1.15 for 600–800, 1.42 for 800–1000. Three peaks are recovered; above \(\ell\sim1000\) the points diverge.</p></div></details></div>
+    <div class="q"><p>Why do the points diverge at high \(\ell\)?</p><details class="answer"><summary>Show answer</summary><div class="dbody"><p>Dividing by \(B_\ell^2W_\ell^2\) amplifies whatever is left after subtracting N. At \(\ell=1500\), \(B_\ell^2=0.003\), so a 1% error in N becomes \(\sim5\times10^3\ \mu{\rm K}^2\). The expected bin error exceeds 50% of the model from \(\ell=1276\). Deconvolution is a division by a small number: the beam sets the useful range, whatever the data.</p></div></details></div>
+  </div>
+</section>
+
+<!-- ---------------- EXT A ---------------- -->
+<section class="card" id="l-extA">
+  <div class="secnum">EXTENSION A · optional</div>
+  <h3>The 100 GHz map</h3>
+  <p><b>Goal:</b> repeat Steps 0–4 with <code>planck_T100_n1024_uK.fits</code> and FWHM = 9.66′. Estimate N at \(\ell=2600\)–3000 (the beam is narrower, so the sky survives to higher \(\ell\)). Check UNSEEN pixels first and decide what to do with them.</p>
+  <div class="box num"><div class="boxtitle">Mini math</div><p>Narrower beam: \(B_\ell^2=0.5\) at \(\ell=698\) (instead of 515) and 0.01 at 1798 (instead of 1328). Pixels per FWHM: \(9.66/3.44=2.8\).<br>One UNSEEN pixel holds \(-1.6\times10^{30}\). Its square is \(\sim10^{60}\), against CMB values \(\sim10^4\): a single bad pixel would swamp the whole spectrum.</p></div>
+  <div class="box task">
+    <div class="boxtitle">Your turn</div>
+    <ol>
+      <li>Read the 100 GHz map; count UNSEEN pixels and check whether any lie inside the kept sky.</li>
+      <li>Build a common mask <code>mask2</code> that also cuts those pixels (same for both maps), and <code>fsky2</code>.</li>
+      <li>Full-sky spectrum: set UNSEEN pixels to 0 first.</li>
+      <li>Repeat Step 2 with <code>mask2</code>, Step 3 with \(\ell=2600\)–3000, Step 4 with the 9.66′ beam.</li>
+    </ol>
+  </div>
+  <details class="solution"><summary><span class="pill">Code</span> Suggested solution, Extension A (the slides give no code here)</summary><div class="dbody">
+    <div class="codewrap"><div class="codelabel mine"><span>Suggested · Extension A (not from the slides)</span></div>
+<pre><code class="language-python">m100 = hp.read_map('data/planck_T100_n1024_uK.fits').astype(float)
+bad100 = m100 &lt; -1e30
+print('UNSEEN at 100 GHz:', bad100.sum(), np.where(bad100)[0])
+print('inside the kept sky:', (bad100 &amp; (mask == 1)).sum())
+
+# a common mask for both maps: also cut the unobserved pixel
+mask2 = mask.copy(); mask2[bad100] = 0.0
+fsky2 = mask2.mean()
+
+# Step 1 again: zero the unobserved pixel for the full-sky spectrum
+m100_full = m100.copy(); m100_full[bad100] = 0.0
+cl_full100 = hp.anafast(m100_full, lmax=lmax)
+
+# Step 2 again, with mask2
+mm100 = m100.copy(); mm100[mask2 == 0] = hp.UNSEEN
+mono100, dip100 = hp.fit_dipole(mm100)
+print(mono100, np.linalg.norm(dip100))
+mm100 = hp.remove_dipole(mm100)
+mm100[mask2 == 0] = 0.0
+cl_mask100 = hp.anafast(mm100, lmax=lmax) / fsky2
+
+# Step 3 again: noise from l = 2600-3000
+N100 = cl_mask100[2600:3001].mean()
+print('N100 =', N100, '  N70 =', N)
+
+# Step 4 again: narrower beam, same pixel window
+B100 = hp.gauss_beam(np.radians(9.66 / 60), lmax=lmax)
+BW2_100 = (B100 * W)**2
+rec100 = Dl((cl_mask100 - N100) / BW2_100)
+Db100 = [rec100[a:b].mean() for a, b in zip(edges[:-1], edges[1:])]
+
+for a, b in [(30, 300), (300, 600), (600, 800), (800, 1000)]:
+    print(a, b, (rec100[a:b] / Dth[a:b]).mean())
+
+plt.figure()
+plt.plot(lc, Db, 'o', ms=3, label='70 GHz')
+plt.plot(lc, Db100, 's', ms=3, label='100 GHz')
+plt.plot(ell, Dth, 'k', label='model')
+plt.xlim(0, 2000); plt.ylim(-1000, 8000)
+plt.xlabel(r'$\ell$'); plt.ylabel(r'$D_\ell\ [\mu K^2]$'); plt.legend(); plt.show()</code></pre></div>
+    <p class="small">New idea in the code: <code>np.where(bad100)[0]</code> returns the pixel indices where the condition is True.</p>
+  </div></details>
+  <h4>Questions</h4>
+  <div class="qlist">
+    <div class="q"><p>Are there unobserved pixels?</p><details class="answer"><summary>Show answer</summary><div class="dbody"><p>One, inside the kept sky (the 2048 map has one unobserved pixel, and <code>pess=True</code> in the degrading propagated it). Remove it from the mask, common to both maps; set it to 0 for the full-sky map. Without this, its value \(-1.6\times10^{30}\) dominates the whole spectrum.</p></div></details></div>
+    <div class="q"><p>How do the two maps differ?</p><details class="answer"><summary>Show answer</summary><div class="dbody"><p>100 GHz has lower noise (\(N=5.1\times10^{-4}\) vs \(3.3\times10^{-3}\ \mu{\rm K}^2\,{\rm sr}\)), a narrower beam (\(B_\ell^2=0.5\) at 698 instead of 515; 0.01 at 1798 instead of 1328), and more Galaxy on the full sky (dust). Recovered/model: 1.01, 1.07, 1.11, 1.18 in the same bands: useful to \(\ell\sim1000\)–1200.</p></div></details></div>
+    <div class="q"><p>Above \(\ell\sim1500\) the corrected 100 GHz spectrum falls below the model, even negative. Why?</p><details class="answer"><summary>Show answer</summary><div class="dbody"><p>Not the noise, which is white there to 1%. It is what we neglect, most likely the beam: the Gaussian with effective FWHM approximates the real beam window, and a few per cent error on \(B_\ell^2\) where \(B_\ell^2&lt;0.04\) is enough. Planck uses measured beam windows.</p></div></details></div>
+  </div>
+</section>
+
+<!-- ---------------- EXT B ---------------- -->
+<section class="card" id="l-extB">
+  <div class="secnum">EXTENSION B · optional</div>
+  <h3>What is left after the correction?</h3>
+  <p><b>Goal:</b> at 70 GHz the recovered spectrum exceeds the model more and more with \(\ell\) (1.05, 1.15, 1.42). Find the shape of the excess and fit it.</p>
+  <div class="box num"><div class="boxtitle">Mini math: weighted least squares for one number</div>
+    <p>Model: \(y_\ell=A\,x_\ell\) with \(y=\hat C_\ell-N-C^{\rm th}_\ell B_\ell^2W_\ell^2\) (the excess) and \(x=B_\ell^2W_\ell^2\) (its shape if it is a flat \(C_\ell\) seen through the beam). Minimising \(\chi^2=\sum(y-Ax)^2/\sigma^2\) gives</p>
+    \[ A=\frac{\sum x y/\sigma^2}{\sum x^2/\sigma^2}. \]
+    <p>Toy check: \(x=[1,0.5]\), \(y=[2,1]\), \(\sigma^2=[1,1]\): \(A=(2+0.5)/(1+0.25)=2\). Exactly the slope. Then compare \(\chi^2\) with \(A\) and with \(A=0\): a big drop means the fit explains the excess.</p>
+  </div>
+  <div class="box task"><div class="boxtitle">Your turn</div><ol>
+    <li>Convert the model to \(C^{\rm th}_\ell\) (inverse of Dl). Plot \(\hat C^{\rm CMB}_\ell-C^{\rm th}_\ell\) for \(\ell=30\)–1199: what shape?</li>
+    <li>Think: a flat \(C_\ell\) is white noise. Can it be the instrument noise? (Hint: it was divided by \(B_\ell^2\).)</li>
+    <li>Fit \(A\) in \(\hat C_\ell-N=(C^{\rm th}_\ell+A)B_\ell^2W_\ell^2\) with Knox variances; print \(A\), \(\chi^2_A\), \(\chi^2_0\). Repeat at 100 GHz.</li>
+  </ol></div>
+  <details class="solution"><summary><span class="pill">Code</span> Professor's code, Extension B</summary><div class="dbody">
+    <div class="codewrap"><div class="codelabel prof"><span>Professor · Extension B</span></div>
+<pre><code class="language-python">Cth = np.zeros(lmax + 1)
+l2 = ell[2:] * (ell[2:] + 1)
+Cth[2:] = 2 * np.pi * Dth[2:] / l2
+s = slice(30, 1200)
+y = cl_mask[s] - N - Cth[s]*BW2[s] # excess
+x = BW2[s]                          # its shape
+var = 2 * (Cth[s]*BW2[s] + N)**2 \
+      / ((2*ell[s] + 1) * fsky)     # Knox
+# weighted least squares
+A = (x*y/var).sum() / (x*x/var).sum()
+chi_A = ((y - A*x)**2 / var).sum()
+chi_0 = (y**2 / var).sum()
+print(A, chi_A, chi_0)</code></pre></div>
+  </div></details>
+  <details class="explain"><summary><span class="pill">Explain</span> Line by line</summary><div class="dbody"><ul>
+    <li><code>Cth[2:] = 2*np.pi*Dth[2:]/l2</code>: inverse of \(D_\ell\); starts at 2 to avoid dividing by \(\ell(\ell+1)=0\).</li>
+    <li><code>s = slice(30, 1200)</code>: a reusable slice object; <code>a[s]</code> is the same as <code>a[30:1200]</code>.</li>
+    <li><code>y</code>: data minus noise minus beamed model = the excess still in the map.</li>
+    <li><code>x = BW2[s]</code>: the shape a flat \(C_\ell\) would have after the beam and pixel.</li>
+    <li><code>var</code>: Knox variance per multipole, \(2(C+N)^2/((2\ell+1)f_{\rm sky})\). The backslash continues the line.</li>
+    <li><code>A</code>, <code>chi_A</code>, <code>chi_0</code>: best amplitude, \(\chi^2\) with it, \(\chi^2\) without it (\(A=0\)).</li>
+  </ul></div></details>
+  <div class="codewrap"><div class="codelabel extra"><span>Try it (optional): plot the excess, then the 100 GHz fit</span></div>
+<pre><code class="language-python">Crec = (cl_mask - N) / BW2                     # recovered CMB C_l (not D_l)
+binit = lambda D: np.array([D[a:b].mean() for a, b in zip(edges[:-1], edges[1:])])
+ok = (lc &gt; 30) &amp; (lc &lt; 1200)
+plt.figure()
+plt.plot(lc[ok], binit(Crec - Cth)[ok], 'o', ms=3, label='recovered - model')
+plt.axhline(A, color='r', label=f'fitted A = {A:.2e}')
+plt.axhline(0, color='k', lw=0.5)
+plt.xlabel(r'$\ell$'); plt.ylabel(r'$\Delta C_\ell\ [\mu K^2 sr]$'); plt.legend(); plt.show()
+
+# same fit at 100 GHz (needs Extension A variables)
+y1 = cl_mask100[s] - N100 - Cth[s]*BW2_100[s]; x1 = BW2_100[s]
+var1 = 2 * (Cth[s]*BW2_100[s] + N100)**2 / ((2*ell[s] + 1) * fsky2)
+A1 = (x1*y1/var1).sum() / (x1*x1/var1).sum()
+print(A1, ((y1 - A1*x1)**2 / var1).sum(), (y1**2 / var1).sum())</code></pre></div>
+  <h4>Questions and answer</h4>
+  <div class="qlist">
+    <div class="q"><p>What shape has the excess?</p><details class="answer"><summary>Show answer</summary><div class="dbody"><p>Roughly flat in \(C_\ell\): a constant \(A\).</p></div></details></div>
+    <div class="q"><p>Can it be the instrument noise?</p><details class="answer"><summary>Show answer</summary><div class="dbody"><p>No. The noise is not convolved with the beam, and it was already subtracted. A flat \(C_\ell\) that passed through the beam is a sky component: point-like objects distributed at random.</p></div></details></div>
+    <div class="q"><p>Results of the fit?</p><details class="answer"><summary>Show answer</summary><div class="dbody">
+      <p><b>70 GHz:</b> \(A=4.8\times10^{-3}\ \mu{\rm K}^2\,{\rm sr}\); \(\chi^2\) drops from 5722 to 1532 over 1170 multipoles. Recovered/(model+A): 0.99, 0.98, 0.97, 1.03 up to \(\ell=1000\). A narrower Gaussian beam without \(A\) does worse (best \(\chi^2=2162\), FWHM 12.2′).</p>
+      <p><b>100 GHz:</b> \(A=1.84\times10^{-3}\), 2.6 times smaller; \(\chi^2\) from 11 558 to 1722. Here a narrower beam without \(A\) does better (\(\chi^2=1484\), FWHM 8.96′), and the flat model is not enough (1.04 at \(\ell=300\)–1000, 0.79 at 1200–1500). At 100 GHz these data cannot separate sources from beam shape.</p>
+      <p><b>Interpretation:</b> unresolved extragalactic radio sources, too faint to be in the mask. Randomly placed points have a flat \(C_\ell\) (shot noise), and their spectrum falls with frequency, so \(A\) is larger at 70 GHz. Planck's likelihood fits a point-source amplitude per frequency.</p>
+    </div></details></div>
+  </div>
+</section>
+
+<!-- ---------------- EXT C ---------------- -->
+<section class="card" id="l-extC">
+  <div class="secnum">EXTENSION C · optional</div>
+  <h3>The cross-spectrum 70 × 100</h3>
+  <p><b>Goal:</b> the noise of the two instruments is independent, but the sky is the same. Multiply the harmonic coefficients of one map by the other's: the noise averages away.</p>
+  \[ \hat C^{70\times100}_\ell=\frac{1}{2\ell+1}\sum_m a^{70}_{\ell m}a^{100\,*}_{\ell m},\qquad \langle\hat C^{70\times100}_\ell\rangle=B^{70}_\ell B^{100}_\ell W_\ell^2\,C^{\rm sky}_\ell\quad(\text{no }N_\ell). \]
+  <div class="box num"><div class="boxtitle">Mini math</div><p>Each map = sky + its own noise: \(a^{70}=s+n_1\), \(a^{100}=s+n_2\). Product: \(s^2+s\,n_2+n_1 s+n_1n_2\). The noises are uncorrelated with the sky and with each other, so the last three terms average to 0. Only \(s^2\) survives: nothing to subtract. Beams: one factor of each, \(B^{70}B^{100}\), instead of a square.</p></div>
+  <div class="box task"><div class="boxtitle">Your turn</div><ol>
+    <li>Make sure both masked maps (Step 2) use the same mask (<code>mask2</code>) and have monopole and dipole removed.</li>
+    <li><code>hp.anafast(mm70, map2=mm100, lmax=lmax)/fsky</code>.</li>
+    <li>Correct by \(B^{70}B^{100}W^2\), convert to \(D_\ell\), bin, and plot against auto 70, auto 100 and the model.</li>
+  </ol></div>
+  <details class="solution"><summary><span class="pill">Code</span> Preparation (suggested) + professor's code, Extension C</summary><div class="dbody">
+    <div class="codewrap"><div class="codelabel mine"><span>Suggested preparation (not from the slides)</span></div>
+<pre><code class="language-python"># rebuild the 70 GHz masked map with the common mask2 of Extension A
+mm70 = m.copy(); mm70[mask2 == 0] = hp.UNSEEN
+mm70 = hp.remove_dipole(mm70); mm70[mask2 == 0] = 0.0
+fsky = fsky2          # the common sky fraction (differs by one pixel)</code></pre></div>
+    <div class="codewrap"><div class="codelabel prof"><span>Professor · Extension C</span></div>
+<pre><code class="language-python"># mm70, mm100: masked maps of step 2
+# (same mask, monopole and dipole removed)
+cl_x = hp.anafast(mm70, map2=mm100,
+                  lmax=lmax) / fsky
+B70 = hp.gauss_beam(np.radians(13.08/60),
+                    lmax=lmax)
+B100 = hp.gauss_beam(np.radians(9.66/60),
+                     lmax=lmax)
+rec_x = Dl(cl_x / (B70 * B100 * W**2))</code></pre></div>
+  </div></details>
+  <div class="codewrap"><div class="codelabel extra"><span>Try it (optional): compare cross with the two autos</span></div>
+<pre><code class="language-python">binit = lambda D: np.array([D[a:b].mean() for a, b in zip(edges[:-1], edges[1:])])
+plt.figure()
+plt.plot(lc, binit(rec_x), 'o', ms=4, label='cross 70x100')
+plt.plot(lc, binit(rec), '.', label='auto 70')
+plt.plot(lc, binit(rec100), '.', label='auto 100')
+plt.plot(ell, Dth, 'k', label='model')
+plt.xlim(0, 1500); plt.ylim(0, 8000)
+plt.xlabel(r'$\ell$'); plt.ylabel(r'$D_\ell\ [\mu K^2]$'); plt.legend(); plt.show()
+for l0 in [106, 226, 526, 796, 1006]:
+    i = np.argmin(abs(lc - l0))
+    print(lc[i], binit(rec_x)[i] / binit(Dth)[i])     # expect ~1.02 1.00 1.04 1.13 1.59</code></pre></div>
+  <h4>Questions</h4>
+  <div class="qlist">
+    <div class="q"><p>Compare cross, auto 70 and auto 100 (all corrected): what improves?</p><details class="answer"><summary>Show answer</summary><div class="dbody"><p>There is no noise to subtract, so no error from estimating it. At \(\ell\simeq1000\) the cross gives 1.59 times the model, the auto 70 gives 1.96.</p></div></details></div>
+    <div class="q"><p>Is the cross-spectrum the CMB alone?</p><details class="answer"><summary>Show answer</summary><div class="dbody"><p>No. Everything on the sky is in both maps, including Galaxy residuals and point sources: cross/model is 1.13 at \(\ell\simeq800\). The cross removes the noise bias, not the foregrounds. Real analyses cross two halves of the same channel (half-mission, detector sets).</p></div></details></div>
+  </div>
+</section>
+
+<!-- ---------------- FULL SCRIPT ---------------- -->
+<section class="card" id="l-script">
+  <div class="secnum">B3</div>
+  <h3>The full core script (Steps 0–4) in one piece</h3>
+  <p>The professor's blocks joined in order, with <code>plt.figure()</code>, labels and <code>plt.show()</code> added so each plot appears on its own. Use it at home to re-run the whole analysis, or as a reference for your project.</p>
+  <details class="solution"><summary><span class="pill">Code</span> Show the full script</summary><div class="dbody">
+    <div class="codewrap"><div class="codelabel prof"><span>lab2_core.py · professor's code + plot labels</span></div>
+<pre><code class="language-python">import numpy as np, healpy as hp
+import matplotlib.pyplot as plt
+
+# ---------- Step 0: read and look ----------
+m = hp.read_map('data/planck_T070_n1024_uK.fits')
+mask = hp.read_map('data/mask_UT78_n1024.fits')
+m, mask = m.astype(float), mask.astype(float)
+nside = hp.npix2nside(m.size)
+print(nside, hp.nside2resol(nside, arcmin=True))
+bad = m &lt; -1e30            # UNSEEN pixels
+print(bad.sum(), m[~bad].mean(), m[~bad].std())
+fsky = mask.mean()
+print('fsky =', fsky)
+
+hp.mollview(m, min=-300, max=300, unit='muK', title='70 GHz, full sky')
+mm = m.copy(); mm[mask == 0] = hp.UNSEEN
+hp.mollview(mm, min=-300, max=300, unit='muK', title='70 GHz, masked')
+plt.show()
+
+# ---------- Step 1: full-sky spectrum ----------
+lmax = 3 * nside - 1
+ell = np.arange(lmax + 1)
+Dl = lambda c: ell * (ell + 1) * c / (2 * np.pi)
+
+cl_full = hp.anafast(m, lmax=lmax)
+
+th = np.loadtxt('data/COM_PowerSpect_CMB-base-'
+                'plikHM-TTTEEE-lowl-lowE-lensing-minimum-'
+                'theory_R3.01.txt')       # l, D_TT, ...
+Dth = np.zeros(lmax + 1)
+Dth[2:2 + len(th)] = th[:, 1] # up to l = 2508
+
+plt.figure()
+plt.semilogy(ell[2:], Dl(cl_full)[2:], label='full sky')
+plt.semilogy(ell[2:2509], Dth[2:2509], 'k', label='model')
+plt.xlabel(r'$\ell$'); plt.ylabel(r'$D_\ell\ [\mu K^2]$'); plt.legend(); plt.title('Step 1')
+plt.show()
+
+# ---------- Step 2: cut the Galaxy ----------
+mm = m.copy()
+mm[mask == 0] = hp.UNSEEN # ignored by fit
+mono, dip = hp.fit_dipole(mm)
+print(mono, np.linalg.norm(dip))
+mm = hp.remove_dipole(mm) # both
+mm[mask == 0] = 0.0
+
+cl_mask = hp.anafast(mm, lmax=lmax) / fsky
+
+raw = m * mask
+cl_raw = hp.anafast(raw, lmax=lmax) / fsky
+
+# ---------- Step 3: noise bias ----------
+hi = (ell &gt;= 2000) &amp; (ell &lt;= 2500)
+N = cl_mask[hi].mean()          # muK^2 sr
+print(N)
+for a, b in [(1200, 1500), (1500, 2000),
+             (2000, 2500), (2500, 3000)]:
+    print(a, b, cl_mask[a:b].mean() / N)
+
+plt.figure()
+plt.semilogy(ell[2:], Dl(cl_mask)[2:], label='masked')
+plt.semilogy(ell[2:], Dl(np.full(lmax+1, N))[2:], label='noise N')
+plt.semilogy(ell[2:2509], Dth[2:2509], 'k', label='model')
+plt.xlabel(r'$\ell$'); plt.ylabel(r'$D_\ell\ [\mu K^2]$'); plt.legend(); plt.title('Steps 2-3')
+plt.show()
+
+# ---------- Step 4: beam and pixels ----------
+fwhm = np.radians(13.08 / 60)    # 70 GHz
+B = hp.gauss_beam(fwhm, lmax=lmax)
+W = hp.read_cl('data/pixel_window_n1024.fits')
+W = np.atleast_2d(W)[0][:lmax + 1]
+BW2 = (B * W)**2
+model = Dth * BW2 + Dl(np.full(lmax + 1, N))
+
+rec = Dl((cl_mask - N) / BW2)     # CMB D_l
+edges = np.arange(2, lmax + 1, 30)
+lc = 0.5 * (edges[:-1] + edges[1:] - 1)
+Db = [rec[a:b].mean() for a, b in
+      zip(edges[:-1], edges[1:])]
+
+plt.figure()
+plt.plot(lc, Db, 'o', ms=3, label='70 GHz recovered')
+plt.plot(ell, Dth, 'k', label='model')
+plt.xlim(0, 2000); plt.ylim(-1000, 8000)
+plt.xlabel(r'$\ell$'); plt.ylabel(r'$D_\ell\ [\mu K^2]$'); plt.legend(); plt.title('Step 4')
+plt.show()</code></pre></div>
+  </div></details>
+</section>
+
+<section class="card" id="l-wrap">
+  <div class="secnum">B4</div>
+  <h3>What we neglected, and the numbers to check against</h3>
+  <div class="tablewrap"><table>
+    <tr><th>Neglected</th><th>Effect</th><th>In a real analysis</th></tr>
+    <tr><td>Mode coupling of the mask</td><td>\(\hat C_\ell\) mixes neighbouring \(\ell\); \(1/f_{\rm sky}\) is exact only on average</td><td>MASTER: invert the coupling matrix (NaMaster)</td></tr>
+    <tr><td>Gaussian beam</td><td>\(B_\ell\) wrong by per cents where \(B_\ell^2\ll1\)</td><td>Measured beam windows (Planck RIMO)</td></tr>
+    <tr><td>White, uniform noise</td><td>\(N_\ell\) estimated at high \(\ell\) and extrapolated</td><td>Noise simulations; half-mission cross-spectra</td></tr>
+    <tr><td>Foreground residuals</td><td>Dust, synchrotron, sources inside the mask</td><td>Masks per frequency, source masks, component separation</td></tr>
+    <tr><td>Degrading to \(N_{\rm side}=1024\)</td><td>Aliasing above \(\ell\sim2048\), mask edges</td><td>Native resolution</td></tr>
+    <tr><td>Errors from the model</td><td>Our error bars assume the model is right</td><td>Simulations of the full pipeline</td></tr>
+  </table></div>
+  <details class="answer"><summary>Reference numbers (open after you have your own)</summary><div class="dbody">
+    <div class="tablewrap"><table>
+      <tr><th>Quantity</th><th>70 GHz</th><th>100 GHz</th></tr>
+      <tr><td>\(N_{\rm side}\), pixel size</td><td>1024, 3.44′</td><td>1024, 3.44′</td></tr>
+      <tr><td>Unobserved pixels</td><td>0</td><td>1 (inside the kept sky)</td></tr>
+      <tr><td>Mean, rms, max</td><td>86.5 µK, 436 µK, \(1.5\times10^5\) µK (M17)</td><td>–</td></tr>
+      <tr><td>\(f_{\rm sky}\)</td><td colspan="2">0.778</td></tr>
+      <tr><td>Monopole, dipole (kept sky)</td><td>35.9 µK, 4.7 µK</td><td>–</td></tr>
+      <tr><td>Noise N [µK² sr]</td><td>\(3.3\times10^{-3}\)</td><td>\(5.1\times10^{-4}\)</td></tr>
+      <tr><td>\(B_\ell^2=0.5\) / 0.01 at</td><td>\(\ell=515\) / 1328</td><td>\(\ell=698\) / 1798</td></tr>
+      <tr><td>Recovered/model, bands 30–300, 300–600, 600–800, 800–1000</td><td>0.99, 1.05, 1.15, 1.42</td><td>1.01, 1.07, 1.11, 1.18</td></tr>
+      <tr><td>Point-source amplitude A [µK² sr]</td><td>\(4.8\times10^{-3}\) (χ² 5722 → 1532)</td><td>\(1.84\times10^{-3}\) (χ² 11 558 → 1722)</td></tr>
+      <tr><td>Cross/model at ℓ ≈ 106, 226, 526, 796, 1006</td><td colspan="2">1.02, 1.00, 1.04, 1.13, 1.59</td></tr>
+    </table></div>
+  </div></details>
+  <div class="box key">
+    <div class="boxtitle">Rule of thumb to say in the oral</div>
+    <p>Before dividing by \(B_\ell^2\), look at how small it is: the beam, not the data, decides how far in \(\ell\) you can go. Compare with a model before and after every correction.</p>
+  </div>
+  <div class="box concept">
+    <div class="boxtitle">Search terms if you want to go further (project ideas)</div>
+    <p>"pseudo-\(C_\ell\)", "coupling matrix" (Hivon et al. 2002, NaMaster) · "beam window function", "RIMO" · "half-mission cross-spectra" · "component separation", SMICA, Commander · "point-source mask", "shot noise" · "low-ℓ likelihood", Gibbs sampling (Planck 2018 V).</p>
+  </div>
+</section>
+
+</main>
+</div>
+
+<script>
+/* ---------- syntax highlight + copy buttons ---------- */
+(function () {
+  try { if (window.hljs) { document.querySelectorAll('pre code.language-python').forEach(function (el) { hljs.highlightElement(el); }); } } catch (e) {}
+  document.querySelectorAll('.codewrap').forEach(function (wrap) {
+    var label = wrap.querySelector('.codelabel');
+    var code = wrap.querySelector('pre code');
+    if (!label || !code) return;
+    var btn = document.createElement('button');
+    btn.type = 'button'; btn.className = 'copybtn'; btn.textContent = 'Copy';
+    btn.addEventListener('click', function () {
+      var text = code.textContent;
+      function done(msg) { btn.textContent = msg; setTimeout(function () { btn.textContent = 'Copy'; }, 1600); }
+      function fallback() {
+        try {
+          var ta = document.createElement('textarea'); ta.value = text; ta.setAttribute('readonly', '');
+          ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select();
+          var ok = document.execCommand('copy'); document.body.removeChild(ta);
+          done(ok ? 'Copied' : 'Select + Ctrl+C');
+        } catch (e) { done('Select + Ctrl+C'); }
+      }
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(function () { done('Copied'); }, fallback);
+        } else { fallback(); }
+      } catch (e) { fallback(); }
+    });
+    label.appendChild(btn);
+  });
+  document.getElementById('openAll').addEventListener('click', function () { document.querySelectorAll('details').forEach(function (d) { d.open = true; }); });
+  document.getElementById('closeAll').addEventListener('click', function () { document.querySelectorAll('details').forEach(function (d) { d.open = false; }); });
+})();
+
+/* ---------- calculator ---------- */
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  function fmt(x, d) { return Number(x).toFixed(d); }
+  function sci(x) { return x === 0 ? '0' : (Math.abs(x) >= 0.01 ? x.toFixed(3) : x.toExponential(2)); }
+  function update() {
+    var fwhm = parseFloat($('cFwhm').value), nside = parseInt($('cNside').value, 10), l = parseInt($('cEll').value, 10);
+    if (!(fwhm > 0) || !(l >= 1)) { $('oVerdict').textContent = 'Enter a positive FWHM and an ℓ of at least 1.'; return; }
+    var npix = 12 * nside * nside;
+    var thpix = Math.sqrt(4 * Math.PI / npix);            // rad
+    var thArcmin = thpix * 180 / Math.PI * 60;
+    var ppf = fwhm / thArcmin;
+    var sigma = (fwhm / 60 * Math.PI / 180) / Math.sqrt(8 * Math.log(2));
+    var B2 = Math.exp(-l * (l + 1) * sigma * sigma);
+    var x = l * thpix / 2, W = x === 0 ? 1 : Math.sin(x) / x, W2 = W * W;
+    $('oNpix').textContent = npix.toLocaleString('en-US');
+    $('oRes').textContent = thArcmin >= 60 ? fmt(thArcmin / 60, 2) + '°' : fmt(thArcmin, 2) + '′';
+    $('oPpf').textContent = fmt(ppf, 2);
+    $('oB2').textContent = sci(B2);
+    $('oW2').textContent = l > 3 * nside ? 'ℓ > 3Nside' : sci(W2);
+    $('oBW2').textContent = sci(B2 * W2);
+    $('oCV').textContent = fmt(100 * Math.sqrt(2 / (2 * l + 1)), 1) + '%';
+    $('oScale').textContent = (180 / l) >= 1 ? fmt(180 / l, 2) + '°' : fmt(180 / l * 60, 1) + '′';
+    var v = $('oVerdict'), msg = [], ok = true;
+    if (ppf < 2) { msg.push('Fewer than 2 pixels per FWHM: aliasing risk, use a larger Nside.'); ok = false; }
+    else if (ppf <= 3.2) msg.push('2–3 pixels per FWHM: the recommended sampling.');
+    else msg.push('More than 3 pixels per FWHM: safe, but each halving of Nside would save 4× memory and ~8× time.');
+    if (l > 3 * nside - 1) { msg.push('ℓ is above 3Nside−1: not resolved by this grid.'); ok = false; }
+    else if (l > 2 * nside) { msg.push('ℓ is between 2Nside and 3Nside: quick looks only.'); ok = false; }
+    else msg.push('ℓ ≤ 2Nside: the transform is accurate.');
+    if (B2 < 0.01) { msg.push('B²ℓ < 0.01: the beam has removed almost all sky signal here.'); ok = false; }
+    v.textContent = msg.join(' ');
+    v.className = 'verdict ' + (ok ? 'ok' : 'warn');
+  }
+  ['cFwhm', 'cNside', 'cEll'].forEach(function (id) { $(id).addEventListener('input', update); $(id).addEventListener('change', update); });
+  update();
+})();
+
+/* ---------- beam chart ---------- */
+(function () {
+  var cv = document.getElementById('beamChart');
+  if (!cv || !cv.getContext) return;
+  function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || '#888'; }
+  function draw() {
+    var dpr = window.devicePixelRatio || 1, w = cv.clientWidth, h = cv.clientHeight;
+    if (!w || !h) return;
+    cv.width = w * dpr; cv.height = h * dpr;
+    var c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, w, h);
+    var padL = 48, padR = 14, padT = 12, padB = 34, pw = w - padL - padR, ph = h - padT - padB;
+    var lmax = 3000, ymin = -4, ymax = 0;               // log10 range
+    var X = function (l) { return padL + l / lmax * pw; };
+    var Y = function (v) { var lv = Math.log10(Math.max(v, 1e-4)); return padT + (ymax - lv) / (ymax - ymin) * ph; };
+    c.font = '12px "IBM Plex Sans", system-ui, sans-serif'; c.fillStyle = css('--muted'); c.strokeStyle = css('--line'); c.lineWidth = 1;
+    for (var e = ymin; e <= ymax; e++) {
+      var y = Y(Math.pow(10, e)); c.beginPath(); c.moveTo(padL, y); c.lineTo(w - padR, y); c.stroke();
+      c.textAlign = 'right'; c.textBaseline = 'middle'; c.fillText(e === 0 ? '1' : '1e' + e, padL - 6, y);
+    }
+    for (var l = 0; l <= lmax; l += 500) {
+      var x = X(l); c.beginPath(); c.moveTo(x, padT); c.lineTo(x, padT + ph); c.stroke();
+      c.textAlign = 'center'; c.textBaseline = 'top'; c.fillText(String(l), x, padT + ph + 6);
+    }
+    c.textAlign = 'right'; c.fillText('ℓ', w - padR, padT + ph + 20);
+    function curve(fn, color) {
+      c.strokeStyle = color; c.lineWidth = 2.2; c.beginPath();
+      for (var l = 0; l <= lmax; l += 5) { var px = X(l), py = Y(fn(l)); if (l === 0) c.moveTo(px, py); else c.lineTo(px, py); }
+      c.stroke();
+    }
+    function beam(fw) { var s = (fw / 60 * Math.PI / 180) / Math.sqrt(8 * Math.log(2)); return function (l) { return Math.exp(-l * (l + 1) * s * s); }; }
+    var thpix = Math.sqrt(4 * Math.PI / (12 * 1024 * 1024));
+    curve(function (l) { var x = l * thpix / 2; var W = x === 0 ? 1 : Math.sin(x) / x; return W * W; }, css('--good'));
+    curve(beam(13.08), css('--accent'));
+    curve(beam(9.66), css('--warm'));
+    // markers at B^2 = 0.5 and 0.01 for 70 GHz
+    c.fillStyle = css('--ink'); c.textAlign = 'left'; c.textBaseline = 'bottom';
+    [[515, 0.5, 'ℓ=515, 0.5'], [1328, 0.01, 'ℓ=1328, 0.01']].forEach(function (p) {
+      var px = X(p[0]), py = Y(p[1]); c.beginPath(); c.arc(px, py, 3.5, 0, 2 * Math.PI); c.fill();
+      c.fillText(p[2], px + 6, py - 3);
+    });
+  }
+  draw();
+  window.addEventListener('resize', draw);
+  try { window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', draw); } catch (e) {}
+  try { new MutationObserver(draw).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] }); } catch (e) {}
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(draw);
+})();
+</script>
+</body>
+</html>

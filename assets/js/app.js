@@ -44,10 +44,7 @@
     let h = `<div class="tree-head"><svg width="26" height="22" viewBox="0 0 24 19"><path d="M1 3.5A2.5 2.5 0 0 1 3.5 1h5l2.2 2.4h9.8A2.5 2.5 0 0 1 23 5.9v10.6a2.5 2.5 0 0 1-2.5 2.5h-17A2.5 2.5 0 0 1 1 16.5z" fill="currentColor"/></svg>Course<small>${ready.reduce((s, u) => s + u.subs.length, 0)} lessons</small></div>`;
     C.units.forEach((u) => {
       const cur = u.id === UNIT, nSeen = (seen[u.id] || []).length;
-      if (u.status !== "ready") {
-        h += `<div class="folder soon" title="Coming soon">${ICON.chev}${ICON.folder(u.color)}<span class="nm">${lbl(u)}</span><span class="cnt">soon</span></div>`;
-        return;
-      }
+      if (u.status !== "ready") return;
       h += `<div class="folder${cur ? " open" : ""}" data-unit="${u.id}">${ICON.chev}${ICON.folder(u.color)}<span class="nm">${lbl(u)}</span><span class="cnt">${nSeen}/${u.subs.length}</span></div><div class="subs">`;
       (cur && sectionTitles ? sectionTitles : u.subs).forEach((t, i) => {
         const done = (seen[u.id] || []).includes(i);
@@ -56,6 +53,8 @@
       });
       h += `</div>`;
     });
+    const soon = C.units.filter((u) => u.status !== "ready");
+    if (soon.length) h += `<div class="soonrow"><b>SOON</b>${soon.map((u) => `<span title="${lbl(u)} — coming soon">${u.label ? u.label.replace("·", "").trim() : u.id}</span>`).join("")}</div>`;
     tree.innerHTML = h;
     $$(".folder[data-unit]", tree).forEach((f) => f.addEventListener("click", () => f.classList.toggle("open")));
     const [s, t] = totals(), pr = $(".progress");
@@ -195,7 +194,7 @@
     // stepper + sidebar
     $$(".dot").forEach((dt, k) => { dt.classList.toggle("on", k === i); dt.classList.toggle("seen", (seen[UNIT] || []).includes(k)); });
     $("#stepper-n").textContent = `Step ${i + 1} of ${sections.length}`;
-    markSeen(UNIT, i); renderSidebar(sections.map((x) => x.dataset.title));
+    markSeen(UNIT, i); renderSidebar(sections.map((x) => x.dataset.short || x.dataset.title));
     $$(".sub").forEach((a) => a.classList.toggle("on", a.closest(".subs").previousElementSibling.dataset.unit === UNIT && +a.dataset.i === i));
     history.replaceState(null, "", "#s" + (i + 1));
     renderMath(s); initCode(s); initWidgets(s); renderMath($(".right"));
@@ -211,7 +210,7 @@
     $("#r-learn").addEventListener("click", (e) => { const li = e.target.closest("li"); if (!li) return; const ck = store.get("learn", {}); ck[li.dataset.k] = !ck[li.dataset.k]; store.set("learn", ck); li.classList.toggle("ck"); li.querySelector("i").textContent = ck[li.dataset.k] ? "✓" : ""; });
     const fromHash = () => { const m = location.hash.match(/^#s(\d+)/); return m ? +m[1] - 1 : 0; };
     window.addEventListener("hashchange", () => { setView("learn"); show(fromHash()); });
-    renderSidebar(sections.map((x) => x.dataset.title));
+    renderSidebar(sections.map((x) => x.dataset.short || x.dataset.title));
     show(fromHash(), false);
   } else renderSidebar();
 

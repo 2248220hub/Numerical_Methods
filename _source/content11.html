@@ -1,0 +1,415 @@
+<!-- ================================================================== 1 -->
+<section class="lesson" data-title="Why the sphere is hard: there is no perfect grid" data-short="No perfect grid" data-badge="CONCEPT" data-time="15 min" data-level="Beginner"
+  data-sub="Lessons 07–10 sampled a line. The sky is a sphere around us, and a sphere has no regular grid that can be refined forever.">
+  <div class="stage" data-widget="latlon"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>Many astrophysical data are one value per direction: the CMB temperature, all-sky radio, X-ray or γ-ray surveys, galaxy counts. A direction is a point on the unit sphere, given by the colatitude θ ∈ [0, π] (0 at the north pole) and the longitude φ ∈ [0, 2π).</p></div>
+    <div class="s-key">On a curved surface the shape of a regular cell fixes its size. Every pixelisation must choose what to keep: equal areas, equal shapes, or points on rings of constant latitude.</div>
+    <ul class="s-learn"><li>The line → sphere dictionary</li><li>Why latitude–longitude grids crowd the poles</li><li>Gauss–Bonnet and the Platonic solids</li><li>Euler's formula and the 12 pentagons</li></ul>
+  </aside>
+  <div class="prose">
+    <h2><span class="lv basic">BASIC</span>One story, from a line to the sky</h2>
+    <p>Lessons 07 to 10 took a continuous signal, turned it into numbers and asked what we can compute from them. This lesson moves the same ideas onto the surface of a sphere. Almost every concept has a twin:</p>
+    <table><tr><th>on a line (07–10)</th><th>on the sphere (11)</th></tr>
+      <tr><td>sample every Δt</td><td>pixelise the sky (HEALPix pixels)</td></tr>
+      <tr><td>Fourier modes e<sup>iωt</sup></td><td>spherical harmonics Y<sub>ℓm</sub>(θ, φ)</td></tr>
+      <tr><td>frequency f</td><td>multipole ℓ (angular scale ≈ 180°/ℓ)</td></tr>
+      <tr><td>FFT, cost N log N</td><td>FFT on each ring + Legendre sum, cost L³</td></tr>
+      <tr><td>periodogram</td><td>angular power spectrum C<sub>ℓ</sub></td></tr>
+      <tr><td>Nyquist: ≥ 2 samples per period</td><td>ℓ<sub>max</sub> ≤ 2N<sub>side</sub>; 2–3 pixels per beam FWHM</td></tr>
+      <tr><td>anti-aliasing filter before sampling</td><td>the telescope beam smooths before pixelising</td></tr>
+      <tr><td>finite record = window (leakage)</td><td>Galaxy mask = window on the sky</td></tr></table>
+    <h2><span class="lv core">CORE</span>Polar crowding</h2>
+    <p>On a flat sheet you can draw equal squares and split each into 4 forever. On a sphere the obvious grid — equal steps in latitude and longitude, like a world map — crowds the poles: cells shrink to slivers.</p>
+    <x-f name="Cell area of a latitude–longitude grid" tag="RESULT">
+      \h{dOm}{d\Omega}=\sin\h{theta}{\theta}\,d\theta\,d\h{phi}{\varphi}\qquad\Longrightarrow\qquad \Delta\Omega_{\rm cell}\propto\sin\theta
+      <note>At the equator sin 90° = 1; at θ = 10° from the pole sin 10° = 0.17 (6 times smaller); at θ = 2°, 0.035 (29 times smaller). Many samples are spent near the poles where they add little information.</note>
+      <py>
+      th = np.radians(np.arange(1, 180, 2))      # cell centres, 2-degree grid
+      area = np.sin(th) * np.radians(2)**2        # solid angle of each cell
+      print(area.max() / area.min())              # ~57
+      </py>
+      <f90>
+      do i = 1, nth
+         th = (i - 0.5_dp)*dth
+         area(i) = sin(th)*dth*dphi               ! cells shrink towards the poles
+      end do
+      </f90>
+    </x-f>
+    <h2><span class="lv adv">ADVANCED</span>Why no regular grid can be refined</h2>
+    <p>On a sphere the angles of a polygon add up to more than on a plane, and the excess equals its area (Gauss–Bonnet on the unit sphere). So the shape of a regular cell fixes its size: you cannot shrink it and keep its shape. Only the 5 Platonic solids tile the sphere with identical regular cells; the finest (icosahedron) has 20 faces about 41° across — useless as a map. Euler's formula V − E + F = 2 forces defects: a sphere covered by hexagons always needs exactly 12 pentagons (look at a football).</p>
+    <x-ex id="e11-1a" ans="5.76" tol="0.02" lvl="Basic">On a latitude–longitude grid, how many times larger is a cell at the equator than a cell centred at θ = 10°? (ratio of sin θ)
+      <hint>1 / sin 10°.</hint><sol>1/0.1736 = 5.76.</sol></x-ex>
+    <x-ex id="e11-1b" ans="12" tol="0.001" lvl="Intermediate">A sphere is tiled by hexagons and pentagons, three faces meeting at each vertex. How many pentagons are needed?
+      <hint>With P pentagons and H hexagons: F = P + H, E = (5P + 6H)/2, V = (5P + 6H)/3. Use V − E + F = 2.</hint><sol>V − E + F = P/6 = 2, so P = 12, whatever H.</sol></x-ex>
+  </div>
+</section>
+
+<!-- ================================================================== 2 -->
+<section class="lesson" data-title="From the circle to the sphere" data-short="Circle → sphere" data-badge="MATH" data-time="20 min" data-level="Beginner"
+  data-sub="On a circle N ≥ 2B + 1 equispaced samples are exact. The sphere is not two circles: its rings shrink to points at the poles.">
+  <div class="stage" data-widget="circle"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>Start with one angle φ. A smooth function on the circle is a Fourier series; if it is band-limited, the DFT of enough equispaced samples gives back every coefficient exactly. This is the Nyquist theorem of Lesson 07, written for an angle.</p></div>
+    <div class="s-key">On a torus (two circles) the 2D grid is a product of two 1D grids and the 2D DFT is exact too. On the sphere the φ-circles shrink towards the poles, so the number of samples per ring must change with latitude.</div>
+    <ul class="s-learn"><li>Fourier series on the circle</li><li>Band limit B and N ≥ 2B + 1</li><li>Exact DFT of the samples</li><li>Aliasing: k looks like k − N</li></ul>
+  </aside>
+  <div class="prose">
+    <x-f name="Fourier series on the circle" tag="DEFINITION">
+      f(\h{phi}{\varphi})=\h{sum}{\sum_k}\h{fk}{\hat f_k}\,e^{ik\varphi},\qquad \hat f_k=0\ \ \text{for }|k|>\h{B}{B}
+      <note>f is band-limited with band limit B.</note>
+    </x-f>
+    <x-f name="Sampling theorem on the circle" tag="THEOREM">
+      \h{Ns}{N}\ge 2B+1,\quad \varphi_n=\frac{2\pi n}{N}:\qquad \hat f_k=\frac1N\sum_{n=0}^{N-1}f(\varphi_n)\,e^{-ik\varphi_n}\quad\text{exactly}
+      <note>With fewer samples the mode k is indistinguishable from k − N (aliasing), exactly as in Lesson 07.</note>
+      <py>
+      N = 7; phi = 2*np.pi*np.arange(N)/N
+      fk = np.fft.fft(np.cos(3*phi)) / N          # 0.5 at k = 3 and k = -3 (index 4)
+      </py>
+      <f90>
+      do k = 0, N-1
+         fk(k) = sum(f*exp(-(0,1)*k*phi))/N
+      end do
+      </f90>
+    </x-f>
+    <p><b>Worked numbers.</b> f(φ) = cos 3φ has B = 3: it needs N ≥ 7 samples, every 360°/7 ≈ 51.4°. With 7 samples the DFT returns f̂<sub>±3</sub> = 0.5 and zero elsewhere to machine precision. With 5 samples, k = 3 looks identical to k = 3 − 5 = −2.</p>
+    <x-ex id="e11-2a" ans="11" tol="0.001" lvl="Basic">Minimum number of equispaced samples for f(φ) = sin 5φ + cos 2φ?
+      <hint>B is the highest |k|.</hint><sol>B = 5, N ≥ 2·5 + 1 = 11.</sol></x-ex>
+    <x-ex id="e11-2b" ans="-3" tol="0.001" lvl="Basic">With N = 8 samples, which mode in −4 … 3 does k = 5 alias to?
+      <hint>Subtract N.</hint><sol>5 − 8 = −3.</sol></x-ex>
+  </div>
+</section>
+
+<!-- ================================================================== 3 -->
+<section class="lesson" data-title="Spherical harmonics: the Fourier modes of the sphere" data-short="Spherical harmonics" data-badge="MATH" data-time="30 min" data-level="Intermediate"
+  data-sub="Y_ℓm = a Legendre function of θ times a pure wave e^{imφ}. Along every ring of constant latitude there is an FFT hidden inside.">
+  <div class="stage" data-widget="ylm"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>Spherical harmonics are the natural vibration patterns of a sphere, the eigenfunctions of its Laplacian. ℓ sets the size of the pattern, m how it is oriented in longitude.</p></div>
+    <div class="s-key">Y<sub>ℓm</sub> = λ<sub>ℓm</sub>(θ) e<sup>imφ</sup>: along a ring it is just e<sup>imφ</sup>. This separation is what makes the HEALPix transform fast.</div>
+    <ul class="s-learn"><li>Definition and normalisation</li><li>Zonal, sectoral, tesseral</li><li>Synthesis and analysis</li><li>Counting coefficients: L²</li><li>Angular scale 180°/ℓ</li></ul>
+  </aside>
+  <div class="prose">
+    <x-f name="Spherical harmonics" tag="DEFINITION">
+      \h{Ylm}{Y_{\ell m}}(\theta,\varphi)=\underbrace{\sqrt{\frac{2\ell+1}{4\pi}\frac{(\ell-m)!}{(\ell+m)!}}\;\h{Plm}{P_\ell^m}(\cos\theta)}_{\h{lam}{\lambda_{\ell m}}(\theta)}\;e^{i\h{m}{m}\varphi},\qquad \nabla^2_{S^2}Y_{\ell m}=-\h{ell}{\ell}(\ell+1)\,Y_{\ell m}
+      <note>ℓ ≥ 0 is the <b>multipole</b>: scale θ ≈ π/ℓ ≈ 180°/ℓ. m = −ℓ … ℓ: 2ℓ + 1 patterns per ℓ. m = 0: <b>zonal</b> (latitude bands); |m| = ℓ: <b>sectoral</b> (orange slices); in between: <b>tesseral</b> (checkerboard). The real pattern cos(mφ)λ<sub>ℓm</sub> has ℓ − m nodal circles of latitude and m nodal great circles through the poles.</note>
+      <py>
+      from scipy.special import sph_harm_y        # scipy >= 1.15: sph_harm_y(l, m, theta, phi)
+      Y = sph_harm_y(3, 2, theta, phi)
+      </py>
+      <f90>
+      ! lambda_lm(theta) by the stable three-term recursion in l (see code lab)
+      lam(l) = sqrt((4*l*l-1.0_dp)/(l*l-m*m))*(x*lam(l-1) - c(l)*lam(l-2))
+      </f90>
+    </x-f>
+    <x-f name="Synthesis and analysis" tag="TRANSFORM PAIR">
+      f(\theta,\varphi)=\sum_{\ell=0}^{\infty}\sum_{m=-\ell}^{\ell}\h{alm}{a_{\ell m}}\,Y_{\ell m}(\theta,\varphi),\qquad a_{\ell m}=\h{integral}{\int_{S^2}}f\,Y^*_{\ell m}\,\h{dOm}{d\Omega}
+      <note><b>Synthesis</b> builds a map from coefficients; <b>analysis</b> gets the coefficients from a map. For a real map a<sub>ℓ,−m</sub> = (−1)<sup>m</sup>a*<sub>ℓm</sub>.</note>
+      <py>
+      m = hp.alm2map(alm, nside, lmax=lmax)       # synthesis
+      alm = hp.map2alm(m, lmax=lmax, iter=3)      # analysis
+      </py>
+      <f90>
+      ! HEALPix Fortran 90: call alm2map(nside, lmax, mmax, alm, map)
+      !                    call map2alm(nside, lmax, mmax, map, alm, zbounds, w8ring)
+      </f90>
+    </x-f>
+    <p><b>Counting.</b> With ℓ<sub>max</sub> = 2: 1 + 3 + 5 = 9 = L² coefficients (L = ℓ<sub>max</sub> + 1). With ℓ<sub>max</sub> = 2048, L² ≈ 4.2 million numbers describe the map. <b>Scales.</b> ℓ = 2 (quadrupole): 90°, a quarter of the sky. ℓ = 220: ≈ 0.8°, the first acoustic peak of the CMB — spots about twice the Moon's diameter.</p>
+    <x-ex id="e11-3a" ans="36" tol="0.001" lvl="Basic">How many coefficients a<sub>ℓm</sub> for ℓ<sub>max</sub> = 5?
+      <hint>Σ (2ℓ + 1) for ℓ = 0 … 5.</hint><sol>(ℓ<sub>max</sub> + 1)² = 36.</sol></x-ex>
+    <x-ex id="e11-3b" ans="0.818" tol="0.01" lvl="Basic">Angular scale in degrees of the multipole ℓ = 220?
+      <hint>180°/ℓ.</hint><sol>0.82°.</sol></x-ex>
+    <div class="oral">Why is there an FFT hidden inside every spherical-harmonic transform? Use the factorisation of Y<sub>ℓm</sub> and say what must be true of the pixel positions to exploit it.</div>
+  </div>
+</section>
+
+<!-- ================================================================== 4 -->
+<section class="lesson" data-title="The angular power spectrum and cosmic variance" data-short="C_ℓ & cosmic variance" data-badge="MATH" data-time="30 min" data-level="Intermediate"
+  data-sub="For an isotropic random sky all the information is in C_ℓ. We estimate it from 2ℓ + 1 numbers of our one sky: an error no instrument can remove.">
+  <div class="stage" data-widget="cosmicvar"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>On a time series you reduce the scatter of a spectrum by averaging more segments (Welch, Lesson 10). On the sky you cannot: we have only one universe to observe.</p></div>
+    <div class="s-key">ΔĈ<sub>ℓ</sub>/C<sub>ℓ</sub> = √(2/(2ℓ+1)): 63% at ℓ = 2, 3% at ℓ = 1000. Large scales are always poorly known.</div>
+    <ul class="s-learn"><li>Statistical isotropy</li><li>The estimator Ĉ<sub>ℓ</sub></li><li>χ² with 2ℓ + 1 degrees of freedom</li><li>Cosmic variance; f<sub>sky</sub> and binning</li><li>D<sub>ℓ</sub> = ℓ(ℓ+1)C<sub>ℓ</sub>/2π</li></ul>
+  </aside>
+  <div class="prose">
+    <x-f name="Power spectrum of an isotropic sky" tag="DEFINITION">
+      \langle a_{\ell m}a^*_{\ell' m'}\rangle=\h{Cl}{C_\ell}\,\delta_{\ell\ell'}\delta_{mm'},\qquad \h{Chat}{\hat C_\ell}=\frac{1}{2\ell+1}\sum_{m=-\ell}^{\ell}|a_{\ell m}|^2
+      <note>The coefficients are uncorrelated and the mean of |a<sub>ℓm</sub>|² depends only on ℓ. We estimate it from our sky by averaging over the 2ℓ + 1 values of m.</note>
+      <py>
+      cl = hp.anafast(m, lmax=lmax)               # = hp.alm2cl(hp.map2alm(m, lmax))
+      </py>
+      <f90>
+      cl(l) = (abs(alm(l,0))**2 + 2*sum(abs(alm(l,1:l))**2)) / (2*l+1)
+      </f90>
+    </x-f>
+    <x-f name="Cosmic variance" tag="RESULT">
+      \frac{(2\ell+1)\hat C_\ell}{C_\ell}\sim\chi^2_{2\ell+1},\qquad \frac{\Delta\hat C_\ell}{C_\ell}=\sqrt{\frac{2}{2\ell+1}}\ \xrightarrow{\ \text{cut sky, bins}\ }\ \sqrt{\frac{2}{(2\ell+1)\,\h{fsky}{f_{\rm sky}}\,\h{Dell}{\Delta\ell}}}
+      <note>2ℓ + 1 degrees of freedom: a<sub>ℓ0</sub> is real (1 number); for m &gt; 0 a<sub>ℓm</sub> is complex (2 numbers) and a<sub>ℓ,−m</sub> is fixed by it. A partial sky keeps fewer modes (× f<sub>sky</sub>); averaging Δℓ multipoles adds modes (× Δℓ). This is the Knox (1995) formula used in Lab 2.</note>
+      <py>
+      err = np.sqrt(2 / ((2*ell + 1) * fsky * dl)) # relative error of a bin
+      </py>
+      <f90>
+      err = sqrt(2.0_dp/((2*l+1)*fsky*dl))
+      </f90>
+    </x-f>
+    <x-f name="The plotted spectrum" tag="CONVENTION">
+      \h{Dl}{D_\ell}=\frac{\ell(\ell+1)}{2\pi}C_\ell\quad[\mu{\rm K}^2]
+      <note>Flat for a scale-invariant sky, so the acoustic peaks stand out. A white (flat) C<sub>ℓ</sub>, such as detector noise, becomes D<sub>ℓ</sub> ∝ ℓ². Model peak: D<sub>220</sub> ≈ 5730 µK², i.e. C<sub>220</sub> = 0.74 µK² sr.</note>
+    </x-f>
+    <p><b>By hand.</b> a<sub>1,0</sub> = 2, a<sub>1,1</sub> = 1 + i, a<sub>1,−1</sub> = −(1 − i): |a|² = 4, 2, 2, so Ĉ<sub>1</sub> = 8/3 ≈ 2.67.</p>
+    <x-ex id="e11-4a" ans="0.632" tol="0.01" lvl="Basic">Relative cosmic variance of Ĉ<sub>2</sub> on the full sky?
+      <hint>√(2/5).</hint><sol>0.63: 63%.</sol></x-ex>
+    <x-ex id="e11-4b" ans="0.0139" tol="0.03" lvl="Intermediate">Knox error of a bin at ℓ = 220 with f<sub>sky</sub> = 0.778 and Δℓ = 30?
+      <hint>√(2/(441 · 0.778 · 30)).</hint><sol>√(2/10293) = 0.014: 1.4%.</sol></x-ex>
+    <x-ex id="e11-4c" ans="5727" tol="0.01" lvl="Basic">C<sub>220</sub> = 0.74 µK² sr. What is D<sub>220</sub> in µK²?
+      <hint>220 · 221 · 0.74 / 2π.</hint><sol>≈ 5727 µK², the first peak.</sol></x-ex>
+  </div>
+</section>
+
+<!-- ================================================================== 5 -->
+<section class="lesson" data-title="Synthesis is exact, analysis is not — and HEALPix" data-short="HEALPix" data-badge="MATH" data-time="35 min" data-level="Intermediate"
+  data-sub="Going from coefficients to a map is a finite sum; going back is a quadrature. HEALPix trades exactness for equal areas, a hierarchy and rings.">
+  <div class="stage" data-widget="healpix"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>HEALPix — Hierarchical Equal Area isoLatitude Pixelisation (Górski et al. 2005) — is the standard of WMAP, Planck and most all-sky surveys.</p></div>
+    <div class="s-key">Equal areas: integrals become plain sums and white noise has the same variance in every pixel. Hierarchy: each pixel splits into 4. Rings: one FFT per ring.</div>
+    <ul class="s-learn"><li>The round trip AS = I and exact quadratures</li><li>Driscoll–Healy, Gauss–Legendre, McEwen–Wiaux</li><li>N<sub>pix</sub> = 12 N<sub>side</sub>², 4N<sub>side</sub> − 1 rings</li><li>RING and NESTED ordering</li></ul>
+  </aside>
+  <div class="prose">
+    <x-f name="Discrete synthesis and analysis" tag="DEFINITION">
+      \underbrace{f_p=\sum_{\ell m}a_{\ell m}Y_{\ell m}(\hat n_p)}_{\text{synthesis }S:\ \text{exact}}\qquad \underbrace{\hat a_{\ell m}=\sum_p \h{wp}{w_p}\,f_p\,Y^*_{\ell m}(\hat n_p)}_{\text{analysis }A:\ \text{a quadrature}}
+      <note>The round trip gives back the input (AS = I) only if the sum integrates exactly every product Y<sub>ℓm</sub>Y*<sub>ℓ'm'</sub> up to band limit 2ℓ<sub>max</sub>. On a circle the equispaced grid does this for free; on the sphere only special grids do.</note>
+    </x-f>
+    <table><tr><th>scheme</th><th>points needed</th><th>weak point</th></tr>
+      <tr><td>Driscoll &amp; Healy (1994), equiangular</td><td>4L²</td><td>polar crowding</td></tr>
+      <tr><td>Gauss–Legendre (rings at roots of P<sub>L</sub>)</td><td>≈ 2L²</td><td>unequal areas, no hierarchy</td></tr>
+      <tr><td>McEwen &amp; Wiaux (2011)</td><td>≈ 2L²</td><td>unequal areas</td></tr>
+      <tr><td>HEALPix, ℓ<sub>max</sub> = 3N<sub>side</sub> − 1 (not exact)</td><td>≈ 1.33L²</td><td>approximate quadrature</td></tr></table>
+    <p>For L = 100: Driscoll–Healy 40 000 samples, Gauss–Legendre 19 900, HEALPix ≈ 13 300 — fewer samples, but the round trip is no longer exact. For observations we still prefer equal-area pixels: detectors average over an area, noise per pixel is simpler, and we want a hierarchy.</p>
+    <x-f name="HEALPix geometry" tag="FORMULAS">
+      \h{Npix}{N_{\rm pix}}=12\,\h{Nside}{N_{\rm side}}^2,\quad N_{\rm side}=2^k,\quad \h{Opix}{\Omega_{\rm pix}}=\frac{4\pi}{N_{\rm pix}}=\frac{\pi}{3N_{\rm side}^2},\quad \h{thpix}{\theta_{\rm pix}}=\sqrt{\Omega_{\rm pix}}\simeq\frac{58.6^\circ}{N_{\rm side}}
+      <note>12 base pixels (4 around each pole, 4 on the equator), each split into N<sub>side</sub> × N<sub>side</sub>. 4N<sub>side</sub> − 1 rings: polar-cap ring i has 4i pixels at z = cos θ = 1 − i²/(3N<sub>side</sub>²); the equatorial rings have 4N<sub>side</sub> pixels each.</note>
+      <py>
+      npix = hp.nside2npix(1024)                  # 12 582 912
+      res = hp.nside2resol(1024, arcmin=True)     # 3.44 arcmin
+      </py>
+      <f90>
+      npix = 12*nside**2
+      thpix = sqrt(4*pi/npix)*180/pi*60          ! arcmin
+      </f90>
+    </x-f>
+    <p><b>By hand.</b> N<sub>side</sub> = 2: 48 pixels on 7 rings. Ring 1 has 4 pixels at z = 1 − 1/12 = 0.917 (θ = 23.6°); rings 2 … 6 have 8 each: 2·4 + 5·8 = 48 ✓. N<sub>side</sub> = 1024 (the Lab 2 maps): 12 582 912 pixels of 3.44′.</p>
+    <h2><span class="lv core">CORE</span>RING and NESTED ordering</h2>
+    <p><b>RING</b>: ring by ring from north to south — each ring is a contiguous block, which is what the transform wants. <b>NESTED</b>: a quad-tree inside each base pixel; the children of pixel p are 4p … 4p + 3, good for neighbours and changing resolution. Pixel 5 at N<sub>side</sub> = 1 has children 20–23 at N<sub>side</sub> = 2, and 80–95 at N<sub>side</sub> = 4. Planck archive files are NESTED; the Lab 2 files were converted to RING (<code>hp.reorder</code>).</p>
+    <x-ex id="e11-5a" ans="196608" tol="0.001" lvl="Basic">N<sub>pix</sub> for N<sub>side</sub> = 128?
+      <hint>12 N<sub>side</sub>².</hint><sol>12 · 16384 = 196 608.</sol></x-ex>
+    <x-ex id="e11-5b" ans="4095" tol="0.001" lvl="Basic">How many rings at N<sub>side</sub> = 1024?
+      <hint>4N<sub>side</sub> − 1.</hint><sol>4095.</sol></x-ex>
+    <x-ex id="e11-5c" ans="1.72" tol="0.02" lvl="Intermediate">Pixel size in arcmin at N<sub>side</sub> = 2048?
+      <hint>58.6°/N<sub>side</sub>, times 60.</hint><sol>58.6 · 60 / 2048 = 1.72′.</sol></x-ex>
+  </div>
+</section>
+
+<!-- ================================================================== 6 -->
+<section class="lesson" data-title="The fast spherical harmonic transform on rings" data-short="Fast transform on rings" data-badge="ALGORITHM" data-time="25 min" data-level="Advanced"
+  data-sub="An FFT along each ring, then a Legendre sum over rings: O(L³) instead of O(L⁴). The round trip is approximate; Jacobi iterations improve it.">
+  <div class="stage" data-widget="ringcost"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>Because the pixels of ring r sit at φ<sub>rj</sub> = φ<sub>r0</sub> + 2πj/n<sub>r</sub>, the φ part of the transform is a DFT of length n<sub>r</sub> — done by the FFT of Lesson 08. Rings are independent: the work is trivially parallel.</p></div>
+    <div class="s-key">Practical rule: ℓ<sub>max</sub> ≤ 2N<sub>side</sub> accurate; up to 3N<sub>side</sub> − 1 quick looks only; beyond, not resolved by the grid.</div>
+    <ul class="s-learn"><li>Step 1: FFT on each ring</li><li>Step 2: Legendre sum over rings</li><li>Cost L³ vs L⁴</li><li>Azimuthal aliasing on short rings</li><li>Jacobi iteration of map2alm</li></ul>
+  </aside>
+  <div class="prose">
+    <x-f name="Analysis on rings" tag="ALGORITHM">
+      \text{1.}\ \ \h{Fm}{F_m(r)}=e^{-im\varphi_{r0}}\sum_{j=0}^{\h{nr}{n_r}-1}f_{rj}\,e^{-2\pi i\,mj/n_r}\qquad \text{2.}\ \ \hat a_{\ell m}=\h{Opix}{\Omega_{\rm pix}}\sum_r\h{lam}{\lambda_{\ell m}}(\theta_r)\,F_m(r)
+      <note>Synthesis is the same two steps in reverse. Direct sum: N<sub>pix</sub> × L² ~ L⁴. Rings: N<sub>ring</sub> × L² ~ L³. For L = 2048: 1.8×10¹³ vs 8.6×10⁹ operations, ~2000 times less. Measured with healpy on one core: N<sub>side</sub> = 1024, ℓ<sub>max</sub> = 2048 takes about 2 s.</note>
+      <py>
+      F = np.fft.rfft(m[start:start + nr])        # step 1 on one RING-ordered ring
+      </py>
+      <f90>
+      plan = fftw_plan_dft_r2c_1d(nr, seg, F, FFTW_ESTIMATE)
+      call fftw_execute_dft_r2c(plan, seg, F)     ! one ring (see ring_fft.f90)
+      </f90>
+    </x-f>
+    <p><b>Azimuthal aliasing.</b> A ring of n<sub>r</sub> pixels cannot tell m from m ± n<sub>r</sub>. The first polar ring has only 4 pixels, so e<sup>5iφ</sup> looks like e<sup>iφ</sup> there — one reason the HEALPix round trip is not exact.</p>
+    <x-f name="Jacobi iteration of the analysis" tag="ALGORITHM">
+      a^{(k+1)}=a^{(k)}+A\big(f-S\,a^{(k)}\big)
+      <note>The best a<sub>ℓm</sub> solve a least-squares problem; since AS ≃ I a simple Jacobi iteration (Lesson 06) converges fast. Measured at N<sub>side</sub> = 64, ℓ<sub>max</sub> = 2N<sub>side</sub>: rms error 2.2×10⁻³ (iter = 0), 2.3×10⁻⁴ (1), 3.3×10⁻⁶ (3, healpy's default). At ℓ<sub>max</sub> = 3N<sub>side</sub> − 1 it stays at 0.15 whatever you do.</note>
+      <py>
+      alm = hp.map2alm(m, lmax=lmax, iter=3)
+      </py>
+      <f90>
+      do it = 1, niter
+         call alm2map(nside, lmax, lmax, alm, mback)
+         call map2alm(nside, lmax, lmax, m - mback, dalm, zb, w8)
+         alm = alm + dalm
+      end do
+      </f90>
+    </x-f>
+    <x-ex id="e11-6a" ans="2048" tol="0.01" lvl="Intermediate">Speed-up of the ring algorithm over the direct sum at L = 2048, taking costs L⁴ and L³?
+      <hint>L⁴/L³.</hint><sol>2048 (the notes quote "about 2000").</sol></x-ex>
+    <div class="oral">Why does map2alm(alm2map(a)) not return exactly a, and why does iterating help only when ℓ<sub>max</sub> ≤ 2N<sub>side</sub>?</div>
+  </div>
+</section>
+
+<!-- ================================================================== 7 -->
+<section class="lesson" data-title="Beams, pixels and the choice of N_side" data-short="Beams, pixels, N_side" data-badge="MATH" data-time="35 min" data-level="Intermediate"
+  data-sub="Two low-pass filters act on the sky: the telescope beam B_ℓ and the pixel window W_ℓ. The beam is the anti-aliasing filter of the sphere.">
+  <div class="stage" data-widget="beamcalc"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>A telescope does not see a point but a blurred spot, the beam, described by its FWHM. A map pixel is the average of the sky over its area. Both are convolutions; on the sphere a circular convolution is diagonal in harmonic space (Funk–Hecke): each a<sub>ℓm</sub> is multiplied by one number.</p></div>
+    <div class="s-key">Choose the smallest N<sub>side</sub> = 2<sup>k</sup> that gives FWHM ≳ 2–3 pixels. Smooth before you degrade; upgrading adds pixels, not information.</div>
+    <ul class="s-learn"><li>Gaussian beam B<sub>ℓ</sub></li><li>Pixel window W<sub>ℓ</sub></li><li>Aliasing on the sphere</li><li>Pixels per FWHM</li><li>ud_grade: smooth first</li></ul>
+  </aside>
+  <div class="prose">
+    <x-f name="Beam: the convolution theorem on the sphere" tag="RESULT">
+      a^{\rm out}_{\ell m}=\h{Bl}{B_\ell}\,a_{\ell m},\qquad B_\ell=\exp\!\Big(-\tfrac12\ell(\ell+1)\h{sigb}{\sigma}^2\Big),\qquad \sigma=\frac{\h{FWHM}{\rm FWHM}}{\sqrt{8\ln 2}}=\frac{\rm FWHM}{2.355}
+      <note>hp.smoothing does exactly this: map2alm → multiply by B<sub>ℓ</sub> → alm2map. The power is multiplied by B<sub>ℓ</sub>². An asymmetric beam is not diagonal (it mixes m).</note>
+      <py>
+      B = hp.gauss_beam(np.radians(13.08/60), lmax=lmax)   # FWHM in RADIANS
+      ms = hp.smoothing(m, fwhm=np.radians(1.0))
+      </py>
+      <f90>
+      sig = fwhm_rad/sqrt(8*log(2.0_dp))
+      bl = exp(-0.5_dp*[(l*(l+1), l=0,lmax)]*sig**2)
+      </f90>
+    </x-f>
+    <x-f name="Pixel window" tag="RESULT">
+      a^{\rm map}_{\ell m}\simeq\h{Wl}{W_\ell}\,a^{\rm sky}_{\ell m},\qquad C^{\rm map}_\ell\simeq W_\ell^2\,C^{\rm sky}_\ell,\qquad W_\ell\approx\frac{\sin x}{x},\ \ x=\frac{\ell\,\theta_{\rm pix}}{2}
+      <note>Averaging over a pixel is a top-hat convolution, a low-pass filter that holds only on average because pixel shapes vary. W<sub>ℓ</sub> ≈ 1 for ℓ ≪ N<sub>side</sub>; at N<sub>side</sub> = 64 it is 0.96 at ℓ = N<sub>side</sub>, 0.83 at 2N<sub>side</sub>, 0.64 at 3N<sub>side</sub>. The CMB beam is measured on planet transits in time-ordered data, before map-making, so B<sub>ℓ</sub> does not contain the pixel: W<sub>ℓ</sub>² is a separate factor.</note>
+      <py>
+      W = hp.pixwin(nside, lmax=lmax)             # downloads a table; Lab 2 reads it from a file
+      m_pw = hp.alm2map(alm, nside, pixwin=True)  # simulate pixel averaging
+      </py>
+      <f90>
+      ! HEALPix F90: call pixel_window(pixlw, nside)
+      </f90>
+    </x-f>
+    <p><b>The Planck 70 GHz beam</b>, FWHM = 13.08′ = 0.003805 rad, σ = 0.001616 rad, σ² = 2.61×10⁻⁶. At ℓ = 515, ℓ(ℓ+1)σ² = 0.694 and B<sub>ℓ</sub>² = 0.50: half the power is gone. At ℓ = 800 (third peak) only 19% survives; at ℓ = 1328, 1%.</p>
+    <h2><span class="lv core">CORE</span>Aliasing and choosing N<sub>side</sub></h2>
+    <p>Sky power on scales smaller than the pixels folds back onto lower ℓ and biases Ĉ<sub>ℓ</sub> upwards — aliasing, as in Lesson 07. The cure is to smooth before pixelising, and the telescope does it for free if the pixels are small enough compared with the beam:</p>
+    <table><tr><th>FWHM in pixels</th><th>1</th><th>1.5</th><th>2</th><th>2.5</th><th>3</th><th>4</th></tr>
+      <tr><td>aliased power, 2N<sub>side</sub> ≤ ℓ &lt; 3N<sub>side</sub></td><td>16%</td><td>4.7%</td><td>1.8%</td><td>0.7%</td><td>0.2%</td><td>&lt;10⁻⁵</td></tr>
+      <tr><td>aliased power, N<sub>side</sub> ≤ ℓ &lt; 2N<sub>side</sub></td><td>1.3%</td><td>0.06%</td><td>&lt;10⁻⁵</td><td>&lt;10⁻⁵</td><td>&lt;10⁻⁵</td><td>&lt;10⁻⁵</td></tr></table>
+    <p>A 1° beam: N<sub>side</sub> = 64 gives 1.1 pixels per FWHM (aliasing), <b>128 gives 2.2 (the choice)</b>, 256 gives 4.4 (wasteful), 512 gives 8.7 (oversampled). Planck 70 GHz at N<sub>side</sub> = 1024: 13.08′/3.44′ = 3.8 pixels. Each factor 2 in N<sub>side</sub> costs 4× memory and ~8× transform time.</p>
+    <h2><span class="lv core">CORE</span>Changing the resolution: ud_grade</h2>
+    <p><b>Degrading</b> makes each new pixel the mean of its children: a top-hat of one new pixel, ~1 pixel per FWHM, which aliases. Measured 512 → 64: 2.7% (N<sub>side</sub> ≤ ℓ &lt; 2N<sub>side</sub>) and 25% (2N<sub>side</sub> ≤ ℓ &lt; 3N<sub>side</sub>); smoothed first to 3 × 55′ = 2.75°: 0.00% and 0.03%. <b>Upgrading</b> copies each pixel into its 4 children: more pixels, no new information, and fake power at high ℓ from the block edges.</p>
+    <x-code><py>
+      m_lo = hp.ud_grade(hp.smoothing(m, fwhm=np.radians(3*0.92*2)), 32)   # smooth, then degrade 64 -> 32
+    </py></x-code>
+    <x-ex id="e11-7a" ans="0.188" tol="0.03" lvl="Intermediate">Planck 70 GHz (σ² = 2.61×10⁻⁶ rad²): B<sub>ℓ</sub>² at ℓ = 800?
+      <hint>exp(−ℓ(ℓ+1)σ²).</hint><sol>exp(−800·801·2.61×10⁻⁶) = exp(−1.67) = 0.19.</sol></x-ex>
+    <x-ex id="e11-7b" ans="2048" tol="0.001" lvl="Intermediate">Which N<sub>side</sub> for a 5′ beam (2–3 pixels per FWHM)?
+      <hint>θ<sub>pix</sub> = 58.6°/N<sub>side</sub>; try 1024 and 2048.</hint><sol>2048: θ<sub>pix</sub> = 1.72′, 2.9 pixels per FWHM.</sol></x-ex>
+  </div>
+</section>
+
+<!-- ================================================================== 8 -->
+<section class="lesson" data-title="Recovering the sky spectrum on a cut sky" data-short="Recovering C_ℓ, cut sky" data-badge="MATH" data-time="35 min" data-level="Advanced"
+  data-sub="The map gives the sky times B_ℓ²W_ℓ², plus noise, through a mask. Undo each step — and stop where the beam has erased the signal.">
+  <div class="stage" data-widget="deconv"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>This section is the whole of Lab 2 in one equation. Every correction is a division or a subtraction, and every one has a price in the error bars.</p></div>
+    <div class="s-key">Before dividing by B<sub>ℓ</sub>², look at how small it is: the beam, not the data, decides how far in ℓ you can go.</div>
+    <ul class="s-learn"><li>The measurement equation</li><li>Deconvolution and its blow-up</li><li>Error bars with noise</li><li>Pseudo-C<sub>ℓ</sub> and the coupling matrix</li><li>f<sub>sky</sub>, binning, apodisation</li><li>Wiener filter on the sphere</li></ul>
+  </aside>
+  <div class="prose">
+    <x-f name="Measurement equation and its inversion" tag="RESULT">
+      \hat C_\ell^{\rm map}=\h{Bl}{B_\ell}^2\h{Wl}{W_\ell}^2\,C_\ell^{\rm sky}+\h{Nl}{N_\ell}\qquad\Longrightarrow\qquad \hat C_\ell^{\rm sky}=\frac{\hat C_\ell^{\rm map}-N_\ell}{W_\ell^2B_\ell^2}
+      <note>N<sub>ℓ</sub> comes from noise simulations, half-difference maps or — in the lab — the high-ℓ tail where the sky is gone. W<sub>ℓ</sub> must match how the map was made: a wrong window is a bias of several per cent at ℓ ≳ N<sub>side</sub>.</note>
+      <py>
+      cl_sky = (cl_map - N) / (B * W)**2
+      </py>
+      <f90>
+      cl_sky = (cl_map - noise)/(bl*wl)**2
+      </f90>
+    </x-f>
+    <x-f name="Error bar with noise" tag="RESULT">
+      \Delta\hat C_\ell=\sqrt{\frac{2}{(2\ell+1)\,\h{fsky}{f_{\rm sky}}\,\Delta\ell}}\;\Big(C_\ell+\frac{N_\ell}{W_\ell^2B_\ell^2}\Big)
+      <note>Cosmic variance plus the noise amplified by the deconvolution. Where N/B² exceeds C<sub>ℓ</sub> the measurement is over.</note>
+    </x-f>
+    <p><b>Why deconvolution fails at high ℓ.</b> 70 GHz noise N = 3.3×10⁻³ µK² sr; at ℓ = 1500, B<sub>ℓ</sub>² = 0.0028. A 1% mistake in N (3.3×10⁻⁵) becomes 0.0118 µK² sr after the division, i.e. D<sub>ℓ</sub> ≈ 4×10³ µK² — while the CMB there is under 10³ µK². The error is bigger than the signal.</p>
+    <h2><span class="lv core">CORE</span>A mask is a window</h2>
+    <p>Real maps are masked: we cut the Galaxy and bright sources and keep a fraction f<sub>sky</sub> &lt; 1. Exactly like a finite time record:</p>
+    <x-f name="Pseudo-C_ℓ" tag="RESULT">
+      \langle\tilde C_\ell\rangle=\sum_{\ell'}\h{Mll}{M_{\ell\ell'}}\,C_{\ell'}\ \approx\ f_{\rm sky}\,C_\ell
+      <note>On a partial sky the Y<sub>ℓm</sub> are no longer orthogonal: power leaks into neighbouring ℓ through the coupling matrix. Dividing by f<sub>sky</sub> (the lab's choice) is exact only on average and for ℓ much larger than the mask's scale. A patch of size Θ cannot separate multipoles closer than Δℓ ~ 2π/Θ: bin in Δℓ. Sharp edges leak power from large to small scales; apodising (smoothing) the edges reduces it. Proper tools: MASTER (Hivon et al. 2002), NaMaster.</note>
+      <py>
+      cl_mask = hp.anafast(m * mask, lmax=lmax) / mask.mean()
+      </py>
+      <f90>
+      fsky = sum(mask)/npix
+      </f90>
+    </x-f>
+    <x-f name="Wiener filter on the sphere (for display)" tag="FILTER">
+      a^{\rm WF}_{\ell m}=\frac{C_\ell B_\ell W_\ell}{C_\ell B_\ell^2W_\ell^2+N_\ell}\,a^{\rm map}_{\ell m}
+      <note>The filter of Lesson 10, now one number per ℓ. It gives the most probable sky of a Gaussian field: used for pretty maps, not to measure C<sub>ℓ</sub>.</note>
+      <py>
+      alm_wf = hp.almxfl(hp.map2alm(m), C*B*W / (C*(B*W)**2 + N))
+      </py>
+    </x-f>
+    <x-ex id="e11-8a" ans="4000" tol="0.1" lvl="Advanced">A 1% error on N = 3.3×10⁻³ µK² sr at ℓ = 1500 with B<sub>ℓ</sub>² = 0.0028: error on D<sub>ℓ</sub> in µK²?
+      <hint>0.01 N / B², then × ℓ(ℓ+1)/2π.</hint><sol>0.0118 × 1500·1501/2π ≈ 4.2×10³ µK².</sol></x-ex>
+    <x-ex id="e11-8b" ans="0.778" tol="0.01" lvl="Basic">A map of variance 100 µK² with 22.2% of the pixels set to zero has a mean power of 77.8 µK². By what number must you divide to restore it?
+      <hint>The kept fraction.</hint><sol>f<sub>sky</sub> = 0.778.</sol></x-ex>
+    <div class="oral">List everything a mask does to a power spectrum, and which of those effects the simple 1/f<sub>sky</sub> correction fixes.</div>
+  </div>
+</section>
+
+<!-- ================================================================== 9 -->
+<section class="lesson" data-title="Lab 2 mind map: the whole process at a glance" data-short="Lab 2 mind map" data-badge="MAP" data-time="15 min" data-level="Beginner"
+  data-sub="Data, theory, pipeline, extensions and results of the Planck laboratory in one interactive map. Click a node to see what it does, its formula, its code and its number.">
+  <div class="stage" data-widget="mindmap"></div>
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>Lab 2 asks one question: on a real map, with our Galaxy in the way, instrument noise and a measured beam, how much of the true CMB power spectrum can we recover? Every branch of the map is one ingredient of the answer.</p></div>
+    <div class="s-key">The pipeline is the measurement equation read backwards: mask (f<sub>sky</sub>), subtract the noise (N), divide by the beam and pixels (B²W²), bin and compare with the model.</div>
+    <ul class="s-learn"><li>The four data files</li><li>Which theory each step uses</li><li>Steps 0–4 in order</li><li>Extensions A, B, C</li><li>The numbers to expect</li></ul>
+  </aside>
+  <div class="prose">
+    <p>Use <b>▶ Play the pipeline</b> to walk through the steps in order, or click any node. Branch colours: <b>data</b>, <b>theory</b> (links back to the sections of this lesson), <b>pipeline</b> and <b>extensions</b> (links to the Lab 2 page), <b>results</b>. The numbers are those printed by the Lab 2 notebook.</p>
+    <x-lab href="../Lab%202/index.html#s1">Lab 2: each step block by block, with the notebook and its results</x-lab>
+  </div>
+</section>
+
+<!-- ================================================================== 10 -->
+<section class="lesson" data-title="Exercises and code lab: signals on the sphere" data-short="Exercises & code lab" data-badge="CODE" data-time="60 min" data-level="Intermediate"
+  data-sub="A warm-up with healpy, and three solved exercises: from a beam to a map (with a Fortran ring FFT), cosmic variance, and a mask as a window.">
+  <aside class="side-src" hidden>
+    <div class="s-text"><p>Everything in this lesson can be checked numerically with healpy in a few seconds. The exercises are optional practice and good seeds for a final project.</p></div>
+    <div class="s-key">The Fortran part does step 1 of the transform by hand: split a RING map into its 4N<sub>side</sub> − 1 rings and FFT each one with FFTW. It agrees with numpy to 3.6×10⁻¹⁵.</div>
+    <ul class="s-learn"><li>Run sphere_warmup.py</li><li>Exercise 1: beam to map + ring FFT</li><li>Exercise 2: cosmic variance</li><li>Exercise 3: the cut sky</li></ul>
+  </aside>
+  <div class="prose">
+    <x-code><py>
+      # inside "11. Sampling on the Sphere/code"   (pip install healpy: Linux, macOS, WSL or Colab)
+      python sphere_warmup.py
+      python beam_to_map.py          # writes map_nside16.bin for the Fortran part
+      python cosmic_variance.py
+      python cut_sky.py
+      </py><f90>
+      gfortran -O2 ring_fft.f90 -I/usr/include -lfftw3 -o ring_fft
+      ./ring_fft
+    </f90></x-code>
+    <table><tr><th>script</th><th>printed result</th></tr>
+      <tr><td>warm-up: round trip at ℓ<sub>max</sub> = 2N<sub>side</sub></td><td>max error 2.5×10⁻⁴ (iter 0), 2.9×10⁻⁵ (1), 4.3×10⁻⁷ (3)</td></tr>
+      <tr><td>warm-up: smoothed / (B² × input)</td><td>1.000</td></tr>
+      <tr><td>beam_to_map: pixels per 1° FWHM</td><td>N<sub>side</sub> 64: 1.1 · 128: 2.2 · 256: 4.4 · 512: 8.7</td></tr>
+      <tr><td>beam_to_map: aliased power at N<sub>side</sub> 128</td><td>0.94% without pre-smoothing, 0.00% with</td></tr>
+      <tr><td>beam_to_map: recovered/input at N<sub>side</sub> 256, ℓ = 200–399</td><td>0.997 with W<sub>ℓ</sub>; 0.902 without; 1.029 with the wrong (continuous-pixel) window</td></tr>
+      <tr><td>ring_fft.f90 vs numpy, N<sub>side</sub> = 16</td><td>63 rings, 3072 pixels, max difference 3.55×10⁻¹⁵</td></tr>
+      <tr><td>cosmic_variance: std of Ĉ<sub>ℓ</sub>/C<sub>ℓ</sub>, ℓ = 10</td><td>full 0.316 (theory 0.309); cut 0.349 (theory/√f<sub>sky</sub> 0.379)</td></tr>
+      <tr><td>cosmic_variance: KS test 5Ĉ<sub>2</sub>/C<sub>2</sub> vs χ²<sub>5</sub></td><td>p = 0.33; cut sky couples ℓ and ℓ + 2 (r = +0.10)</td></tr>
+      <tr><td>cut_sky: ⟨Ĉ<sub>ℓ</sub>⟩/C<sub>ℓ</sub> at ℓ = 300–309</td><td>full 0.98, binary mask 2.45 (leakage), apodised 0.96</td></tr></table>
+    <figure class="fig"><img src="figures/cosmic_variance.png" alt="cosmic variance"><figcaption>Exercise 2. Left: the scatter of Ĉ<sub>ℓ</sub>/C<sub>ℓ</sub> over 500 skies follows √(2/(2ℓ+1)); the cut sky is a bit wider. Right: 5Ĉ<sub>2</sub>/C<sub>2</sub> is a χ²<sub>5</sub> variable.</figcaption></figure>
+    <figure class="fig"><img src="figures/cut_sky.png" alt="cut sky"><figcaption>Exercise 3. Left: the power of a sharp mask falls slowly with ℓ, an apodised one fast. Right: on a steep spectrum the binary mask leaks large-scale power to high ℓ (estimate × 9 at ℓ ≈ 350); the apodised mask does not.</figcaption></figure>
+    <x-code py="sphere_warmup.py" f90="ring_fft.f90"/>
+    <x-code py="beam_to_map.py"/>
+    <x-code py="cosmic_variance.py"/>
+    <x-code py="cut_sky.py"/>
+    <div class="task"><b>EXERCISE 11.1 — FROM A BEAM TO A MAP</b>Sky C<sub>ℓ</sub> = 1/(ℓ(ℓ+1)), 1° beam, generated at N<sub>side</sub> = 512. Choose N<sub>side</sub>; degrade to 128 and 256 with and without pre-smoothing and measure the aliased power; recover C<sub>ℓ</sub> at 256 dividing by B<sub>ℓ</sub>²W<sub>ℓ</sub>²; find where it breaks. Fortran: split an N<sub>side</sub> = 16 RING map into rings and FFT each with FFTW.</div>
+    <div class="task"><b>EXERCISE 11.2 — COSMIC VARIANCE</b>500 skies at N<sub>side</sub> = 64 with <code>hp.synfast(..., new=True)</code>; plot mean and scatter of Ĉ<sub>ℓ</sub>/C<sub>ℓ</sub> against √(2/(2ℓ+1)); histogram 5Ĉ<sub>2</sub>/C<sub>2</sub> against χ²<sub>5</sub> (<code>scipy.stats.chi2</code>); add a |b| &lt; 20° mask.</div>
+    <div class="task"><b>EXERCISE 11.3 — A MASK IS A WINDOW</b>Binary versus apodised mask: leakage on a steep spectrum, f<sub>sky</sub> and the effective sky fraction ⟨w²⟩²/⟨w⁴⟩.</div>
+    <p><b>Further reading by keyword</b>: pseudo-C<sub>ℓ</sub> and coupling matrix (Hivon et al. 2002, NaMaster) · beam window function, RIMO · half-mission cross-spectra · component separation (SMICA, Commander) · point-source mask, shot noise · low-ℓ likelihood, Gibbs sampling (Planck 2018 V).</p>
+  </div>
+</section>

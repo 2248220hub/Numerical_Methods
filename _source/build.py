@@ -39,6 +39,7 @@ def topbar(root, active="learn"):
   <a class="brand" href="{root}index.html">{LOGO}<span>Comp <mark>Astro</mark></span></a>
   <nav class="tabs">{t}</nav>
   <div class="search" data-act="search">{ICONS["search"]}<span>Search lessons &amp; formulas…</span><kbd>Ctrl K</kbd></div>
+  <div class="topkeys"><span class="stepk"><span class="kbd">←</span><span class="kbd">→</span> step ·</span> hover symbols</div>
   <button class="iconbtn" data-act="theme" aria-label="dark mode">{ICONS["moon"]}</button>
   <div class="credit"><div class="av">∑</div><div>open study guide<b>numerical methods</b></div></div>
 </header>'''
@@ -140,6 +141,12 @@ def expand(body, codedir):
                 f'<span><small>THE THEORY · BACK TO THE LESSON</small>{m.group(2).strip()}</span>'
                 '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/></svg></a>')
     body = re.sub(r'<x-back href="([^"]+)">(.*?)</x-back>', x_back, body, flags=re.S)
+    def x_lab(m):
+        return (f'<a class="hsi-link" href="{m.group(1)}">'
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3"/></svg>'
+                f'<span><small>THE LABORATORY · OPEN THE LAB PAGE</small>{m.group(2).strip()}</span>'
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>')
+    body = re.sub(r'<x-lab href="([^"]+)">(.*?)</x-lab>', x_lab, body, flags=re.S)
     body = re.sub(r"<x-ex([^>]*)>(.*?)</x-ex>", x_ex, body, flags=re.S)
     return body
 
@@ -178,7 +185,6 @@ def lesson_page(unit_id, title, body_file, js_file, folder, prefix=None):
       <div id="r-body"></div>
       <div class="keyidea" id="r-key">{ICONS["spark"]}<b>KEY IDEA</b><span id="r-key-t"></span></div>
       <div class="navbtns"><button class="btn back" id="r-back">{ICONS["arrowl"]} Back</button><button class="btn next" id="r-next"><span id="r-next-t">Next</span>{ICONS["arrowr"]}</button></div>
-      <div class="keys"><span class="kbd">←</span><span class="kbd">→</span> step · <span class="kbd">Ctrl K</span> search · hover symbols</div>
     </div>
     <div class="rcard"><div class="rtop">YOU'LL LEARN</div><ul class="learn" id="r-learn"></ul></div>
   </aside>
@@ -230,6 +236,8 @@ PAGES = {
     "10": ("Spectral Estimation", "content10.html", "lesson10.js", "10. Spectral Estimation", None),
     "L1": ("Discrete signal laboratory", "contentL1.html", "lab1.js", "Lab 1", "Lab 1 · "),
     "12": ("Bayesian Inference", "content12.html", "lesson12.js", "12. Bayesian Inference", None),
+    "11": ("Sampling on the Sphere", "content11.html", "lesson11.js", "11. Sampling on the Sphere", None),
+    "L2": ("Planck power spectrum laboratory", "contentL2.html", "lab2.js", "Lab 2", "Lab 2 · "),
     "13": ("Monte Carlo Methods", "content13.html", "lesson13.js", "13. Monte Carlo Methods", None),
     "HSI": ("Hyperspectral Project", "contentHSI.html", "hsi.js", "Hyperspectral Project", "Project · "),
 }
